@@ -6,7 +6,10 @@ Created on Wed Apr 20 11:08:12 2022
 """
 
 import pyomo.environ as pyo
+from pyomo.core import value
 from utilities import generation
+import pandas as pd 
+import time
 
 
 
@@ -146,14 +149,14 @@ def make_model(generators_dict=None,
     # Define Capacidad máxima
     def cmaxx_rule(model,k, t):
       gen = generators_dict[k]
-      return  model.p[(k,t)] <= gen.c_max** model.v[k,t]
+      return  model.p[(k,t)] <= gen.c_max*model.v[k,t]
       #return  model.p[(k,t)] <= gen.c_max** model.v[k,t]*10 prueba para que active solar
     model.cmaxx_rule = pyo.Constraint(model.GENERATORS, model.HTIME, rule=cmaxx_rule)
 
     # Define Generación mínima
     def cminn_rule(model,k, t):
       gen = generators_dict[k]
-      return  model.p[(k,t)] >= gen.c_min** model.v[k,t]
+      return  model.p[(k,t)] >= gen.c_min*model.v[k,t]
     model.cminn_rule = pyo.Constraint(model.GENERATORS, model.HTIME, rule=cminn_rule)
 
     #Gestión de baterías
@@ -274,3 +277,131 @@ def make_model(generators_dict=None,
     #puse demanda para factibilidad
 
     return model
+
+
+def solve_model(model,
+                optimizer='gurobi',
+                mipgap=0.02,
+                tee=True):
+    solver = pyo.SolverFactory(optimizer)
+    solver.options['MIPGap'] = mipgap
+    results = solver.solve(model, tee = tee)
+    term_cond = results.solver.termination_condition
+    term = {}
+    if term_cond != pyo.TerminationCondition.optimal:
+          term['Temination Condition'] = format(term_cond)
+          print(term)
+          execution_time = time.time() - timea
+          ext_time = {}
+          ext_time['Execution time'] = execution_time
+          print(ext_time)
+          raise RuntimeError("Optimization failed.")
+
+    else: 
+          term['Temination Condition'] = format(term_cond)
+          execution_time = time.time() - timea
+          ext_time = {}
+          ext_time['Execution time'] = execution_time  
+    
+    return results, termintation
+      
+      
+
+def create_results(model, 
+                   demand_df,
+                   generators_dict,
+                   batteries_dict):
+    
+    gen_data = {}
+    for k in model.GENERATORS:
+       aux = []
+       val = value(model.w[k])
+       aux.append(val)
+       gen_data[k] = aux
+   
+    gen_df = pd.DataFrame (gen_data.values(), index = [*gen_data.keys()], columns = ['w'])
+
+
+    tecno_data = {}
+    for i in model.TECHNOLOGIES:
+       aux = []
+       val = value(model.y[i])
+       aux.append(val)
+       tecno_data[i] = aux
+   
+    tecno_df = pd.DataFrame (tecno_data.values(), index = [*tecno_data.keys()], columns = ['y'])
+
+    bat_data = {}
+    for l in model.BATTERIES:
+       aux = []
+       val = value(model.q[l])
+       aux.append(val)
+       bat_data[l] = aux
+   
+    bat_df = pd.DataFrame (bat_data.values(), index = [*bat_data.keys()], columns = ['b'])
+   
+
+    p_data = {k : [0]*len(model.HTIME) for k in model.GENERATORS}
+    for (k,t), f in model.p.items():
+      p_data [k][t] = value(f)
+
+    p_d = pd.DataFrame(p_data, columns=[*p_data.keys()])  
+
+    smenos_data = [0]*len(model.HTIME)
+    lpsp_data = [0]*len(model.HTIME)
+    for t in model.HTIME:
+        smenos_data[t] = value(model.s_menos[t])
+        if model.d[t] != 0:
+          lpsp_data [t] = value(model.s_menos[t]) / value(model.d[t])
+    
+    smenos_df = pd.DataFrame(smenos_data, columns = ['S-'])
+    lpsp_df = pd.DataFrame(lpsp_data, columns = ['LPSP'])
+
+    balance_df = pd.concat([p_d, demand_df, smenos_df,lpsp_df], axis=1)
+
+
+    soc_data = {l : [0]*len(model.HTIME) for l in model.BATTERIES}
+    for (l,t), f in model.soc.items():
+      soc_data [l][t] = value(f)
+
+    soc_df = pd.DataFrame(soc_data, columns=[*soc_data.keys()])
+
+    b_menos_data = {l : [0]*len(model.HTIME) for l in model.BATTERIES}
+    for (l,t), f in model.b_menos.items():
+      b_menos_data [l][t] = value(f)
+
+    b_menos_df = pd.DataFrame(b_menos_data, columns=[*b_menos_data.keys()])
+
+    b_mas_data = {l : [0]*len(model.HTIME) for l in model.BATTERIES}
+    for (l,t), f in model.b_mas.items():
+      b_mas_data [l][t] = value(f)
+
+    b_mas_df = pd.DataFrame(b_mas_data, columns=[*b_mas_data.keys()])
+
+    obj_val = {}
+    obj_val['LCOE'] = model.LCOE_value.expr()
+ 
+    a_val = {}
+    suma = 0
+    for k in model.GENERATORS:
+        ar =  value(model.w[k]) * generators_dict[k].area
+        suma += ar  
+    
+    for l in model.BATTERIES:
+      ar = value(model.q[l]) * batteries_dict[l].area
+      suma += ar
+
+    a_val['Area'] = suma
+
+    com_data = {}
+
+    for (i, j) in model.TECN_ALT:
+            aux = []
+            val = value(model.x[i,j])  
+            aux.append(val)
+            com_data[i, j] = aux
+   
+    com_df = pd.DataFrame (com_data.values(), index = [*com_data.keys()], columns = ['x'])
+      
+    return balance_df, soc_df, obj_val, gen_df, tecno_df, bat_df, com_df, a_val, b_menos_df, b_mas_df
+
