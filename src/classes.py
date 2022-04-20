@@ -28,7 +28,7 @@ class Solar(Generator):
         self.R_test = R_test
         super(Solar, self).__init__(id_gen, tec, alt, va_op, area, cost_up, cost_r, cost_om, cost_s, c_min, c_max)
                                           
-class Eolica(Generator):
+class Eolic(Generator):
     def __init__(self, id_gen, tec, alt, va_op, area, cost_up, cost_r, cost_om, cost_s, c_min, c_max, ef, n, s, p, w_min, w_a, w_max):
         self.ef = ef
         self.n = n
@@ -37,7 +37,7 @@ class Eolica(Generator):
         self.w_min = w_min
         self.w_a = w_a
         self.w_max = w_max
-        super(Eolica, self).__init__(id_gen, tec, alt, va_op, area, cost_up, cost_r, cost_om, cost_s, c_min, c_max)
+        super(Eolic, self).__init__(id_gen, tec, alt, va_op, area, cost_up, cost_r, cost_om, cost_s, c_min, c_max)
                                         
 class Diesel(Generator):
     def __init__(self, id_gen, tec, alt, va_op, area, cost_up, cost_r, cost_om, cost_s,  c_min, c_max, ef, G_min, G_max):
@@ -46,7 +46,7 @@ class Diesel(Generator):
         self.G_max = G_max
         super(Diesel, self).__init__(id_gen, tec, alt, va_op, area, cost_up, cost_r, cost_om, cost_s, c_min, c_max)
 
-class Bateria():
+class Battery():
     def __init__(self, id_bat, tec, alt, efc, efd, eb_zero, soc_max, soc_min, alpha, va_op, area, cost_up, cost_r, cost_om, cost_s ):
   
         self.id_bat = id_bat

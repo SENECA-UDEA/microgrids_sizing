@@ -6,6 +6,7 @@ Created on Wed Apr 20 11:08:12 2022
 """
 
 import pyomo.environ as pyo
+from utilities import generation
 
 
 
@@ -107,7 +108,7 @@ def make_model(generators_dict=None,
     print("Start generation rule")
     def G_rule1 (model, k, t):
       gen = generators_dict[k]
-      return model.p[k,t]<= generacion(gen,t,forecast_df, model.Size[gen.id_gen]) * model.v[k,t]
+      return model.p[k,t]<= generation(gen,t,forecast_df, model.Size[gen.id_gen]) * model.v[k,t]
     model.G_rule1 = pyo.Constraint(model.GENERATORS, model.HTIME, rule=G_rule1)
     print("End generation rule")
     # Define Balance de energía
