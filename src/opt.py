@@ -591,7 +591,12 @@ class Results():
                     line=dict(color='grey', dash='dot')))
         
         # REMOVE after proves
-        self.df_results['b+'] = self.df_results['Battery1_b+']+self.df_results['Battery2_b+']
+        self.df_results['b+'] = 0
+        for key, value in self.descriptive['batteries'].items():
+            if value==1:
+                column_name = key+'_b+'
+                self.df_results['b+'] += self.df_results[column_name]
+        #self.df_results['Battery1_b+']+self.df_results['Battery2_b+']
         plot.add_trace(go.Bar(x=self.df_results.index, y=self.df_results['b+'],
                               base=-1*self.df_results['b+'],
                               marker_color='grey',
