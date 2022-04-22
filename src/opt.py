@@ -588,6 +588,14 @@ class Results():
                     mode='lines',
                     name='Demand',
                     line=dict(color='grey', dash='dot')))
+        
+        # REMOVE after proves
+        self.df_results['b+'] = self.df_results['Battery1_b+']+self.df_results['Battery2_b+']
+        plot.add_trace(go.Scatter(x=self.df_results.index, y=self.df_results['b+'],
+                    mode='lines',
+                    name='b_charge',
+                    line=dict(color='red', dash='dot')))
+        
         # Change the bar mode
         plot.update_layout(barmode='stack')
         
