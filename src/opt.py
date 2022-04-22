@@ -589,6 +589,10 @@ class Results():
                     mode='lines',
                     name='Demand',
                     line=dict(color='grey', dash='dot')))
+        plot.add_trace(go.Scatter(x=self.df_results.index, y=self.df_results['demand'],
+                    mode='lines',
+                    name='Demand',
+                    line=dict(color='grey', dash='dot')))
         
         # REMOVE after proves
         self.df_results['b+'] = 0
