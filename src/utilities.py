@@ -74,6 +74,7 @@ def create_objects(generators, batteries):
               
     return generators_dict, batteries_dict, technologies_dict, renewables_dict
 
+
 # TODO: it might not be needed
 def calculate_size(demand_df, 
                    forecast_df,
@@ -128,3 +129,12 @@ def generation(gen, t, forecast_df, Size):
       elif gen.tec == 'D':
          g_rule =  Size
       return g_rule
+  
+    
+def Calculate_Infraes_cost(generators_opt, batteries_opt):
+     TNPC = sum(generators_opt[k].cost_up for k in generators_opt) + sum(batteries_opt[l].cost_up for l in batteries_opt) 
+     TNPC += sum(generators_opt[k].cost_r for k in generators_opt) + sum(batteries_opt[l].cost_r for l in batteries_opt) 
+     TNPC += sum(generators_opt[k].cost_om for k in generators_opt) + sum(batteries_opt[l].cost_om for l in batteries_opt) 
+     TNPC -= sum(generators_opt[k].cost_s for k in generators_opt) + sum(batteries_opt[l].cost_s for l in batteries_opt) 
+                
+     return TNPC
