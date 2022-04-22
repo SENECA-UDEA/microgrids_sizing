@@ -99,10 +99,9 @@ def make_model(generators_dict=None,
             return pyo.Constraint.Skip
     model.ql_rule = pyo.Constraint(model.TECN_ALT, model.BATTERIES, rule=ql_rule)
 
-    # TODO: Does this include the battery area?
     # Define restricción área
     def area_rule(model):
-      return  sum(generators_dict[k].area*model.w[k] for k in model.GENERATORS) + sum(batteries_dict[l].area*model.q[l] for l in model.BATTERIES) <= model.amax
+      return  sum(model.gen_area[k]*model.w[k] for k in model.GENERATORS) + sum(model.bat_area[l]*model.q[l] for l in model.BATTERIES) <= model.amax
     model.area_rule = pyo.Constraint(rule=area_rule)
 
     # Define regla de activar o desactivar generadores por cada periodo de tiempo
