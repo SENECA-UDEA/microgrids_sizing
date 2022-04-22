@@ -594,7 +594,7 @@ class Results():
                     name='Demand',
                     line=dict(color='grey', dash='dot')))
         
-        # REMOVE after proves
+        
         self.df_results['b+'] = 0
         for key, value in self.descriptive['batteries'].items():
             if value==1:
