@@ -53,7 +53,8 @@ if termination['Temination Condition'] == 'optimal': #check if the word is optim
    model_results = opt.Results(model)
    print(model_results.descriptive)
    print(model_results.df_results)
- 
+   generation_graph = model_results.generation_graph()
+   generation_graph.show()
 
 # Run model decomposition
 '''   

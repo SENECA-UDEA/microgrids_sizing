@@ -8,6 +8,9 @@ Created on Wed Apr 20 11:08:12 2022
 import pyomo.environ as pyo
 from pyomo.core import value
 from utilities import generation
+import plotly.graph_objects as go
+import plotly.io as pio
+pio.renderers.default='browser'
 import pandas as pd 
 import time
 
@@ -567,4 +570,30 @@ class Results():
         
 
         self.df_results = pd.concat([demand, generation, b_menos_df, b_mas_df, soc_df, smenos_df ], axis=1) 
+        
+        
+    def generation_graph(self):
+        bars = []
+        for key, value in self.descriptive['generators'].items():
+            if value==1:
+                bars.append(go.Bar(name=key, x=self.df_results.index, y=self.df_results[key]))
+        for key, value in self.descriptive['batteries'].items():
+            if value==1:
+                column_name = key+'_b-'
+                bars.append(go.Bar(name=key, x=self.df_results.index, y=self.df_results[column_name]))
+        
+        plot = go.Figure(data=bars)
+        
+        plot.add_trace(go.Scatter(x=self.df_results.index, y=self.df_results['demand'],
+                    mode='lines',
+                    name='Demand',
+                    line=dict(color='grey', dash='dot')))
+        # Change the bar mode
+        plot.update_layout(barmode='stack')
+        
+        
+        return plot
+    
+    
+
         
