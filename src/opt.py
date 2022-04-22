@@ -588,6 +588,7 @@ class Results():
                     mode='lines',
                     name='Demand',
                     line=dict(color='grey', dash='dot')))
+                                                                                      
         # Change the bar mode
         plot.update_layout(barmode='stack')
         
