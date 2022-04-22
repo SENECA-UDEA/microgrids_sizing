@@ -53,6 +53,34 @@ if termination['Temination Condition'] == 'optimal': #check if the word is optim
    model_results = opt.Results(model)
    print(model_results.descriptive)
    print(model_results.df_results)
-      
+ 
 
-      
+# Run model decomposition
+'''   
+num_gen = 6
+generators = random.sample(generators, num_gen)
+num_bat = 1
+batteries = random.sample(batteries, num_bat)
+# Create objects
+generators_dict, batteries_dict, technologies_dict, renewables_dict = create_objects(generators,
+                                                                                   batteries)
+
+# TODO: this is not needed
+size = calculate_size(demand_df, forecast_df, generators_dict)
+
+model = opt.make_model_operational(generators_dict=generators_dict, 
+                               forecast_df = forecast_df, 
+                               batteries_dict=batteries_dict,  
+                               demand_df=dict(zip(demand_df.t, demand_df.demand)), 
+                               technologies_dict = technologies_dict,  
+                               renovables_dict = renewables_dict,
+                               nse = 0.15, 
+                               TNPC = 1,
+                               CRF = 1,
+                               Size = size)      
+# solve model 
+results, termination = opt.solve_model(model, 
+                       optimizer = 'gurobi',
+                       mipgap = 0.02,
+                       tee = True)
+     ''' 
