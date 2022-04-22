@@ -584,11 +584,32 @@ class Results():
         
         plot = go.Figure(data=bars)
         
+        
         plot.add_trace(go.Scatter(x=self.df_results.index, y=self.df_results['demand'],
                     mode='lines',
                     name='Demand',
                     line=dict(color='grey', dash='dot')))
-                                                                                      
+        plot.add_trace(go.Scatter(x=self.df_results.index, y=self.df_results['demand'],
+                    mode='lines',
+                    name='Demand',
+                    line=dict(color='grey', dash='dot')))
+        
+        
+        self.df_results['b+'] = 0
+        for key, value in self.descriptive['batteries'].items():
+            if value==1:
+                column_name = key+'_b+'
+                self.df_results['b+'] += self.df_results[column_name]
+        #self.df_results['Battery1_b+']+self.df_results['Battery2_b+']
+        plot.add_trace(go.Bar(x=self.df_results.index, y=self.df_results['b+'],
+                              base=-1*self.df_results['b+'],
+                              marker_color='grey',
+                              name='Charge'
+                              ))
+        
+        # Set values y axis
+        #plot.update_yaxes(range=[-self.df_results['b+'].max()-50, self.df_results['demand'].max()+200])
+        #plot.update_yaxes(range=[-10, 30])
         # Change the bar mode
         plot.update_layout(barmode='stack')
         
