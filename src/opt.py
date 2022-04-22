@@ -39,7 +39,9 @@ def make_model(generators_dict=None,
     model.HTIME = pyo.Set(initialize=[t for t in range(len(forecast_df))])
 
     # Parámetros    
-    model.amax = pyo.Param(initialize=amax) #Área máxima    
+    model.amax = pyo.Param(initialize=amax) #Área máxima
+    model.gen_area = pyo.Param(model.GENERATORS, initialize = {k:generators_dict[k].area for k in generators_dict.keys()})# generator area
+    model.bat_area = pyo.Param(model.BATTERIES, initialize = {k:batteries_dict[k].area for k in batteries_dict.keys()})# generator area
     model.d = pyo.Param(model.HTIME, initialize = demand_df) #demanda    
     model.ir = pyo.Param(initialize=ir) #tasa de interés    
     model.nse = pyo.Param(initialize=nse) #demanda no abastecida permitida    
@@ -97,6 +99,7 @@ def make_model(generators_dict=None,
             return pyo.Constraint.Skip
     model.ql_rule = pyo.Constraint(model.TECN_ALT, model.BATTERIES, rule=ql_rule)
 
+    # TODO: Does this include the battery area?
     # Define restricción área
     def area_rule(model):
       return  sum(generators_dict[k].area*model.w[k] for k in model.GENERATORS) + sum(batteries_dict[l].area*model.q[l] for l in model.BATTERIES) <= model.amax
@@ -475,24 +478,98 @@ def solve_model(model,
     results = solver.solve(model, tee = tee)
     term_cond = results.solver.termination_condition
     term = {}
+    # TODO: Check which other termination conditions may be interesting for us 
+    # http://www.pyomo.org/blog/2015/1/8/accessing-solver
     if term_cond != pyo.TerminationCondition.optimal:
           term['Temination Condition'] = format(term_cond)
-          print(term)
           execution_time = time.time() - timea
-          ext_time = {}
-          ext_time['Execution time'] = execution_time
-          print(ext_time)
+          term['Execution time'] = execution_time
           raise RuntimeError("Optimization failed.")
 
     else: 
           term['Temination Condition'] = format(term_cond)
           execution_time = time.time() - timea
-          ext_time = {}
-          ext_time['Execution time'] = execution_time  
-    
+          term['Execution time'] = execution_time    
     return results, term
-      
-      
+
+
+class Results():
+    def __init__(self, model):
+        
+        # general descriptives of tehe solution
+        self.descriptive = {}
+        
+        # generators 
+        generators = {}
+        for k in model.GENERATORS:
+           generators[k] = value(model.w[k])
+        self.descriptive['generators'] = generators
+        
+        # technologies
+        tecno_data = {}
+        for i in model.TECHNOLOGIES:
+           tecno_data[i] = value(model.y[i])
+        self.descriptive['technologies'] = tecno_data
+        
+        bat_data = {}
+        for l in model.BATTERIES:
+           bat_data[l] = value(model.q[l])
+        self.descriptive['batteries'] = bat_data
+        
+        com_data = {}
+        for (i, j) in model.TECN_ALT:
+            com_data[i, j] = value(model.x[i,j])  
+        self.descriptive['comercial_alt'] = com_data
+        
+        area = 0
+        for k in model.GENERATORS:
+            area += value(model.w[k]) * model.gen_area[k]          
+        for l in model.BATTERIES:
+          area += value(model.q[l]) * model.bat_area[l]
+        self.descriptive['area'] = area
+            
+            
+        # objective function
+        self.descriptive['LCOE'] = model.LCOE_value.expr()
+        
+        # Hourly data frame
+        demand = pd.DataFrame(model.d.values(), columns=['demand'])
+        
+        generation = {k : [0]*len(model.HTIME) for k in model.GENERATORS}
+        for (k,t), f in model.p.items():
+          generation [k][t] = value(f)
+        generation = pd.DataFrame(generation, columns=[*generation.keys()])
+        
+        # batery charge and discharge
+        b_menos_data = {l+'_b-' : [0]*len(model.HTIME) for l in model.BATTERIES}
+        for (l,t), f in model.b_menos.items():
+          b_menos_data [l+'_b-'][t] = value(f)
+        b_menos_df = pd.DataFrame(b_menos_data, columns=[*b_menos_data.keys()])
+
+        b_mas_data = {l+'_b+': [0]*len(model.HTIME) for l in model.BATTERIES}
+        for (l,t), f in model.b_mas.items():
+          b_mas_data [l+'_b+'][t] = value(f)
+        b_mas_df = pd.DataFrame(b_mas_data, columns=[*b_mas_data.keys()])
+        
+        soc_data = {l+'_soc' : [0]*len(model.HTIME) for l in model.BATTERIES}
+        for (l,t), f in model.soc.items():
+          soc_data [l+'_soc'][t] = value(f)
+        soc_df = pd.DataFrame(soc_data, columns=[*soc_data.keys()])  
+        
+        # No supplied demand
+        smenos_data = [0]*len(model.HTIME)
+        lpsp_data = [0]*len(model.HTIME)
+        for t in model.HTIME:
+            smenos_data[t] = value(model.s_menos[t])
+            if model.d[t] != 0:
+              lpsp_data [t] = value(model.s_menos[t]) / value(model.d[t])
+        
+        smenos_df = pd.DataFrame(list(zip(smenos_data, lpsp_data)), columns = ['S-', 'LPSP'])
+        
+
+        self.df_results = pd.concat([demand, generation, b_menos_df, b_mas_df, soc_df, smenos_df ], axis=1) 
+        
+
 
 def create_results(model, 
                    demand_df,

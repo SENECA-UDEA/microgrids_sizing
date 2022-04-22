@@ -14,8 +14,11 @@ demand_filepath = 'https://raw.githubusercontent.com/pmayaduque/MicrogridSizing/
 forecast_filepath = 'https://raw.githubusercontent.com/pmayaduque/MicrogridSizing/main/data/Forecast%20anual.csv' 
 units_filepath  = 'https://raw.githubusercontent.com/pmayaduque/MicrogridSizing/main/data/parameters_P.json' 
 # file paths local
-demand_filepath = "../data/Demanda Anual Leticia.csv"
-forecast_filepath = '../data/Forecast anual.csv'
+#demand_filepath = "../data/Demanda Anual Leticia.csv"
+#forecast_filepath = '../data/Forecast anual.csv'
+#units_filepath = "../data/parameters_P.json"
+demand_filepath = "../data/demand_day.csv"
+forecast_filepath = '../data/forecast_day.csv'
 units_filepath = "../data/parameters_P.json"
 
 
@@ -46,11 +49,10 @@ results, termination = opt.solve_model(model,
                        tee = True)
 # TODO: check how are the termination conditions saved
 # TODO: I thinkthe results can be gattered directly from results and not from model
-if termination['Temination Condition'] != 'optimal': #check if the word is optimal or another
-    balance_results, soc_results, LCOE_results, gen_results, tecno_results, bat_results, com_results, a_results, b_menos_results, b_mas_results = opt.create_results(model,
-                                                                                                                                                                 demand_df,
-                                                                                                                                                                 generators_dict,
-                                                                                                                                                                 batteries_dict)
+if termination['Temination Condition'] == 'optimal': #check if the word is optimal or another
+   model_results = opt.Results(model)
+   print(model_results.descriptive)
+   print(model_results.df_results)
       
 
       
