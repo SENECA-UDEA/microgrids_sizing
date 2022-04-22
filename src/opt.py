@@ -99,10 +99,9 @@ def make_model(generators_dict=None,
             return pyo.Constraint.Skip
     model.ql_rule = pyo.Constraint(model.TECN_ALT, model.BATTERIES, rule=ql_rule)
 
-    # TODO: Does this include the battery area?
     # Define restricción área
     def area_rule(model):
-      return  sum(generators_dict[k].area*model.w[k] for k in model.GENERATORS) + sum(batteries_dict[l].area*model.q[l] for l in model.BATTERIES) <= model.amax
+      return  sum(model.gen_area[k]*model.w[k] for k in model.GENERATORS) + sum(model.bat_area[l]*model.q[l] for l in model.BATTERIES) <= model.amax
     model.area_rule = pyo.Constraint(rule=area_rule)
 
     # Define regla de activar o desactivar generadores por cada periodo de tiempo
@@ -569,103 +568,3 @@ class Results():
 
         self.df_results = pd.concat([demand, generation, b_menos_df, b_mas_df, soc_df, smenos_df ], axis=1) 
         
-
-
-def create_results(model, 
-                   demand_df,
-                   generators_dict,
-                   batteries_dict):
-    
-    gen_data = {}
-    for k in model.GENERATORS:
-       aux = []
-       val = value(model.w[k])
-       aux.append(val)
-       gen_data[k] = aux
-   
-    gen_df = pd.DataFrame (gen_data.values(), index = [*gen_data.keys()], columns = ['w'])
-
-
-    tecno_data = {}
-    for i in model.TECHNOLOGIES:
-       aux = []
-       val = value(model.y[i])
-       aux.append(val)
-       tecno_data[i] = aux
-   
-    tecno_df = pd.DataFrame (tecno_data.values(), index = [*tecno_data.keys()], columns = ['y'])
-
-    bat_data = {}
-    for l in model.BATTERIES:
-       aux = []
-       val = value(model.q[l])
-       aux.append(val)
-       bat_data[l] = aux
-   
-    bat_df = pd.DataFrame (bat_data.values(), index = [*bat_data.keys()], columns = ['b'])
-   
-
-    p_data = {k : [0]*len(model.HTIME) for k in model.GENERATORS}
-    for (k,t), f in model.p.items():
-      p_data [k][t] = value(f)
-
-    p_d = pd.DataFrame(p_data, columns=[*p_data.keys()])  
-
-    smenos_data = [0]*len(model.HTIME)
-    lpsp_data = [0]*len(model.HTIME)
-    for t in model.HTIME:
-        smenos_data[t] = value(model.s_menos[t])
-        if model.d[t] != 0:
-          lpsp_data [t] = value(model.s_menos[t]) / value(model.d[t])
-    
-    smenos_df = pd.DataFrame(smenos_data, columns = ['S-'])
-    lpsp_df = pd.DataFrame(lpsp_data, columns = ['LPSP'])
-
-    balance_df = pd.concat([p_d, demand_df, smenos_df,lpsp_df], axis=1)
-
-
-    soc_data = {l : [0]*len(model.HTIME) for l in model.BATTERIES}
-    for (l,t), f in model.soc.items():
-      soc_data [l][t] = value(f)
-
-    soc_df = pd.DataFrame(soc_data, columns=[*soc_data.keys()])
-
-    b_menos_data = {l : [0]*len(model.HTIME) for l in model.BATTERIES}
-    for (l,t), f in model.b_menos.items():
-      b_menos_data [l][t] = value(f)
-
-    b_menos_df = pd.DataFrame(b_menos_data, columns=[*b_menos_data.keys()])
-
-    b_mas_data = {l : [0]*len(model.HTIME) for l in model.BATTERIES}
-    for (l,t), f in model.b_mas.items():
-      b_mas_data [l][t] = value(f)
-
-    b_mas_df = pd.DataFrame(b_mas_data, columns=[*b_mas_data.keys()])
-
-    obj_val = {}
-    obj_val['LCOE'] = model.LCOE_value.expr()
- 
-    a_val = {}
-    suma = 0
-    for k in model.GENERATORS:
-        ar =  value(model.w[k]) * generators_dict[k].area
-        suma += ar  
-    
-    for l in model.BATTERIES:
-      ar = value(model.q[l]) * batteries_dict[l].area
-      suma += ar
-
-    a_val['Area'] = suma
-
-    com_data = {}
-
-    for (i, j) in model.TECN_ALT:
-            aux = []
-            val = value(model.x[i,j])  
-            aux.append(val)
-            com_data[i, j] = aux
-   
-    com_df = pd.DataFrame (com_data.values(), index = [*com_data.keys()], columns = ['x'])
-      
-    return balance_df, soc_df, obj_val, gen_df, tecno_df, bat_df, com_df, a_val, b_menos_df, b_mas_df
-
