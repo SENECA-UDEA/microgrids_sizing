@@ -31,6 +31,9 @@ demand_df, forecast_df, generators, batteries = read_data(demand_filepath,
 generators_dict, batteries_dict, technologies_dict, renewables_dict = create_objects(generators,
                                                                                    batteries)
 
+#Max number of brands
+
+max_brand = {'S':2,'D':1,'W':1,'B':2}
 
 # Create model          
 model = opt.make_model(generators_dict, 
@@ -39,7 +42,7 @@ model = opt.make_model(generators_dict,
                        dict(zip(demand_df.t, demand_df.demand)),
                        technologies_dict, 
                        renewables_dict, 
-                       20, 0.2, 0.1,4,3,2,20)    
+                       20, 0.2, 0.3,4,max_brand,20)    
 
 # solve model 
 results, termination = opt.solve_model(model, 

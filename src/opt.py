@@ -27,7 +27,6 @@ def make_model(generators_dict=None,
                nse = None, 
                maxtec = None, 
                maxbr = None, 
-               maxbat = None,
                years = None):
 
     
@@ -48,8 +47,7 @@ def make_model(generators_dict=None,
     model.ir = pyo.Param(initialize=ir) #Interest rate
     model.nse = pyo.Param(initialize=nse) #Available nsupplied demand  
     model.maxtec = pyo.Param(initialize = maxtec) #Maximum technologies  
-    model.maxbr = pyo.Param(initialize = maxbr) #Maximum alternatives    
-    model.maxbat = pyo.Param(initialize = maxbat) #Maximum batteries
+    model.maxbr = pyo.Param(model.TECHNOLOGIES, initialize = maxbr) #Maximum alternatives    
     model.t_years = pyo.Param(initialize = years) # Number of years for the project, for CRF
     CRF_calc = (model.ir * (1 + model.ir)**(model.t_years))/((1 + model.ir)**(model.t_years)-1) #CRF to LCOE
     model.CRF = pyo.Param(initialize = CRF_calc)  
@@ -225,16 +223,10 @@ def make_model(generators_dict=None,
     model.maxtec_rule = pyo.Constraint(rule=maxtec_rule)
 
     # Defines constraint of maximum number of brands
-    def maxalt_rule (model, i):
-      return sum (model.x[i,j] for  j in technologies_dict[i]) <= model.maxbr
-      #TODO: maxalt like a vector and no a parameter 
-    model.maxalt_rule = pyo.Constraint(model.TECHNOLOGIES, rule = maxalt_rule)
+    def maxbr_rule (model, i):
+      return sum (model.x[i,j] for  j in technologies_dict[i]) <= model.maxbr[i]
+    model.maxbr_rule = pyo.Constraint(model.TECHNOLOGIES, rule = maxbr_rule)
     
-    #Defines constraint of maximum number of batteries
-    def maxbat_rule(model):
-        return sum(model.q[l] for l in model.BATTERIES)  <= model.maxbat
-    model.maxbat_rule = pyo.Constraint(rule=maxbat_rule)
-
 
     #Objective function
         
@@ -584,10 +576,6 @@ class Results():
         plot = go.Figure(data=bars)
         
         
-        plot.add_trace(go.Scatter(x=self.df_results.index, y=self.df_results['demand'],
-                    mode='lines',
-                    name='Demand',
-                    line=dict(color='grey', dash='dot')))
         plot.add_trace(go.Scatter(x=self.df_results.index, y=self.df_results['demand'],
                     mode='lines',
                     name='Demand',
