@@ -27,7 +27,8 @@ def make_model(generators_dict=None,
                nse = None, 
                maxtec = None, 
                maxbr = None, 
-               years = None):
+               years = None,
+               tlpsp = None):
 
     
     # Sets
@@ -51,6 +52,7 @@ def make_model(generators_dict=None,
     model.t_years = pyo.Param(initialize = years) # Number of years for the project, for CRF
     CRF_calc = (model.ir * (1 + model.ir)**(model.t_years))/((1 + model.ir)**(model.t_years)-1) #CRF to LCOE
     model.CRF = pyo.Param(initialize = CRF_calc)  
+    model.tlpsp = pyo.Param (initialize = tlpsp)
 
 
     # Variables
@@ -246,15 +248,17 @@ def make_model(generators_dict=None,
       return model.TNPC_OP ==  sum(sum(generators_dict[k].va_op * model.p[k,t] for t in model.HTIME) for k in model.GENERATORS)
     model.tnpcop = pyo.Constraint(rule=tnpcop_rule)
 
-    # Define LPSP constraint
+    # Defines LPSP constraint
     def lpspcons_rule(model, t):
-      if model.d[t] > 0:
-        return model.s_minus[t] / model.d[t]  <= model.nse 
+      if t >= (model.tlpsp - 1):
+        rev = sum(model.d[t] for t in range((t-model.tlpsp+1), t+1)) 
+        if rev > 0:
+          return sum(model.s_menos[t] for t in range((t-model.tlpsp+1), t+1)) / sum(model.d[t] for t in range((t-model.tlpsp+1), t+1))  <= model.nse 
+        else:
+          return pyo.Constraint.Skip
       else:
         return pyo.Constraint.Skip
     model.lpspcons = pyo.Constraint(model.HTIME, rule=lpspcons_rule)
-
-
 
     '''
     LPSP
@@ -432,8 +436,12 @@ def make_model_operational(generators_dict=None,
 
     # Defines LPSP constraint
     def lpspcons_rule(model, t):
-      if model.d[t] > 0:
-        return model.s_minus[t] / model.d[t]  <= model.nse 
+      if t >= (model.tlpsp - 1):
+        rev = sum(model.d[t] for t in range((t-model.tlpsp+1), t+1)) 
+        if rev > 0:
+          return sum(model.s_menos[t] for t in range((t-model.tlpsp+1), t+1)) / sum(model.d[t] for t in range((t-model.tlpsp+1), t+1))  <= model.nse 
+        else:
+          return pyo.Constraint.Skip
       else:
         return pyo.Constraint.Skip
     model.lpspcons = pyo.Constraint(model.HTIME, rule=lpspcons_rule)
