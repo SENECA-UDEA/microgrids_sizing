@@ -52,15 +52,15 @@ def create_objects(generators, batteries):
     for bat in batteries_dict.values(): 
       if not (bat.tec in technologies_dict.keys()):
         technologies_dict[bat.tec] = set()
-        technologies_dict[bat.tec].add(bat.alt)
+        technologies_dict[bat.tec].add(bat.br)
       else:
-        technologies_dict[bat.tec].add(bat.alt)
+        technologies_dict[bat.tec].add(bat.br)
     for gen in generators_dict.values(): 
       if not (gen.tec in technologies_dict.keys()):
         technologies_dict[gen.tec] = set()
-        technologies_dict[gen.tec].add(gen.alt)
+        technologies_dict[gen.tec].add(gen.br)
       else:
-        technologies_dict[gen.tec].add(gen.alt)
+        technologies_dict[gen.tec].add(gen.br)
 
     # Creates renewables dict
     #another attribute could be created to the class, for the user to determine if it is renewable or not
@@ -69,9 +69,9 @@ def create_objects(generators, batteries):
         if gen.tec == 'S' or gen.tec == 'W': #or gen.tec = 'H'
           if not (gen.tec in renewables_dict.keys()):
               renewables_dict[gen.tec] = set()
-              renewables_dict[gen.tec].add(gen.alt)
+              renewables_dict[gen.tec].add(gen.br)
           else:
-              renewables_dict[gen.tec].add(gen.alt)
+              renewables_dict[gen.tec].add(gen.br)
               
     return generators_dict, batteries_dict, technologies_dict, renewables_dict
 

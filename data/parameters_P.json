@@ -3,7 +3,7 @@
         {
             "id_gen": "Solar1",
             "tec": "S",
-            "alt": "S1",
+            "br": "S1",
             "va_op": 1,
             "area": 4,
             "cost_up": 3,
@@ -19,7 +19,7 @@
         {
             "id_gen": "Solar2",
             "tec": "S",
-            "alt": "S2",
+            "br": "S2",
             "va_op": 2,
             "area": 3,
             "cost_up": 1,
@@ -35,7 +35,7 @@
         {
             "id_gen": "Wind1",
             "tec": "W",
-            "alt": "W1",
+            "br": "W1",
             "va_op": 4,
             "area": 4,
             "cost_up": 4,
@@ -55,7 +55,7 @@
         {
             "id_gen": "Wind2",
             "tec": "W",
-            "alt": "W2",
+            "br": "W2",
             "va_op": 1,
             "area": 4,
             "cost_up": 1,
@@ -75,7 +75,7 @@
         {
             "id_gen": "Wind3",
             "tec": "W",
-            "alt": "W2",
+            "br": "W2",
             "va_op": 1,
             "area": 4,
             "cost_up": 1,
@@ -95,7 +95,7 @@
         {
             "id_gen": "Diesel1",
             "tec": "D",
-            "alt": "D1",
+            "br": "D1",
             "va_op": 3,
             "area": 2,
             "cost_up": 3,
@@ -114,7 +114,7 @@
     	{
             "id_bat": "Battery1",
             "tec": "B",
-            "alt": "B1",
+            "br": "B1",
             "efc": 0.95,
             "efd": 0.99,
             "eb_zero": 4,
@@ -131,7 +131,7 @@
     	{
             "id_bat": "Battery2",
             "tec": "B",
-            "alt": "B2",
+            "br": "B2",
             "efc": 0.9,
             "efd": 0.95,
             "eb_zero": 1,
