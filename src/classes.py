@@ -47,7 +47,7 @@ class Diesel(Generator):
         super(Diesel, self).__init__(id_gen, tec, br, va_op, area, cost_up, cost_r, cost_om, cost_s, c_min, c_max)
 
 class Battery():
-    def __init__(self, id_bat, tec, br, efc, efd, eb_zero, soc_max, soc_min, alpha, va_op, area, cost_up, cost_r, cost_om, cost_s ):
+    def __init__(self, id_bat, tec, br, efc, efd, eb_zero, soc_max, dod_max, alpha, va_op, area, cost_up, cost_r, cost_om, cost_s ):
   
         self.id_bat = id_bat
         self.tec = tec
@@ -56,7 +56,7 @@ class Battery():
         self.efd = efd
         self.eb_zero = eb_zero
         self.soc_max = soc_max
-        self.soc_min = soc_min
+        self.dod_max = dod_max
         self.alpha = alpha
         self.va_op = va_op
         self.area = area
@@ -64,3 +64,8 @@ class Battery():
         self.cost_r = cost_r
         self.cost_om = cost_om
         self.cost_s = cost_s
+        self.soc_min = 0
+
+    def soc_dod(self):
+        self.soc_min = self.soc_max * (1-self.dod_max)
+        return self.soc_min

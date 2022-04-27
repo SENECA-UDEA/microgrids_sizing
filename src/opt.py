@@ -200,7 +200,6 @@ def make_model(generators_dict=None,
       battery = batteries_dict[l]
       return model.b_discharge[l, t] >= battery.soc_min * model.bd[l, t]
     model.Bconstraint4 = pyo.Constraint(model.BATTERIES, model.HTIME, rule=Bconstraint4_rule)
-    #TODO: SOCMIN = SOCMAX * (1 - DODMAX)
     
     #Maximum level of energy that can enter to the battery
     def Bconstraint5_rule(model, l, t):
@@ -234,9 +233,8 @@ def make_model(generators_dict=None,
         
     # Defines TNPC constraint
     def tnpcc_rule(model):
-        #TODO check cost unsupplied
-            expr = 10*sum(model.s_minus[t] for t in model.HTIME)
-            expr += sum(generators_dict[k].cost_up *model.w[k] for k in model.GENERATORS) + sum(batteries_dict[l].cost_up * model.q[l] for l in model.BATTERIES) 
+            #expr = 10*sum(model.s_minus[t] for t in model.HTIME)
+            expr = sum(generators_dict[k].cost_up *model.w[k] for k in model.GENERATORS) + sum(batteries_dict[l].cost_up * model.q[l] for l in model.BATTERIES) 
             expr += sum(generators_dict[k].cost_r *model.w[k] for k in model.GENERATORS) + sum(batteries_dict[l].cost_r * model.q[l]  for l in model.BATTERIES) 
             expr += sum(generators_dict[k].cost_om *model.w[k] for k in model.GENERATORS) + sum(batteries_dict[l].cost_om * model.q[l]  for l in model.BATTERIES)
             expr -= sum(generators_dict[k].cost_s *model.w[k] for k in model.GENERATORS) + sum(batteries_dict[l].cost_s * model.q[l]  for l in model.BATTERIES)

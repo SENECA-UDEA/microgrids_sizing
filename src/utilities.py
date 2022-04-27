@@ -46,6 +46,7 @@ def create_objects(generators, batteries):
     for l in batteries:
         obj_aux = Battery(*l.values())
         batteries_dict[l['id_bat']] = obj_aux
+        batteries_dict[l['id_bat']].soc_dod()
         
     # Create technologies list
     technologies_dict = dict()
