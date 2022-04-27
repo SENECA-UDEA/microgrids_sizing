@@ -253,7 +253,7 @@ def make_model(generators_dict=None,
       if t >= (model.tlpsp - 1):
         rev = sum(model.d[t] for t in range((t-model.tlpsp+1), t+1)) 
         if rev > 0:
-          return sum(model.s_menos[t] for t in range((t-model.tlpsp+1), t+1)) / sum(model.d[t] for t in range((t-model.tlpsp+1), t+1))  <= model.nse 
+          return sum(model.s_minus[t] for t in range((t-model.tlpsp+1), t+1)) / sum(model.d[t] for t in range((t-model.tlpsp+1), t+1))  <= model.nse 
         else:
           return pyo.Constraint.Skip
       else:
@@ -439,7 +439,7 @@ def make_model_operational(generators_dict=None,
       if t >= (model.tlpsp - 1):
         rev = sum(model.d[t] for t in range((t-model.tlpsp+1), t+1)) 
         if rev > 0:
-          return sum(model.s_menos[t] for t in range((t-model.tlpsp+1), t+1)) / sum(model.d[t] for t in range((t-model.tlpsp+1), t+1))  <= model.nse 
+          return sum(model.s_minus[t] for t in range((t-model.tlpsp+1), t+1)) / sum(model.d[t] for t in range((t-model.tlpsp+1), t+1))  <= model.nse 
         else:
           return pyo.Constraint.Skip
       else:
@@ -580,7 +580,7 @@ class Results():
                 column_name = key+'_b-'
                 bars.append(go.Bar(name=key, x=self.df_results.index, y=self.df_results[column_name]))
         
-        #TODO poner gráfico de s menos
+        bars.append(go.Bar(name='Unsupplied Demand',x=self.df_results.index, y=self.df_results['S-']))
         plot = go.Figure(data=bars)
         
         
