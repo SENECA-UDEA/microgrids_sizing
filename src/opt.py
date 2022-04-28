@@ -290,7 +290,8 @@ def make_model_operational(generators_dict=None,
                batteries_dict=None,  
                demand_df=None, 
                technologies_dict = None,  
-               renewables_dict = None,
+               renewables_dict = None,               
+               amax = None, 
                nse = None, 
                TNPC = None,
                CRF = None):
@@ -306,7 +307,10 @@ def make_model_operational(generators_dict=None,
     model.TECN_ALT = pyo.Set( initialize = [(i,j) for i in technologies_dict.keys() for j in technologies_dict[i]], ordered = False)
     model.HTIME = pyo.Set(initialize=[t for t in range(len(forecast_df))])
 
-    # Parameters     
+    # Parameters 
+    model.amax = pyo.Param(initialize=amax) #Maximum area
+    model.gen_area = pyo.Param(model.GENERATORS, initialize = {k:generators_dict[k].area for k in generators_dict.keys()})# Generator area
+    model.bat_area = pyo.Param(model.BATTERIES, initialize = {k:batteries_dict[k].area for k in batteries_dict.keys()})# Battery area    
     model.d = pyo.Param(model.HTIME, initialize = demand_df) #demand     
     model.nse = pyo.Param(initialize=nse) # Available unsupplied demand  
     model.TNPC = pyo.Param(initialize = TNPC)
@@ -495,42 +499,6 @@ def solve_model(model,
 class Results():
     def __init__(self, model):
         
-        # general descriptives of tehe solution
-        self.descriptive = {}
-        
-        # generators 
-        generators = {}
-        for k in model.GENERATORS:
-           generators[k] = value(model.w[k])
-        self.descriptive['generators'] = generators
-        
-        # technologies
-        tecno_data = {}
-        for i in model.TECHNOLOGIES:
-           tecno_data[i] = value(model.y[i])
-        self.descriptive['technologies'] = tecno_data
-        
-        bat_data = {}
-        for l in model.BATTERIES:
-           bat_data[l] = value(model.q[l])
-        self.descriptive['batteries'] = bat_data
-        
-        com_data = {}
-        for (i, j) in model.TECN_ALT:
-            com_data[i, j] = value(model.x[i,j])  
-        self.descriptive['comercial_alt'] = com_data
-        
-        area = 0
-        for k in model.GENERATORS:
-            area += value(model.w[k]) * model.gen_area[k]          
-        for l in model.BATTERIES:
-          area += value(model.q[l]) * model.bat_area[l]
-        self.descriptive['area'] = area
-            
-            
-        # objective function
-        self.descriptive['LCOE'] = model.LCOE_value.expr()
-        
         # Hourly data frame
         demand = pd.DataFrame(model.d.values(), columns=['demand'])
         
@@ -568,6 +536,69 @@ class Results():
 
         self.df_results = pd.concat([demand, generation, b_discharge_df, b_charge_df, soc_df, sminus_df ], axis=1) 
         
+        # general descriptives of tehe solution
+        self.descriptive = {}
+        
+        # generators 
+        generators = {}
+        try:
+            for k in model.GENERATORS:
+               generators[k] = value(model.w[k])
+            self.descriptive['generators'] = generators
+        except:
+            for k in model.GENERATORS:
+                if generation[k].sum() > 0:
+                    generators[k] = 1
+            self.descriptive['generators'] = generators
+        # technologies
+        tecno_data = {}
+        try:
+            for i in model.TECHNOLOGIES:
+               tecno_data[i] = value(model.y[i])
+            self.descriptive['technologies'] = tecno_data
+        except: #TODO
+              a=1 
+              
+        bat_data = {}
+        try: 
+            for l in model.BATTERIES:
+               bat_data[l] = value(model.q[l])
+            self.descriptive['batteries'] = bat_data
+        except:
+            for l in model.BATTERIES:
+                if b_discharge_df[l+'_b-'].sum() + b_charge_df[l+'_b+'].sum() > 0:
+                    bat_data[l] = 1
+            self.descriptive['batteries'] = bat_data 
+                  
+        
+        com_data = {}
+        try:
+            for (i, j) in model.TECN_ALT:
+                com_data[i, j] = value(model.x[i,j])  
+            self.descriptive['comercial_alt'] = com_data
+        except:#TODO
+            a=1 
+        
+        area = 0
+        try:
+            for k in model.GENERATORS:
+                area += value(model.w[k]) * model.gen_area[k]          
+            for l in model.BATTERIES:
+              area += value(model.q[l]) * model.bat_area[l]
+            self.descriptive['area'] = area
+        except:
+            for k in generators.keys():
+                area += generators[k] * model.gen_area[k]          
+            for l in bat_data.keys():
+              area += bat_data[l] * model.bat_area[l]
+            self.descriptive['area'] = area
+            
+            
+        # objective function
+        self.descriptive['LCOE'] = model.LCOE_value.expr()
+        
+        
+        
         
     def generation_graph(self):
         bars = []
@@ -587,11 +618,6 @@ class Results():
                     mode='lines',
                     name='Demand',
                     line=dict(color='grey', dash='dot')))
-        plot.add_trace(go.Scatter(x=self.df_results.index, y=self.df_results['demand'],
-                    mode='lines',
-                    name='Demand',
-                    line=dict(color='grey', dash='dot')))
-        
         
         self.df_results['b+'] = 0
         for key, value in self.descriptive['batteries'].items():
