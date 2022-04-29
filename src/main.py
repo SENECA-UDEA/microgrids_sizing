@@ -29,7 +29,7 @@ units_filepath = "../data/parameters_P.json"
 demand_df, forecast_df, generators, batteries = read_data(demand_filepath,
                                                           forecast_filepath,
                                                           units_filepath)
-'''
+
 # Create objects
 generators_dict, batteries_dict, technologies_dict, renewables_dict = create_objects(generators,
                                                                                    batteries)
@@ -57,7 +57,7 @@ if termination['Temination Condition'] == 'optimal':
    print(model_results.descriptive)
    print(model_results.df_results)
    generation_graph = model_results.generation_graph()
-   generation_graph.show()
+   plot(generation_graph)
 '''
 # Run model decomposition
  
@@ -90,3 +90,4 @@ if termination['Temination Condition'] == 'optimal':
    print(model_results.df_results)
    generation_graph = model_results.generation_graph()
    plot(generation_graph)
+'''
