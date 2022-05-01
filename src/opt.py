@@ -7,7 +7,6 @@ Created on Wed Apr 20 11:08:12 2022
 
 import pyomo.environ as pyo
 from pyomo.core import value
-from utilities import generation
 import plotly.graph_objects as go
 import plotly.io as pio
 pio.renderers.default='browser'
@@ -114,7 +113,7 @@ def make_model(generators_dict=None,
     print("Start generation rule")
     def G_rule1 (model, k, t):
       gen = generators_dict[k]
-      return model.p[k,t]<= generation(gen,t,forecast_df) * model.v[k,t]
+      return model.p[k,t]<= gen.gen_rule[t] * model.v[k,t]
     model.G_rule1 = pyo.Constraint(model.GENERATORS, model.HTIME, rule=G_rule1)
     print("End generation rule")
     
@@ -154,14 +153,16 @@ def make_model(generators_dict=None,
     def cmaxx_rule(model,k, t):
       gen = generators_dict[k]
       return  model.p[(k,t)] <= gen.c_max*model.v[k,t]
-    model.cmaxx_rule = pyo.Constraint(model.GENERATORS, model.HTIME, rule=cmaxx_rule)
-
+    #model.cmaxx_rule = pyo.Constraint(model.GENERATORS, model.HTIME, rule=cmaxx_rule)
+    #TODO: Deletes this constraint when we have all generation constraints
+    
     # Defines minimum power to activate the generator
     def cminn_rule(model,k, t):
       gen = generators_dict[k]
       return  model.p[(k,t)] >= gen.c_min*model.v[k,t]
-    model.cminn_rule = pyo.Constraint(model.GENERATORS, model.HTIME, rule=cminn_rule)
-
+    #model.cminn_rule = pyo.Constraint(model.GENERATORS, model.HTIME, rule=cminn_rule)
+    #TODO: Deletes this constraint when we have all generation constraints
+    
     #Batteries management
     def soc_rule(model, l, t):
       battery = batteries_dict[l]
@@ -341,7 +342,7 @@ def make_model_operational(generators_dict=None,
     print("Start generation rule")
     def G_rule1 (model, k, t):
       gen = generators_dict[k]
-      return model.p[k,t]<= generation(gen,t,forecast_df) * model.v[k,t]
+      return model.p[k,t]<= gen.gen_rule[t] * model.v[k,t]
     model.G_rule1 = pyo.Constraint(model.GENERATORS, model.HTIME, rule=G_rule1)
     print("End generation rule")
 
@@ -654,6 +655,3 @@ class Results():
         
         return plot
     
-    
-
-        
