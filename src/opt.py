@@ -292,8 +292,7 @@ def make_model_operational(generators_dict=None,
                batteries_dict=None,  
                demand_df=None, 
                technologies_dict = None,  
-               renewables_dict = None,               
-               amax = None, 
+               renewables_dict = None,                
                nse = None, 
                TNPC = None,
                CRF = None,
@@ -311,14 +310,14 @@ def make_model_operational(generators_dict=None,
     model.HTIME = pyo.Set(initialize=[t for t in range(len(forecast_df))])
 
     # Parameters 
-    model.amax = pyo.Param(initialize=amax) #Maximum area
-    model.gen_area = pyo.Param(model.GENERATORS, initialize = {k:generators_dict[k].area for k in generators_dict.keys()})# Generator area
-    model.bat_area = pyo.Param(model.BATTERIES, initialize = {k:batteries_dict[k].area for k in batteries_dict.keys()})# Battery area    
     model.d = pyo.Param(model.HTIME, initialize = demand_df) #demand     
     model.nse = pyo.Param(initialize=nse) # Available unsupplied demand  
     model.TNPC = pyo.Param(initialize = TNPC)
     model.CRF = pyo.Param (initialize = CRF)
     model.tlpsp = pyo.Param (initialize = tlpsp)
+    model.gen_area = pyo.Param(model.GENERATORS, initialize = {k:generators_dict[k].area for k in generators_dict.keys()})# Generator area
+    model.bat_area = pyo.Param(model.BATTERIES, initialize = {k:batteries_dict[k].area for k in batteries_dict.keys()})# Battery area
+    
 
     # Variables
     model.v = pyo.Var(model.GENERATORS, model.HTIME, within=pyo.Binary)
@@ -382,13 +381,13 @@ def make_model_operational(generators_dict=None,
     def cmaxx_rule(model,k, t):
       gen = generators_dict[k]
       return  model.p[(k,t)] <= gen.c_max * model.v[k,t]
-    model.cmaxx_rule = pyo.Constraint(model.GENERATORS, model.HTIME, rule=cmaxx_rule)
+    #model.cmaxx_rule = pyo.Constraint(model.GENERATORS, model.HTIME, rule=cmaxx_rule)
 
     # Define minimum power to activate the generator
     def cminn_rule(model,k, t):
       gen = generators_dict[k]
       return  model.p[(k,t)] >= gen.c_min * model.v[k,t]
-    model.cminn_rule = pyo.Constraint(model.GENERATORS, model.HTIME, rule=cminn_rule)
+    #model.cminn_rule = pyo.Constraint(model.GENERATORS, model.HTIME, rule=cminn_rule)
 
     # Batteries management
     def soc_rule(model, l, t):
@@ -442,9 +441,9 @@ def make_model_operational(generators_dict=None,
     model.Bconstraint6 = pyo.Constraint(model.BATTERIES, model.HTIME, rule=Bconstraint6_rule)
     
     # Charge and discharge control 
-    def bcbd_rule(model,t):
-      return  model.bc[t] + model.bd[t] <= 1
-    model.bcbd_rule = pyo.Constraint(model.HTIME, rule=bcbd_rule)
+    def bcbd_rule(model, l, t):
+      return  model.bc[l, t] + model.bd[l, t] <= 1
+    model.bcbd_rule = pyo.Constraint(model.BATTERIES, model.HTIME, rule=bcbd_rule)
    
 
     # Defines LPSP constraint
