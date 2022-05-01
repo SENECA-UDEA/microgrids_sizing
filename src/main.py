@@ -29,14 +29,10 @@ units_filepath = "../data/parameters_P.json"
 demand_df, forecast_df, generators, batteries = read_data(demand_filepath,
                                                           forecast_filepath,
                                                           units_filepath)
-
-# Create objects and generation rule
+'''
+# Create objects
 generators_dict, batteries_dict, technologies_dict, renewables_dict = create_objects(generators,
-                                                                                   batteries, forecast_df)
-
-
-#Max number of brands
-max_brand = {'S':2,'D':3,'W':3,'B':2}
+                                                                                   batteries)
 
 
 # Create model          
@@ -46,13 +42,7 @@ model = opt.make_model(generators_dict,
                        dict(zip(demand_df.t, demand_df.demand)),
                        technologies_dict, 
                        renewables_dict, 
-                       amax = 20, 
-                       ir = 0.2, 
-                       nse = 0.2, 
-                       maxtec = 4, 
-                       maxbr = max_brand,
-                       years = 20,
-                       tlpsp = 1)    
+                       20, 0.2, 0.1,4,3,2,20)    
 
 # solve model 
 results, termination = opt.solve_model(model, 
@@ -67,7 +57,7 @@ if termination['Temination Condition'] == 'optimal':
    print(model_results.descriptive)
    print(model_results.df_results)
    generation_graph = model_results.generation_graph()
-   plot(generation_graph)
+   generation_graph.show()
 '''
 # Run model decomposition
  
@@ -88,8 +78,7 @@ model = opt.make_model_operational(generators_dict=generators_dict,
                                amax = 20,
                                nse = 0.15, 
                                TNPC = 1,
-                               CRF = 1,
-                               tlpsp = 1)      
+                               CRF = 1)      
 # solve model 
 results, termination = opt.solve_model(model, 
                        optimizer = 'gurobi',
@@ -101,4 +90,3 @@ if termination['Temination Condition'] == 'optimal':
    print(model_results.df_results)
    generation_graph = model_results.generation_graph()
    plot(generation_graph)
-'''
