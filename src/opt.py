@@ -7,6 +7,7 @@ Created on Wed Apr 20 11:08:12 2022
 
 import pyomo.environ as pyo
 from pyomo.core import value
+from utilities import generation
 import plotly.graph_objects as go
 import plotly.io as pio
 pio.renderers.default='browser'
@@ -25,9 +26,9 @@ def make_model(generators_dict=None,
                ir = None, 
                nse = None, 
                maxtec = None, 
-               maxbr = None,
-               years = None,
-               tlpsp = None):
+               maxalt = None, 
+               maxbat = None,
+               years = None):
 
     
     # Sets
@@ -36,7 +37,8 @@ def make_model(generators_dict=None,
     model.BATTERIES = pyo.Set(initialize=[l for l in batteries_dict.keys()])
     model.TECHNOLOGIES = pyo.Set(initialize=[i for i in technologies_dict.keys()])
     model.RENEWABLES = pyo.Set(initialize=[r for r in renewables_dict.keys()])
-    model.TEC_BRAND = pyo.Set( initialize = [(i,j) for i in technologies_dict.keys() for j in technologies_dict[i]], ordered = False)
+    model.TECN_ALT = pyo.Set( initialize = [(i,j) for i in technologies_dict.keys() for j in technologies_dict[i]], ordered = False)
+    #TODO Change name to 'Brand'
     model.HTIME = pyo.Set(initialize=[t for t in range(len(forecast_df))])
 
     # Parameters
@@ -45,18 +47,18 @@ def make_model(generators_dict=None,
     model.bat_area = pyo.Param(model.BATTERIES, initialize = {k:batteries_dict[k].area for k in batteries_dict.keys()})# Battery area
     model.d = pyo.Param(model.HTIME, initialize = demand_df) #demand    
     model.ir = pyo.Param(initialize=ir) #Interest rate
-    model.nse = pyo.Param(initialize=nse) #Available not supplied demand  
+    model.nse = pyo.Param(initialize=nse) #Available nsupplied demand  
     model.maxtec = pyo.Param(initialize = maxtec) #Maximum technologies  
-    model.maxbr = pyo.Param(model.TECHNOLOGIES, initialize = maxbr) #Maximum brand by each technology  
+    model.maxalt = pyo.Param(initialize = maxalt) #Maximum alternatives    
+    model.maxbat = pyo.Param(initialize = maxbat) #Maximum batteries
     model.t_years = pyo.Param(initialize = years) # Number of years for the project, for CRF
     CRF_calc = (model.ir * (1 + model.ir)**(model.t_years))/((1 + model.ir)**(model.t_years)-1) #CRF to LCOE
     model.CRF = pyo.Param(initialize = CRF_calc)  
-    model.tlpsp = pyo.Param (initialize = tlpsp) #LPSP Time for moving average
 
 
     # Variables
     model.y = pyo.Var(model.TECHNOLOGIES, within=pyo.Binary)
-    model.x = pyo.Var(model.TEC_BRAND, within=pyo.Binary)
+    model.x = pyo.Var(model.TECN_ALT, within=pyo.Binary)
     model.w = pyo.Var(model.GENERATORS, within=pyo.Binary)
     model.q = pyo.Var(model.BATTERIES, within=pyo.Binary)
     model.v = pyo.Var(model.GENERATORS, model.HTIME, within=pyo.Binary)
@@ -65,7 +67,7 @@ def make_model(generators_dict=None,
     model.b_charge = pyo.Var(model.BATTERIES, model.HTIME, within=pyo.NonNegativeReals)
     model.b_discharge = pyo.Var(model.BATTERIES, model.HTIME, within=pyo.NonNegativeReals)
     model.p_g = pyo.Var(model.TECHNOLOGIES, model.HTIME, within=pyo.NonNegativeReals)
-    model.p_c = pyo.Var(model.TEC_BRAND, model.HTIME, within=pyo.NonNegativeReals)
+    model.p_c = pyo.Var(model.TECN_ALT, model.HTIME, within=pyo.NonNegativeReals)
     model.p_ren = pyo.Var(model.HTIME, within=pyo.NonNegativeReals)
     model.s_minus = pyo.Var(model.HTIME, within=pyo.NonNegativeReals)
     model.p_tot = pyo.Var(model.HTIME, within=pyo.NonNegativeReals)
@@ -76,28 +78,28 @@ def make_model(generators_dict=None,
    
     # Constraints
 
-    #Defines rule of technologies and brands
+    #Defines rule of technologies and commercial alternatives
     def xy_rule (model,i,j):
         return model.x[i,j] <= model.y[i]
-    model.xy_rule = pyo.Constraint(model.TEC_BRAND, rule = xy_rule)
+    model.xy_rule = pyo.Constraint(model.TECN_ALT, rule = xy_rule)
     
-    #Defines rule of brands and generators
+    #Defines rule of commercial alternatives and generators
     def wk_rule(model, i, j, k):
         gen = generators_dict[k]
-        if gen.tec == i and gen.br == j:
+        if gen.tec == i and gen.alt == j:
             return model.w[k] <= model.x[i,j] 
         else:
             return pyo.Constraint.Skip
-    model.wk_rule = pyo.Constraint(model.TEC_BRAND, model.GENERATORS, rule=wk_rule)
+    model.wk_rule = pyo.Constraint(model.TECN_ALT, model.GENERATORS, rule=wk_rule)
 
-    #Defines rule of brands and batteries
+    #Defines rule of commercial alternatives and batteries
     def ql_rule(model, i, j, l):
         bat = batteries_dict[l]
-        if  (bat.tec == i) and (bat.br == j):
+        if  (bat.tec == i) and (bat.alt == j):
             return model.q[l] <= model.x[i,j] 
         else:
             return pyo.Constraint.Skip
-    model.ql_rule = pyo.Constraint(model.TEC_BRAND, model.BATTERIES, rule=ql_rule)
+    model.ql_rule = pyo.Constraint(model.TECN_ALT, model.BATTERIES, rule=ql_rule)
 
     # Defines area rule
     def area_rule(model):
@@ -113,7 +115,7 @@ def make_model(generators_dict=None,
     print("Start generation rule")
     def G_rule1 (model, k, t):
       gen = generators_dict[k]
-      return model.p[k,t]<= gen.gen_rule[t] * model.v[k,t]
+      return model.p[k,t]<= generation(gen,t,forecast_df) * model.v[k,t]
     model.G_rule1 = pyo.Constraint(model.GENERATORS, model.HTIME, rule=G_rule1)
     print("End generation rule")
     
@@ -136,13 +138,13 @@ def make_model(generators_dict=None,
     model.ptec_rule = pyo.Constraint(model.TECHNOLOGIES, model.HTIME, rule=ptec_rule)
 
 
-    # Defines energy generated by each brand
-    def pbrand_rule(model,i,j,t): 
+    # Defines energy generated by each commercial alternative
+    def palt_rule(model,i,j,t): 
       if i != 'B': 
-          return sum(model.p[(k,t)] for k in model.GENERATORS if generators_dict[k].tec == i and generators_dict[k].br == j) == model.p_c[i,j,t]
+          return sum(model.p[(k,t)] for k in model.GENERATORS if generators_dict[k].tec == i and generators_dict[k].alt == j) == model.p_c[i,j,t]
       else:
-          return sum(model.b_discharge[(l,t)] for l in model.BATTERIES if  batteries_dict[l].tec == i and batteries_dict[l].br == j) == model.p_c[i,j,t]
-    model.pbrand_rule = pyo.Constraint(model.TEC_BRAND, model.HTIME, rule=pbrand_rule)
+          return sum(model.b_discharge[(l,t)] for l in model.BATTERIES if  batteries_dict[l].tec == i and batteries_dict[l].alt == j) == model.p_c[i,j,t]
+    model.palt_rule = pyo.Constraint(model.TECN_ALT, model.HTIME, rule=palt_rule)
 
     # Defines renewable energy
     def pren_rule(model,t):
@@ -153,16 +155,14 @@ def make_model(generators_dict=None,
     def cmaxx_rule(model,k, t):
       gen = generators_dict[k]
       return  model.p[(k,t)] <= gen.c_max*model.v[k,t]
-    #model.cmaxx_rule = pyo.Constraint(model.GENERATORS, model.HTIME, rule=cmaxx_rule)
-    #TODO: Deletes this constraint when we have all generation constraints
-    
+    model.cmaxx_rule = pyo.Constraint(model.GENERATORS, model.HTIME, rule=cmaxx_rule)
+
     # Defines minimum power to activate the generator
     def cminn_rule(model,k, t):
       gen = generators_dict[k]
       return  model.p[(k,t)] >= gen.c_min*model.v[k,t]
-    #model.cminn_rule = pyo.Constraint(model.GENERATORS, model.HTIME, rule=cminn_rule)
-    #TODO: Deletes this constraint when we have all generation constraints
-    
+    model.cminn_rule = pyo.Constraint(model.GENERATORS, model.HTIME, rule=cminn_rule)
+
     #Batteries management
     def soc_rule(model, l, t):
       battery = batteries_dict[l]
@@ -201,7 +201,7 @@ def make_model(generators_dict=None,
       battery = batteries_dict[l]
       return model.b_discharge[l, t] >= battery.soc_min * model.bd[l, t]
     model.Bconstraint4 = pyo.Constraint(model.BATTERIES, model.HTIME, rule=Bconstraint4_rule)
-
+    #TODO: SOCMIN = SOCMAX * (1 - DODMAX)
     
     #Maximum level of energy that can enter to the battery
     def Bconstraint5_rule(model, l, t):
@@ -225,16 +225,25 @@ def make_model(generators_dict=None,
       return sum(model.y[i] for i in model.TECHNOLOGIES) <= model.maxtec
     model.maxtec_rule = pyo.Constraint(rule=maxtec_rule)
 
-    # Defines constraint of maximum number of brands
-    def maxbr_rule (model, i):
-        return sum (model.x[i,j] for  j in technologies_dict[i]) <= model.maxbr[i]
-    model.maxbr_rule = pyo.Constraint(model.TECHNOLOGIES, rule = maxbr_rule)
+    # Defines constraint of maximum number of commercial alternatives
+    def maxalt_rule (model, i):
+      return sum (model.x[i,j] for  j in technologies_dict[i]) <= model.maxalt
+      #TODO: maxalt like a vector and no a parameter 
+    model.maxalt_rule = pyo.Constraint(model.TECHNOLOGIES, rule = maxalt_rule)
+    
+    #Defines constraint of maximum number of batteries
+    def maxbat_rule(model):
+        return sum(model.q[l] for l in model.BATTERIES)  <= model.maxbat
+    model.maxbat_rule = pyo.Constraint(rule=maxbat_rule)
+
 
     #Objective function
         
     # Defines TNPC constraint
-    def tnpcc_rule(model): 
-            expr = sum(generators_dict[k].cost_up *model.w[k] for k in model.GENERATORS) + sum(batteries_dict[l].cost_up * model.q[l] for l in model.BATTERIES) 
+    def tnpcc_rule(model):
+        #TODO check cost unsupplied
+            expr = 10*sum(model.s_minus[t] for t in model.HTIME)
+            expr += sum(generators_dict[k].cost_up *model.w[k] for k in model.GENERATORS) + sum(batteries_dict[l].cost_up * model.q[l] for l in model.BATTERIES) 
             expr += sum(generators_dict[k].cost_r *model.w[k] for k in model.GENERATORS) + sum(batteries_dict[l].cost_r * model.q[l]  for l in model.BATTERIES) 
             expr += sum(generators_dict[k].cost_om *model.w[k] for k in model.GENERATORS) + sum(batteries_dict[l].cost_om * model.q[l]  for l in model.BATTERIES)
             expr -= sum(generators_dict[k].cost_s *model.w[k] for k in model.GENERATORS) + sum(batteries_dict[l].cost_s * model.q[l]  for l in model.BATTERIES)
@@ -243,24 +252,17 @@ def make_model(generators_dict=None,
 
     # Define TNPC operative constraint
     def tnpcop_rule(model):
-        #TODO check cost unsupplied
-        expr2 = 10*sum(model.s_minus[t] for t in model.HTIME)
-        expr2 += sum(sum(generators_dict[k].va_op * model.p[k,t] for t in model.HTIME) for k in model.GENERATORS)
-        return model.TNPC_OP == expr2
+      return model.TNPC_OP ==  sum(sum(generators_dict[k].va_op * model.p[k,t] for t in model.HTIME) for k in model.GENERATORS)
     model.tnpcop = pyo.Constraint(rule=tnpcop_rule)
-    
-    
-    # Defines LPSP constraint
+
+    # Define LPSP constraint
     def lpspcons_rule(model, t):
-      if t >= (model.tlpsp - 1):
-        rev = sum(model.d[t] for t in range((t-model.tlpsp+1), t+1)) 
-        if rev > 0:
-          return sum(model.s_minus[t] for t in range((t-model.tlpsp+1), t+1)) / rev  <= model.nse 
-        else:
-          return pyo.Constraint.Skip
+      if model.d[t] > 0:
+        return model.s_minus[t] / model.d[t]  <= model.nse 
       else:
         return pyo.Constraint.Skip
     model.lpspcons = pyo.Constraint(model.HTIME, rule=lpspcons_rule)
+
 
 
     '''
@@ -283,10 +285,6 @@ def make_model(generators_dict=None,
 
     return model
 
-
-
-
-
 def make_model_operational(generators_dict=None, 
                forecast_df = None, 
                batteries_dict=None,  
@@ -296,8 +294,7 @@ def make_model_operational(generators_dict=None,
                amax = None, 
                nse = None, 
                TNPC = None,
-               CRF = None,
-               tlpsp = None):
+               CRF = None):
         
        
     model = pyo.ConcreteModel(name="Sizing microgrids Operational")
@@ -307,7 +304,7 @@ def make_model_operational(generators_dict=None,
     model.BATTERIES = pyo.Set(initialize=[l for l in batteries_dict.keys()])
     model.TECHNOLOGIES = pyo.Set(initialize=[i for i in technologies_dict.keys()])
     model.RENEWABLES = pyo.Set(initialize=[r for r in renewables_dict.keys()])
-    model.TEC_BRAND = pyo.Set( initialize = [(i,j) for i in technologies_dict.keys() for j in technologies_dict[i]], ordered = False)
+    model.TECN_ALT = pyo.Set( initialize = [(i,j) for i in technologies_dict.keys() for j in technologies_dict[i]], ordered = False)
     model.HTIME = pyo.Set(initialize=[t for t in range(len(forecast_df))])
 
     # Parameters 
@@ -318,7 +315,6 @@ def make_model_operational(generators_dict=None,
     model.nse = pyo.Param(initialize=nse) # Available unsupplied demand  
     model.TNPC = pyo.Param(initialize = TNPC)
     model.CRF = pyo.Param (initialize = CRF)
-    model.tlpsp = pyo.Param (initialize = tlpsp)
 
     # Variables
     model.v = pyo.Var(model.GENERATORS, model.HTIME, within=pyo.Binary)
@@ -327,12 +323,12 @@ def make_model_operational(generators_dict=None,
     model.b_charge = pyo.Var(model.BATTERIES, model.HTIME, within=pyo.NonNegativeReals)
     model.b_discharge = pyo.Var(model.BATTERIES, model.HTIME, within=pyo.NonNegativeReals)
     model.p_g = pyo.Var(model.TECHNOLOGIES, model.HTIME, within=pyo.NonNegativeReals)
-    model.p_c = pyo.Var(model.TEC_BRAND, model.HTIME, within=pyo.NonNegativeReals)
+    model.p_c = pyo.Var(model.TECN_ALT, model.HTIME, within=pyo.NonNegativeReals)
     model.p_ren = pyo.Var(model.HTIME, within=pyo.NonNegativeReals)
     model.s_minus = pyo.Var(model.HTIME, within=pyo.NonNegativeReals)
     model.p_tot = pyo.Var(model.HTIME, within=pyo.NonNegativeReals)
-    model.bd = pyo.Var(model.BATTERIES, model.HTIME, within=pyo.Binary)
-    model.bc = pyo.Var(model.BATTERIES, model.HTIME, within=pyo.Binary)
+    model.bd = pyo.Var(model.HTIME, within=pyo.Binary)
+    model.bc = pyo.Var(model.HTIME, within=pyo.Binary)
     model.TNPC_OP = pyo.Var(within=pyo.NonNegativeReals)
    
     # Constraints
@@ -342,7 +338,7 @@ def make_model_operational(generators_dict=None,
     print("Start generation rule")
     def G_rule1 (model, k, t):
       gen = generators_dict[k]
-      return model.p[k,t]<= gen.gen_rule[t] * model.v[k,t]
+      return model.p[k,t]<= generation(gen,t,forecast_df) * model.v[k,t]
     model.G_rule1 = pyo.Constraint(model.GENERATORS, model.HTIME, rule=G_rule1)
     print("End generation rule")
 
@@ -365,13 +361,13 @@ def make_model_operational(generators_dict=None,
     model.ptec_rule = pyo.Constraint(model.TECHNOLOGIES, model.HTIME, rule=ptec_rule)
 
 
-    # Defines energy generated by each brand
-    def pbrand_rule(model,i,j,t): 
+    # Defines energy generated by each commercial alternative
+    def palt_rule(model,i,j,t): 
       if i != 'B': 
-          return sum(model.p[(k,t)] for k in model.GENERATORS if generators_dict[k].tec == i and generators_dict[k].br == j) == model.p_c[i,j,t]
+          return sum(model.p[(k,t)] for k in model.GENERATORS if generators_dict[k].tec == i and generators_dict[k].alt == j) == model.p_c[i,j,t]
       else:
-          return sum(model.b_discharge[(l,t)] for l in model.BATTERIES if  batteries_dict[l].tec == i and batteries_dict[l].br == j) == model.p_c[i,j,t]
-    model.pbrand_rule = pyo.Constraint(model.TEC_BRAND, model.HTIME, rule=pbrand_rule)
+          return sum(model.b_discharge[(l,t)] for l in model.BATTERIES if  batteries_dict[l].tec == i and batteries_dict[l].alt == j) == model.p_c[i,j,t]
+    model.palt_rule = pyo.Constraint(model.TECN_ALT, model.HTIME, rule=palt_rule)
 
     # Defines renewable energy generated
     def pren_rule(model,t):
@@ -420,25 +416,25 @@ def make_model_operational(generators_dict=None,
     # Minimum level of energy that can enter to the battery
     def Bconstraint3_rule(model, l, t):
       battery = batteries_dict[l]
-      return model.b_charge[l, t] >= battery.soc_min * model.bc[l, t]
+      return model.b_charge[l, t] >= battery.soc_min * model.bc[t]
     model.Bconstraint3 = pyo.Constraint(model.BATTERIES, model.HTIME, rule=Bconstraint3_rule)
 
     # Minimum level of energy that the battery can give to the microgrid
     def Bconstraint4_rule(model, l, t):
       battery = batteries_dict[l]
-      return model.b_discharge[l, t] >= battery.soc_min * model.bd[l, t]
+      return model.b_discharge[l, t] >= battery.soc_min * model.bd[t]
     model.Bconstraint4 = pyo.Constraint(model.BATTERIES, model.HTIME, rule=Bconstraint4_rule)
 
     # Maixmum level of energy that can enter to the battery
     def Bconstraint5_rule(model, l, t):
       battery = batteries_dict[l]
-      return model.b_charge[l, t] <= battery.soc_max * model.bc[l, t] 
+      return model.b_charge[l, t] <= battery.soc_max * model.bc[t] 
     model.Bconstraint5 = pyo.Constraint(model.BATTERIES, model.HTIME, rule=Bconstraint5_rule)
 
     # Maximum level of energy that the battery can give to the microgrid
     def Bconstraint6_rule(model, l, t):
       battery = batteries_dict[l]
-      return model.b_discharge[l, t] <= battery.soc_max * model.bd[l, t] 
+      return model.b_discharge[l, t] <= battery.soc_max * model.bd[t] 
     model.Bconstraint6 = pyo.Constraint(model.BATTERIES, model.HTIME, rule=Bconstraint6_rule)
     
     # Charge and discharge control 
@@ -449,28 +445,19 @@ def make_model_operational(generators_dict=None,
 
     # Defines LPSP constraint
     def lpspcons_rule(model, t):
-      if t >= (model.tlpsp - 1):
-        rev = sum(model.d[t] for t in range((t-model.tlpsp+1), t+1)) 
-        if rev > 0:
-          return sum(model.s_minus[t] for t in range((t-model.tlpsp+1), t+1)) / sum(model.d[t] for t in range((t-model.tlpsp+1), t+1))  <= model.nse 
-        else:
-          return pyo.Constraint.Skip
+      if model.d[t] > 0:
+        return model.s_minus[t] / model.d[t]  <= model.nse 
       else:
         return pyo.Constraint.Skip
     model.lpspcons = pyo.Constraint(model.HTIME, rule=lpspcons_rule)
-
-
     
     
     #Objective funtion       
 
     # DefineTNPC operational constraint
-    # Define TNPC operative constraint
     def tnpcop_rule(model):
-        #TODO check cost unsupplied
-        expr2 = 10*sum(model.s_minus[t] for t in model.HTIME)
-        expr2 += sum(sum(generators_dict[k].va_op * model.p[k,t] for t in model.HTIME) for k in model.GENERATORS)
-        return model.TNPC_OP == expr2
+      return model.TNPC_OP ==  10*sum(model.s_minus[t] for t in model.HTIME) + sum(sum(generators_dict[k].va_op * model.v[k,t] for t in model.HTIME) for k in model.GENERATORS)
+      #return model.TNPC_OP ==  10*sum(model.s_minus[t] for t in model.HTIME) + sum(sum(generators_dict[k].va_op * model.p[k,t] for t in model.HTIME) for k in model.GENERATORS)
     model.tnpcop = pyo.Constraint(rule=tnpcop_rule)
 
 
@@ -549,7 +536,7 @@ class Results():
 
         self.df_results = pd.concat([demand, generation, b_discharge_df, b_charge_df, soc_df, sminus_df ], axis=1) 
         
-        # general descriptives of the solution
+        # general descriptives of tehe solution
         self.descriptive = {}
         
         # generators 
@@ -584,11 +571,11 @@ class Results():
             self.descriptive['batteries'] = bat_data 
                   
         
-        brand_data = {}
+        com_data = {}
         try:
-            for (i, j) in model.TEC_BRAND:
-                brand_data[i, j] = value(model.x[i,j])  
-            self.descriptive['Brand'] = brand_data
+            for (i, j) in model.TECN_ALT:
+                com_data[i, j] = value(model.x[i,j])  
+            self.descriptive['comercial_alt'] = com_data
         except:#TODO
             a=1 
         
@@ -624,8 +611,6 @@ class Results():
                 bars.append(go.Bar(name=key, x=self.df_results.index, y=self.df_results[column_name]))
         
         #TODO poner gráfico de s menos
-                bars.append(go.Bar(name='Unsupplied Demand',x=self.df_results.index, y=self.df_results['S-']))
-                
         plot = go.Figure(data=bars)
         
         
