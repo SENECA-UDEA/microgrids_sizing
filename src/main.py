@@ -85,7 +85,6 @@ model = opt.make_model_operational(generators_dict=generators_dict,
                                demand_df=dict(zip(demand_df.t, demand_df.demand)), 
                                technologies_dict = technologies_dict,  
                                renewables_dict = renewables_dict,
-                               amax = 20,
                                nse = 0.15, 
                                TNPC = 1,
                                CRF = 1,
@@ -101,4 +100,5 @@ if termination['Temination Condition'] == 'optimal':
    print(model_results.df_results)
    generation_graph = model_results.generation_graph()
    plot(generation_graph)
+
 '''
