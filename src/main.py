@@ -30,9 +30,10 @@ demand_df, forecast_df, generators, batteries = read_data(demand_filepath,
                                                           forecast_filepath,
                                                           units_filepath)
 
-# Create objects
+# Create objects and generation rule
 generators_dict, batteries_dict, technologies_dict, renewables_dict = create_objects(generators,
-                                                                                   batteries)
+                                                                                   batteries, forecast_df)
+
 
 #Max number of brands
 max_brand = {'S':2,'D':3,'W':3,'B':2}

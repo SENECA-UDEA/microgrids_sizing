@@ -30,7 +30,7 @@ def read_data(demand_filepath,
     
     return demand_df, forecast_df, generators, batteries
 
-def create_objects(generators, batteries):
+def create_objects(generators, batteries, forecast_df):
     # Create generators and batteries
     generators_dict = {}
     for k in generators:
@@ -41,7 +41,14 @@ def create_objects(generators, batteries):
       elif k['tec'] == 'D':
         obj_aux = Diesel(*k.values())      
       generators_dict[k['id_gen']] = obj_aux
-      
+      if k['tec'] == 'S':
+        generators_dict[k['id_gen']].Solargeneration(forecast_df['Rt'])
+      elif k['tec'] == 'W':
+        generators_dict[k['id_gen']].Windgeneration(forecast_df['Wt'])
+      elif k['tec'] == 'D':
+        generators_dict[k['id_gen']].Dieselgeneration(forecast_df['Wt'])
+    
+    
     batteries_dict = {}
     for l in batteries:
         obj_aux = Battery(*l.values())
@@ -76,23 +83,8 @@ def create_objects(generators, batteries):
               
     return generators_dict, batteries_dict, technologies_dict, renewables_dict
 
-def generation(gen, t, forecast_df):
 
-      if gen.tec == 'S':
-         g_rule = gen.ef * gen.G_test * (forecast_df['Rt'][t]/gen.R_test) 
-      elif gen.tec == 'W':
-          if forecast_df['Wt'][t] < gen.w_min:
-              g_rule = 0
-          elif forecast_df['Wt'][t] < gen.w_a:
-              g_rule =  ((1/2) * gen.p * gen.s * (forecast_df['Wt'][t]**3) * gen.ef * gen.n )/1000
-              #p en otros papers es densidad del aíre, preguntar a Mateo, por qué divide por 1000?
-          elif forecast_df['Wt'][t] <= gen.w_max:
-              g_rule = ((1/2) * gen.p * gen.s * (gen.w_a**3) * gen.ef * gen.n )/1000
-          else:
-              g_rule = 0
-      elif gen.tec == 'D':
-         g_rule =  gen.c_max
-      return g_rule
+ 
   
     
 def Calculate_Infraes_cost(generators_opt, batteries_opt):
