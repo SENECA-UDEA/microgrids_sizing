@@ -14,7 +14,8 @@ import math
 
 def read_data(demand_filepath, 
               forecast_filepath,
-              units_filepath):
+              units_filepath,
+              instance_data):
     
     forecast_df = pd.read_csv(forecast_filepath)
     demand_df = pd.read_csv(demand_filepath)
@@ -23,12 +24,18 @@ def read_data(demand_filepath,
         generators_data = json.loads(generators_data.text)
     except:
         f = open(units_filepath)
-        generators_data = json.load(f)
-    
+        generators_data = json.load(f)    
     generators = generators_data['generators']
     batteries = generators_data['batteries']
     
-    return demand_df, forecast_df, generators, batteries
+    try:
+        instance_data =  requests.get(instance_data)
+        instance_data = json.loads(instance_data.text)
+    except:
+        f = open(instance_data)
+        instance_data = json.load(f) 
+    
+    return demand_df, forecast_df, generators, batteries, instance_data
 
 def create_objects(generators, batteries, forecast_df):
     # Create generators and batteries
