@@ -287,7 +287,7 @@ def make_model(generators_dict=None,
 
 
 def make_model_operational(generators_dict=None, 
-               #forecast_df = None, 
+               forecast_df = None, 
                batteries_dict=None,  
                demand_df=None, 
                technologies_dict = None,  
