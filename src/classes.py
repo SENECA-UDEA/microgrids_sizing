@@ -28,6 +28,7 @@ class Solar(Generator):
         self.R_test = R_test
         self.gen_rule = {}
         super(Solar, self).__init__(id_gen, tec, br, va_op, area, cost_up, cost_r, cost_om, cost_s, c_min, c_max)
+    
     def Solargeneration(self, forecastGt):
             t = 0
             for i in forecastGt:
@@ -49,6 +50,7 @@ class Eolic(Generator):
         self.n_eq = n_eq
         self.gen_rule = {}
         super(Eolic, self).__init__(id_gen, tec, br, va_op, area, cost_up, cost_r, cost_om, cost_s, c_min, c_max)
+    
     def Windgeneration(self, forecastWt):
             t = 0
             for i in forecastWt:
@@ -72,6 +74,7 @@ class Diesel(Generator):
         self.G_max = G_max
         self.gen_rule = {}
         super(Diesel, self).__init__(id_gen, tec, br, va_op, area, cost_up, cost_r, cost_om, cost_s, c_min, c_max)
+    
     def Dieselgeneration(self, forecast):
             t = 0
             for i in forecast:
