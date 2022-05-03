@@ -16,7 +16,6 @@ import time
 
 
 def make_model(generators_dict=None, 
-               forecast_df = None, 
                batteries_dict=None,  
                demand_df=None, 
                technologies_dict = None,  
@@ -37,7 +36,7 @@ def make_model(generators_dict=None,
     model.TECHNOLOGIES = pyo.Set(initialize=[i for i in technologies_dict.keys()])
     model.RENEWABLES = pyo.Set(initialize=[r for r in renewables_dict.keys()])
     model.TEC_BRAND = pyo.Set( initialize = [(i,j) for i in technologies_dict.keys() for j in technologies_dict[i]], ordered = False)
-    model.HTIME = pyo.Set(initialize=[t for t in range(len(forecast_df))])
+    model.HTIME = pyo.Set(initialize=[t for t in range(len(demand_df))])
 
     # Parameters
     model.amax = pyo.Param(initialize=amax) #Maximum area
@@ -287,7 +286,6 @@ def make_model(generators_dict=None,
 
 
 def make_model_operational(generators_dict=None, 
-               forecast_df = None, 
                batteries_dict=None,  
                demand_df=None, 
                technologies_dict = None,  
@@ -306,7 +304,7 @@ def make_model_operational(generators_dict=None,
     model.TECHNOLOGIES = pyo.Set(initialize=[i for i in technologies_dict.keys()])
     model.RENEWABLES = pyo.Set(initialize=[r for r in renewables_dict.keys()])
     model.TEC_BRAND = pyo.Set( initialize = [(i,j) for i in technologies_dict.keys() for j in technologies_dict[i]], ordered = False)
-    model.HTIME = pyo.Set(initialize=[t for t in range(len(forecast_df))])
+    model.HTIME = pyo.Set(initialize=[t for t in range(len(demand_df))])
 
     # Parameters 
     model.d = pyo.Param(model.HTIME, initialize = demand_df) #demand     
@@ -337,12 +335,10 @@ def make_model_operational(generators_dict=None,
 
 
     # Generation rule
-    print("Start generation rule")
     def G_rule1 (model, k, t):
       gen = generators_dict[k]
       return model.p[k,t]<= gen.gen_rule[t] * model.v[k,t]
     model.G_rule1 = pyo.Constraint(model.GENERATORS, model.HTIME, rule=G_rule1)
-    print("End generation rule")
 
     # Defines energy balance
     def balance_rule(model, t):
