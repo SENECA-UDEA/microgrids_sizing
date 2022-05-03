@@ -37,7 +37,6 @@ class Solar(Generator):
             return self.gen_rule
 
 
-                                  
 class Eolic(Generator):
     def __init__(self, id_gen, tec, br, va_op, area, cost_up, cost_r, cost_om, cost_s, c_min, c_max, ef, n, s, p, w_in, w_rate, w_out, n_eq):
         self.ef = ef
