@@ -68,6 +68,7 @@ if termination['Temination Condition'] == 'optimal':
    print(model_results.df_results)
    generation_graph = model_results.generation_graph()
    plot(generation_graph)
+   
 '''
 # Run model decomposition
  
