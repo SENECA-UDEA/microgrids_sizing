@@ -43,17 +43,15 @@ def create_objects(generators, batteries, forecast_df):
     for k in generators:
       if k['tec'] == 'S':
         obj_aux = Solar(*k.values())
+        obj_aux.Solargeneration(forecast_df['Rt'])
       elif k['tec'] == 'W':
         obj_aux = Eolic(*k.values())
+        obj_aux.Windgeneration(forecast_df['Wt'])
       elif k['tec'] == 'D':
-        obj_aux = Diesel(*k.values())      
+        obj_aux = Diesel(*k.values())   
+        obj_aux.Dieselgeneration(forecast_df['Wt'])
       generators_dict[k['id_gen']] = obj_aux
-      if k['tec'] == 'S':
-        generators_dict[k['id_gen']].Solargeneration(forecast_df['Rt'])
-      elif k['tec'] == 'W':
-        generators_dict[k['id_gen']].Windgeneration(forecast_df['Wt'])
-      elif k['tec'] == 'D':
-        generators_dict[k['id_gen']].Dieselgeneration(forecast_df['Wt'])
+      
     
     
     batteries_dict = {}

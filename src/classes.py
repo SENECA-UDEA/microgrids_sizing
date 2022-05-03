@@ -29,11 +29,9 @@ class Solar(Generator):
         self.gen_rule = {}
         super(Solar, self).__init__(id_gen, tec, br, va_op, area, cost_up, cost_r, cost_om, cost_s, c_min, c_max)
     
-    def Solargeneration(self, forecastGt):
-            t = 0
-            for i in forecastGt:
+    def Solargeneration(self, forecastGt):            
+            for t in list(forecastGt.index.values):
                 self.gen_rule[t] = self.ef * self.G_test * (forecastGt[t]/self.R_test) 
-                t += 1
             return self.gen_rule
 
 
