@@ -109,13 +109,12 @@ def make_model(generators_dict=None,
         return model.v[k,t] <= model.w[k]
     model.vkt_rule = pyo.Constraint(model.GENERATORS, model.HTIME, rule=vkt_rule)
 
-    # Generation rule
-    print("Start generation rule")
+    # Generation rule    
     def G_rule1 (model, k, t):
       gen = generators_dict[k]
       return model.p[k,t]<= gen.gen_rule[t] * model.v[k,t]
     model.G_rule1 = pyo.Constraint(model.GENERATORS, model.HTIME, rule=G_rule1)
-    print("End generation rule")
+    
     
     # Defines balance rule
     def balance_rule(model, t):

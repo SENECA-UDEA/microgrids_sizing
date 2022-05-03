@@ -53,12 +53,14 @@ model = opt.make_model(generators_dict,
                        maxbr = max_brand,
                        years = 20,
                        tlpsp = 1)    
-
+print("Model generated")
 # solve model 
 results, termination = opt.solve_model(model, 
                        optimizer = 'gurobi',
                        mipgap = 0.01,
                        tee = True)
+print("Model optimised")
+
 # TODO: check how are the termination conditions saved
 # TODO: I thinkthe results can be gattered directly from results and not from model
 #TODO:  ext_time?
