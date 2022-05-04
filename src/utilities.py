@@ -87,5 +87,24 @@ def create_objects(generators, batteries, forecast_df, demand_df):
 
 
  
+def calculate_sizingcost(generators_dict, batteries_dict, ir, years):
+            expr = 0
+            for gen in generators_dict.values(): 
+                expr += gen.cost_up*gen.n 
+                expr += gen.cost_r*gen.n 
+                expr += gen.cost_om*gen.n 
+                expr -= gen.cost_s*gen.n 
+                
+            for bat in batteries_dict.values(): 
+                expr += bat.cost_up
+                expr += bat.cost_om
+                expr += bat.cost_r
+                expr -= bat.cost_s
+                
+                
+                
+            TNPC = expr
+            CRF = (ir * (1 + ir)**(years))/((1 + ir)**(years)-1) 
 
+            return TNPC, CRF
 

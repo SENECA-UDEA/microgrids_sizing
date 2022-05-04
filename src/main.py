@@ -5,7 +5,7 @@ Created on Wed Apr 20 11:14:21 2022
 @author: pmayaduque
 """
 
-from utilities import read_data, create_objects
+from utilities import read_data, create_objects, calculate_sizingcost
 import opt as opt
 import pandas as pd 
 import random as random
@@ -32,6 +32,8 @@ demand_df, forecast_df, generators, batteries, instance_data = read_data(demand_
                                                           units_filepath,
                                                           instanceData_filepath)
 
+
+
 # Create objects and generation rule
 generators_dict, batteries_dict, technologies_dict, renewables_dict = create_objects(generators,
                                                                                    batteries, 
@@ -53,7 +55,7 @@ model = opt.make_model(generators_dict,
                        years = instance_data['years'],
                        tlpsp = instance_data['tlpsp'])    
 
-'''
+
 print("Model generated")
 # solve model 
 results, termination = opt.solve_model(model, 
@@ -78,11 +80,18 @@ n_gen = 6
 generators = random.sample(generators, n_gen)
 n_bat = 1
 batteries = random.sample(batteries, n_bat)
-# Create objects and generation rule
+# Create objectstn and generation rule
 generators_dict, batteries_dict, technologies_dict, renewables_dict = create_objects(generators,
                                                                                    batteries,  
                                                                                    forecast_df,
                                                                                    demand_df)
+
+
+tnpc_calc, crf_calc = calculate_sizingcost(generators_dict=generators_dict, 
+                               batteries_dict=batteries_dict, 
+                               ir = instance_data['ir'],
+                               years = instance_data['years'])
+
 
 model = opt.make_model_operational(generators_dict=generators_dict, 
                                batteries_dict=batteries_dict,  
@@ -90,8 +99,8 @@ model = opt.make_model_operational(generators_dict=generators_dict,
                                technologies_dict = technologies_dict,  
                                renewables_dict = renewables_dict,
                                nse =  instance_data['nse'], 
-                               TNPC = instance_data['TNPC'],
-                               CRF = instance_data['CRF'],
+                               TNPC = tnpc_calc,
+                               CRF = crf_calc,
                                tlpsp = instance_data['tlpsp'])      
 # solve model 
 results, termination = opt.solve_model(model, 
@@ -104,4 +113,5 @@ if termination['Temination Condition'] == 'optimal':
    print(model_results.df_results)
    generation_graph = model_results.generation_graph()
    plot(generation_graph)
-
+   
+'''
