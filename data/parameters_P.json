@@ -10,11 +10,10 @@
             "cost_r": 2,
             "cost_om": 1,
             "cost_s": 2,
-            "c_min": 0.1,
-            "c_max": 10,
             "ef": 0.8,
             "G_test": 3,
-            "R_test": 4
+            "R_test": 4,
+            "n": 1
         },
         {
             "id_gen": "Solar2",
@@ -26,11 +25,10 @@
             "cost_r": 2,
             "cost_om": 6,
             "cost_s": 1,
-            "c_min": 0.3,
-            "c_max": 12,
             "ef": 0.88,
             "G_test": 7,
-            "R_test": 13
+            "R_test": 13,
+            "n": 1
         },
         {
             "id_gen": "Wind1",
@@ -42,16 +40,13 @@
             "cost_r": 1,
             "cost_om": 4,
             "cost_s": 4,
-            "c_min": 0.01,
-            "c_max": 8,
             "ef": 0.9,
-            "n": 4,
-            "s": 2,
-            "p": 1,
-            "w_in":0.11,
-            "w_rate": 4,
-            "w_out": 7,
-            "n_eq" : 2
+            "s_in":0.11,
+            "s_rate": 4,
+            "s_out": 7,
+            "rp": 10,
+            "n": 1,
+            "n_eq": 2
         },
         {
             "id_gen": "Wind2",
@@ -63,36 +58,30 @@
             "cost_r": 3,
             "cost_om": 1,
             "cost_s": 6,
-            "c_min": 0.04,
-            "c_max": 8,
             "ef": 0.99,
-            "n": 3,
-            "s": 3,
-            "p": 3,
-            "w_in": 0.5,
-            "w_rate": 6,
-            "w_out": 10,
-            "n_eq" : 3
+            "s_in": 0.5,
+            "s_rate": 6,
+            "s_out": 10,
+            "rp": 8,
+            "n": 1,
+            "n_eq": 3
         },
         {
-            "id_gen": "Wind3",
+            "id_gen": "Wind2_n2",
             "tec": "W",
             "br": "W2",
             "va_op": 1,
-            "area": 4,
+            "area": 8,
             "cost_up": 1,
             "cost_r": 3,
             "cost_om": 1,
             "cost_s": 6,
-            "c_min": 0.04,
-            "c_max": 8,
             "ef": 0.99,
-            "n": 3,
-            "s": 3,
-            "p": 3,
-            "w_in": 0.5,
-            "w_rate": 6,
-            "w_out": 10,
+            "s_in": 0.5,
+            "s_rate": 6,
+            "s_out": 10,
+            "rp": 8,
+            "n": 2,
             "n_eq" : 3
         },  
         {
@@ -105,11 +94,10 @@
             "cost_r": 1,
             "cost_om": 1,
             "cost_s": 2,
-            "c_min": 0,
-            "c_max": 20,
             "ef": 0.77,
             "G_min": 1,
-            "G_max": 20
+            "G_max": 20,
+            "n": 1
         }
     ],
 
