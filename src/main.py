@@ -34,7 +34,9 @@ demand_df, forecast_df, generators, batteries, instance_data = read_data(demand_
 
 # Create objects and generation rule
 generators_dict, batteries_dict, technologies_dict, renewables_dict = create_objects(generators,
-                                                                                   batteries, forecast_df)
+                                                                                   batteries, 
+                                                                                   forecast_df,
+                                                                                   demand_df)
 
 
 # Create model          
@@ -51,7 +53,7 @@ model = opt.make_model(generators_dict,
                        years = instance_data['years'],
                        tlpsp = instance_data['tlpsp'])    
 
-
+'''
 print("Model generated")
 # solve model 
 results, termination = opt.solve_model(model, 
@@ -60,7 +62,7 @@ results, termination = opt.solve_model(model,
                        tee = True)
 print("Model optimised")
 
-# TODO: check how are the termination conditions saved
+
 #TODO:  ext_time?
 if termination['Temination Condition'] == 'optimal': 
    model_results = opt.Results(model)
@@ -78,7 +80,9 @@ n_bat = 1
 batteries = random.sample(batteries, n_bat)
 # Create objects and generation rule
 generators_dict, batteries_dict, technologies_dict, renewables_dict = create_objects(generators,
-                                                                                   batteries,  forecast_df)
+                                                                                   batteries,  
+                                                                                   forecast_df,
+                                                                                   demand_df)
 
 model = opt.make_model_operational(generators_dict=generators_dict, 
                                batteries_dict=batteries_dict,  
@@ -100,4 +104,4 @@ if termination['Temination Condition'] == 'optimal':
    print(model_results.df_results)
    generation_graph = model_results.generation_graph()
    plot(generation_graph)
-'''
+
