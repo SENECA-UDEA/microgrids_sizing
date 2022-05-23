@@ -145,6 +145,7 @@ class Operators():
                                            TNPC = tnpc_calc,
                                            CRF = crf_calc,
                                            lpsp_cost = instance_data['lpsp_cost'],
+                                           w_cost = instance_data['w_cost'],
                                            tlpsp = instance_data['tlpsp'])  
 
 

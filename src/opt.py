@@ -26,6 +26,7 @@ def make_model(generators_dict=None,
                maxbr = 0,
                years = 1,
                lpsp_cost = 0,
+               w_cost = 0,
                tlpsp = 1):
     #generators_dict = dictionary of generators
     #batteries_dict = dictionary of batteries
@@ -38,6 +39,7 @@ def make_model(generators_dict=None,
     #maxtec = maximum number of technologies allowed
     #maxbr= maximum brands allowed by each technology
     #lpsp_cost = cost of unssupplied load
+    #w_cost = Penalized wasted energy cost
     #tlpsp = Number of lpsp periods for moving average
 
     
@@ -65,6 +67,7 @@ def make_model(generators_dict=None,
     model.CRF = pyo.Param(initialize = CRF_calc) #capital recovery factor 
     model.tlpsp = pyo.Param (initialize = tlpsp) #LPSP Time for moving average
     model.lpsp_cost = pyo.Param (initialize = lpsp_cost)
+    model.w_cost = pyo.Param (initialize = w_cost)
 
     # Variables
     model.y = pyo.Var(model.TECHNOLOGIES, within=pyo.Binary) #select or not the technology
@@ -140,9 +143,7 @@ def make_model(generators_dict=None,
           return pyo.Constraint.Skip
     model.G_mindiesel = pyo.Constraint(model.GENERATORS, model.HTIME, rule=G_mindiesel)
     
-    
-    
-    
+
     # Defines balance rule
     def balance_rule(model, t):
       return  sum(model.p[(k,t)] for k in model.GENERATORS) +  sum(model.b_discharge[(l,t)] for l in model.BATTERIES) + model.s_minus[t] == model.s_plus[t] + model.d[t]  + sum(model.b_charge[(l,t)] for l in model.BATTERIES)
@@ -292,15 +293,26 @@ def make_model(generators_dict=None,
     def amb_rule(model, t):
       return model.p_ren[t] / model.d[t]  >= model.renfrac 
     model.amb_rule = pyo.Constraint(model.HTIME, rule=amb_rule)
+    
+    
+    # Defines objective function with LPSP
+    def obj2_rule(model):
+      return((model.TNPC + model.TNPC_OP ) * model.CRF) / sum( model.d[t] for t in model.HTIME) +  model.w_cost * sum( model.s_plus[t] for t in model.HTIME) +  model.lpsp_cost * sum( model.s_minus[t] for t in model.HTIME)
+    model.LCOE_value = pyo.Objective(sense = pyo.minimize, rule=obj2_rule)
+    #I put demand for linearity
     '''
 
     # Defines objective function
     def obj2_rule(model):
-      return ((model.TNPC + model.TNPC_OP) * model.CRF) / sum( model.d[t] for t in model.HTIME)
+      return((model.TNPC + model.TNPC_OP ) * model.CRF) / sum( model.d[t] for t in model.HTIME) +  model.w_cost * sum( model.s_plus[t] for t in model.HTIME) 
     model.LCOE_value = pyo.Objective(sense = pyo.minimize, rule=obj2_rule)
     #I put demand for linearity
 
+    
+
+
     return model
+
 
 
 
@@ -315,6 +327,7 @@ def make_model_operational(generators_dict=None,
                TNPC = 0,
                CRF = 1,
                lpsp_cost = 0,
+               w_cost = 0,
                tlpsp = 1):
     #generators_dict = dictionary of generators - input (Sizing decision)
     #batteries_dict = dictionary of batteries - input (Sizing decision)
@@ -349,6 +362,7 @@ def make_model_operational(generators_dict=None,
     model.bat_area = pyo.Param(model.BATTERIES, initialize = {k:batteries_dict[k].area for k in batteries_dict.keys()})# Battery area
     model.n_gen = pyo.Param(model.GENERATORS, initialize = {k:generators_dict[k].n for k in generators_dict.keys()})# Number of Generator
     model.lpsp_cost = pyo.Param (initialize = lpsp_cost)
+    model.w_cost = pyo.Param (initialize = w_cost)
 
     # Variables
     model.v = pyo.Var(model.GENERATORS, model.HTIME, within=pyo.Binary) #select or not the generator in each period
@@ -498,8 +512,12 @@ def make_model_operational(generators_dict=None,
         return pyo.Constraint.Skip
     model.lpspcons = pyo.Constraint(model.HTIME, rule=lpspcons_rule)
 
-
-    
+    '''
+    # Defines Objective function with LPSP
+    def obj2_rule(model):
+      return ((model.TNPC + model.TNPC_OP) * model.CRF) / sum( model.d[t] for t in model.HTIME) +  model.w_cost * sum( model.s_plus[t] for t in model.HTIME) +  model.lpsp_cost * sum( model.s_minus[t] for t in model.HTIME)
+    model.LCOE_value = pyo.Objective(sense = pyo.minimize, rule=obj2_rule)    
+    '''
     
     #Objective funtion       
 
@@ -512,8 +530,9 @@ def make_model_operational(generators_dict=None,
 
     # Defines Objective function
     def obj2_rule(model):
-      return ((model.TNPC + model.TNPC_OP) * model.CRF) / sum( model.d[t] for t in model.HTIME)
+      return ((model.TNPC + model.TNPC_OP) * model.CRF) / sum( model.d[t] for t in model.HTIME) +  model.w_cost * sum( model.s_plus[t] for t in model.HTIME) 
     model.LCOE_value = pyo.Objective(sense = pyo.minimize, rule=obj2_rule)
+
 
     
     return model
