@@ -20,21 +20,57 @@ class Generator(): #Superclass generators
 
 
 class Solar(Generator):
-
-    def __init__(self, id_gen, tec, br, va_op, area, cost_up, cost_r, cost_om, cost_s, ef, G_test, R_test, n):
+    def __init__(self, id_gen, tec, br, va_op, area, cost_up, cost_r, cost_om, cost_s, ef, n, T_noct, G_noct, G_max, fpv):
         self.ef = ef #Efficiency 
-        self.G_test = G_test #Rated power of the solar panel in standard test condition
-        self.R_test = R_test #Global irradiance in standard test condition of the PV cell 
         self.n = n #Number of panels
+        self.T_noct = T_noct #Nominal Operating cell Tmperature
+        self.G_noct = G_noct #Irradiance operating Normal Condition
+        self.G_max = G_max #Rated power
+        self.fpv = fpv #derating factor
         self.gen_rule = {}
+        self.INOCT = 0
         super(Solar, self).__init__(id_gen, tec, br, va_op, area, cost_up, cost_r, cost_om, cost_s)
-    
-    def Solargeneration(self, forecastGt): #Gt = irradiance data over the time   
+
+    def Solargeneration(self, kt, t_amb, gt):    
             #Calculate generation over the time
-            for t in list(forecastGt.index.values):
-                self.gen_rule[t] = self.n * self.ef * self.G_test * (forecastGt[t]/self.R_test) 
+            for t in list(gt.index.values):
+                Irad_panel = gt['gt'][t] #irradiacion en modulo W/m2
+                if Irad_panel<=0:
+                   self.gen_rule[t] = 0
+                else:
+                    TM = t_amb[t] + (self.INOCT - 20)*(Irad_panel/self.G_noct)
+                    self.gen_rule[t] = self.n *self.G_max*Irad_panel*(1 + kt*(TM-25))*self.fpv
             return self.gen_rule
 
+    # Modelo de temperatura 
+    def Get_INOCT(self, caso = 1 , w = 1):
+        """caso 1: direct mount
+            caso 2: stand-off
+            caso 3: rack mount
+            w: distans to mount
+            w=1 in > x = 11
+            w=3 in > x = 3
+            w=6 in > x = -1
+        """
+        if caso == 1:
+            inoct = self.T_noct + 18.0
+    
+        if caso == 2:
+            if w <=1:
+                inoct = self.T_noct + 11.0
+            elif w <=3:
+                inoct = self.T_noct + 3.0
+            else:
+                inoct = self.T_noct - 1.0
+    
+        if caso == 3:
+            inoct = self.T_noct - 3.0
+        
+        self.INOCT = inoct
+        
+        return self.INOCT
+        
+  
 
 class Eolic(Generator):
     def __init__(self, id_gen, tec, br, va_op, area, cost_up, cost_r, cost_om, cost_s, ef, s_in, s_rate, s_out, rp, n, n_eq):
@@ -65,18 +101,15 @@ class Eolic(Generator):
 
                                
 class Diesel(Generator):
-    def __init__(self, id_gen, tec, br, va_op, area, cost_up, cost_r, cost_om, cost_s, ef, G_min, G_max, n):
+    def __init__(self, id_gen, tec, br, va_op, area, cost_up, cost_r, cost_om, cost_s, ef, G_min, G_max, n, f0, f1):
         self.ef = ef #efficiency
         self.G_min = G_min #Minimun generation to active the Diesel
         self.G_max = G_max #Rated power, maximum generation
         self.n = n #Number of diesel generators
-        self.gen_rule = {}
+        self.f0 = f0 #fuel consumption curve coefficient
+        self.f1 = f1 #fuel consumption curve coefficient
         super(Diesel, self).__init__(id_gen, tec, br, va_op, area, cost_up, cost_r, cost_om, cost_s)
-    
-    def Dieselgeneration(self, demand): #Calculate maximum generation capacity
-            for t in list(demand.index.values):
-                self.gen_rule[t] = self.n * self.G_max
-            return self.gen_rule
+
 
 
 class Battery():
@@ -104,3 +137,16 @@ class Battery():
         self.soc_min = self.soc_max * (1-self.dod_max)
         return self.soc_min
 
+
+class Solution():
+    def __init__(self, generators_dict_sol, 
+                 batteries_dict_sol, 
+                 technologies_dict_sol, 
+                 renewables_dict_sol, 
+                 results):
+        self.generators_dict_sol = generators_dict_sol
+        self.batteries_dict_sol = batteries_dict_sol
+        self.technologies_dict_sol = technologies_dict_sol
+        self.renewables_dict_sol = renewables_dict_sol
+        self.results = results
+        self.feasible = False

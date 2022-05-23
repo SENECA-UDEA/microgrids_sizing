@@ -1,12 +1,22 @@
 {   
     "amax": 20, 
     "ir" : 0.2, 
-    "nse" : 0.2, 
+    "nse" : 0.5, 
     "maxtec" : 4, 
     "years" : 20,
     "tlpsp" : 1,
+    "lpsp_cost":10,
     "max_brand" : {"S":2,
                    "D":3,
                    "W":3,
-                   "B":2}
+                   "B":2},
+    "tilted_angle" : 10,
+    "module_azimuth": 20,
+    "time_zone": -5,
+    "longitude": 8.1221,
+    "latitude": -72.222,
+    "alpha_albedo": 0.2,
+    "caso": 1,
+    "kt": 0.00232,
+    "w": 1
 }
