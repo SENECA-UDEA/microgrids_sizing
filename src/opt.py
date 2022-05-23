@@ -581,10 +581,15 @@ class Results():
         
         #Generator data frame
         generation = {k : [0]*len(model.HTIME) for k in model.GENERATORS}
+        percent_data = {k+'_%': [0]*len(model.HTIME) for k in model.GENERATORS}
         for (k,t), f in model.p.items():
           generation [k][t] = value(f)
+          if value(model.d[t]) != 0:
+              percent_data [k+'_%'][t] = value (f) / value(model.d[t])
+          
         generation = pd.DataFrame(generation, columns=[*generation.keys()])
-      
+        generation_percent = pd.DataFrame(percent_data, columns=[*percent_data.keys()])
+        
         #Operative cost data frame
         generation_cost_data = {k+'_cost' : [0]*len(model.HTIME) for k in model.GENERATORS}
         for (k,t), f in model.operative_cost.items():
@@ -593,9 +598,14 @@ class Results():
         
         # batery charge and discharge
         b_discharge_data = {l+'_b-' : [0]*len(model.HTIME) for l in model.BATTERIES}
+        percent_battery = {l+'_%': [0]*len(model.HTIME) for l in model.BATTERIES}
         for (l,t), f in model.b_discharge.items():
           b_discharge_data [l+'_b-'][t] = value(f)
+          if value(model.d[t]) != 0:
+              percent_battery [l+'_%'][t] = value (f) / value(model.d[t])
+        
         b_discharge_df = pd.DataFrame(b_discharge_data, columns=[*b_discharge_data.keys()])
+        battery_percent = pd.DataFrame(percent_battery, columns=[*percent_battery.keys()])
 
         b_charge_data = {l+'_b+': [0]*len(model.HTIME) for l in model.BATTERIES}
         for (l,t), f in model.b_charge.items():
@@ -627,7 +637,7 @@ class Results():
         splus_df = pd.DataFrame(splus_data, columns = ['Wasted Energy'])
                 
 
-        self.df_results = pd.concat([demand, generation, b_discharge_df, b_charge_df, soc_df, sminus_df, splus_df, generation_cost ], axis=1) 
+        self.df_results = pd.concat([demand, generation, b_discharge_df, b_charge_df, soc_df, sminus_df, splus_df, generation_cost, generation_percent, battery_percent ], axis=1) 
         
         # general descriptives of the solution
         self.descriptive = {}
