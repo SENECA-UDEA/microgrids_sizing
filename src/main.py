@@ -5,11 +5,13 @@ Created on Wed Apr 20 11:14:21 2022
 @author: pmayaduque
 """
 
-from utilities import read_data, create_objects, calculate_sizingcost
+from utilities import read_data, create_objects, calculate_sizingcost, create_technologies
 import opt as opt
 import pandas as pd 
 import random as random
 from plotly.offline import plot
+import copy
+from classes import Solution
 pd.options.display.max_columns = None
 
 # file paths github
@@ -25,7 +27,6 @@ forecast_filepath = '../data/forecast_day.csv'
 units_filepath = "../data/parameters_P.json"
 instanceData_filepath = "../data/instance_data.json"
 
-
 # read data
 demand_df, forecast_df, generators, batteries, instance_data = read_data(demand_filepath,
                                                           forecast_filepath,
@@ -34,11 +35,17 @@ demand_df, forecast_df, generators, batteries, instance_data = read_data(demand_
 
 
 
+
 # Create objects and generation rule
-generators_dict, batteries_dict, technologies_dict, renewables_dict = create_objects(generators,
-                                                                                   batteries, 
-                                                                                   forecast_df,
-                                                                                   demand_df)
+generators_dict, batteries_dict = create_objects(generators,
+                                                 batteries, 
+                                                 forecast_df,
+                                                 demand_df,
+                                                 instance_data)
+
+technologies_dict, renewables_dict = create_technologies (generators_dict,
+                                                          batteries_dict)
+
 
 
 # Create model          
@@ -53,6 +60,7 @@ model = opt.make_model(generators_dict,
                        maxtec = instance_data['maxtec'], 
                        maxbr = instance_data['max_brand'],
                        years = instance_data['years'],
+                       lpsp_cost = instance_data['lpsp_cost'],
                        tlpsp = instance_data['tlpsp'])    
 
 
@@ -62,7 +70,7 @@ results, termination = opt.solve_model(model,
                        optimizer = 'gurobi',
                        mipgap = 0.01,
                        tee = True)
-print("Model optimised")
+print("Model optimized")
 
 
 #TODO:  ext_time?
@@ -73,45 +81,3 @@ if termination['Temination Condition'] == 'optimal':
    generation_graph = model_results.generation_graph()
    plot(generation_graph)
    
-'''
-# Run model decomposition
- 
-n_gen = 6
-generators = random.sample(generators, n_gen)
-n_bat = 1
-batteries = random.sample(batteries, n_bat)
-# Create objectstn and generation rule
-generators_dict, batteries_dict, technologies_dict, renewables_dict = create_objects(generators,
-                                                                                   batteries,  
-                                                                                   forecast_df,
-                                                                                   demand_df)
-
-
-tnpc_calc, crf_calc = calculate_sizingcost(generators_dict=generators_dict, 
-                               batteries_dict=batteries_dict, 
-                               ir = instance_data['ir'],
-                               years = instance_data['years'])
-
-
-model = opt.make_model_operational(generators_dict=generators_dict, 
-                               batteries_dict=batteries_dict,  
-                               demand_df=dict(zip(demand_df.t, demand_df.demand)), 
-                               technologies_dict = technologies_dict,  
-                               renewables_dict = renewables_dict,
-                               nse =  instance_data['nse'], 
-                               TNPC = tnpc_calc,
-                               CRF = crf_calc,
-                               tlpsp = instance_data['tlpsp'])      
-# solve model 
-results, termination = opt.solve_model(model, 
-                       optimizer = 'gurobi',
-                       mipgap = 0.02,
-                       tee = True)
-if termination['Temination Condition'] == 'optimal': 
-   model_results = opt.Results(model)
-   print(model_results.descriptive)
-   print(model_results.df_results)
-   generation_graph = model_results.generation_graph()
-   plot(generation_graph)
-   
-'''

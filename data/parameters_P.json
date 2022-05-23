@@ -11,9 +11,11 @@
             "cost_om": 1,
             "cost_s": 2,
             "ef": 0.8,
-            "G_test": 3,
-            "R_test": 4,
-            "n": 1
+            "n": 1,
+            "T_noct": 20,
+            "G_noct": 1000,
+            "G_max": 200,
+            "fpv": 0.9
         },
         {
             "id_gen": "Solar2",
@@ -26,9 +28,11 @@
             "cost_om": 6,
             "cost_s": 1,
             "ef": 0.88,
-            "G_test": 7,
-            "R_test": 13,
-            "n": 1
+            "n": 1,
+            "T_noct": 15,
+            "G_noct": 900,
+            "G_max": 150,
+            "fpv": 0.8
         },
         {
             "id_gen": "Wind1",
@@ -97,8 +101,27 @@
             "ef": 0.77,
             "G_min": 1,
             "G_max": 20,
-            "n": 1
-        }
+            "n": 1,
+            "f0": 0.246,
+            "f1": 0.08145
+        },
+        {
+            "id_gen": "Diesel2",
+            "tec": "D",
+            "br": "D1",
+            "va_op": 3,
+            "area": 2,
+            "cost_up": 300,
+            "cost_r": 1,
+            "cost_om": 1,
+            "cost_s": 2,
+            "ef": 0.77,
+            "G_min": 1,
+            "G_max": 20,
+            "n": 1,
+            "f0": 0.246,
+            "f1": 0.08145
+        } 
     ],
 
     "batteries":[
