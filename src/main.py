@@ -61,6 +61,7 @@ model = opt.make_model(generators_dict,
                        maxbr = instance_data['max_brand'],
                        years = instance_data['years'],
                        lpsp_cost = instance_data['lpsp_cost'],
+                       w_cost = instance_data['w_cost'],
                        tlpsp = instance_data['tlpsp'])    
 
 

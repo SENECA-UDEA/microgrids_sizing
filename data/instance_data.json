@@ -6,6 +6,7 @@
     "years" : 20,
     "tlpsp" : 1,
     "lpsp_cost":10,
+    "w_cost": 15,
     "max_brand" : {"S":2,
                    "D":3,
                    "W":3,
