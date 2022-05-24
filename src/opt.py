@@ -254,7 +254,7 @@ def make_model(generators_dict=None,
     def dieselsolar_rule(model,k,t):
         gen = generators_dict[k]
         if gen.tec == 'S':
-            return model.v[k,t] <= sum( model.v[k,t] for k in model.GENERATORS if gen.tec == 'D')
+            return sum( model.v[k1,t] for k1 in model.GENERATORS if generators_dict[k1].tec == 'D') >= model.v[k,t]
         else:
             return pyo.Constraint.Skip
     model.dieselsolar_rule = pyo.Constraint(model.GENERATORS, model.HTIME, rule=dieselsolar_rule)
@@ -276,17 +276,36 @@ def make_model(generators_dict=None,
         return model.TNPC_OP == expr2
     model.tnpcop = pyo.Constraint(rule=tnpcop_rule)
     
+    
+    if model.lpsp_cost > 0:
+        # Defines objective function with LPSP
+        def obj2_rule(model):
+          return((model.TNPC + model.TNPC_OP ) * model.CRF) / sum( model.d[t] for t in model.HTIME) +  model.w_cost * sum( model.s_plus[t] for t in model.HTIME) +  model.lpsp_cost * sum( model.s_minus[t] for t in model.HTIME)
+        model.LCOE_value = pyo.Objective(sense = pyo.minimize, rule=obj2_rule)
+        #I put demand for linearity
+    else:
     # Defines LPSP constraint
-    def lpspcons_rule(model, t):
-      if t >= (model.tlpsp - 1):
-        rev = sum(model.d[t] for t in range((t-model.tlpsp+1), t+1)) 
-        if rev > 0:
-          return sum(model.s_minus[t] for t in range((t-model.tlpsp+1), t+1)) / rev  <= model.nse 
-        else:
-          return pyo.Constraint.Skip
-      else:
-        return pyo.Constraint.Skip
-    model.lpspcons = pyo.Constraint(model.HTIME, rule=lpspcons_rule)
+        def lpspcons_rule(model, t):
+          if t >= (model.tlpsp - 1):
+            rev = sum(model.d[t] for t in range((t-model.tlpsp+1), t+1)) 
+            if rev > 0:
+              return sum(model.s_minus[t] for t in range((t-model.tlpsp+1), t+1)) / rev  <= model.nse 
+            else:
+              return pyo.Constraint.Skip
+          else:
+            return pyo.Constraint.Skip
+        model.lpspcons = pyo.Constraint(model.HTIME, rule=lpspcons_rule)
+
+
+        # Defines objective function
+        def obj2_rule(model):
+          return((model.TNPC + model.TNPC_OP ) * model.CRF) / sum( model.d[t] for t in model.HTIME) +  model.w_cost * sum( model.s_plus[t] for t in model.HTIME) 
+        model.LCOE_value = pyo.Objective(sense = pyo.minimize, rule=obj2_rule)
+        #I put demand for linearity
+
+    
+    return model
+
 
 
     '''
@@ -298,23 +317,10 @@ def make_model(generators_dict=None,
     def amb_rule(model, t):
       return model.p_ren[t] / model.d[t]  >= model.renfrac 
     model.amb_rule = pyo.Constraint(model.HTIME, rule=amb_rule)
-    
-    
-    # Defines objective function with LPSP
-    def obj2_rule(model):
-      return((model.TNPC + model.TNPC_OP ) * model.CRF) / sum( model.d[t] for t in model.HTIME) +  model.w_cost * sum( model.s_plus[t] for t in model.HTIME) +  model.lpsp_cost * sum( model.s_minus[t] for t in model.HTIME)
-    model.LCOE_value = pyo.Objective(sense = pyo.minimize, rule=obj2_rule)
-    #I put demand for linearity
+
     '''
 
-    # Defines objective function
-    def obj2_rule(model):
-      return((model.TNPC + model.TNPC_OP ) * model.CRF) / sum( model.d[t] for t in model.HTIME) +  model.w_cost * sum( model.s_plus[t] for t in model.HTIME) 
-    model.LCOE_value = pyo.Objective(sense = pyo.minimize, rule=obj2_rule)
-    #I put demand for linearity
 
-    
-    return model
 
 
 
@@ -498,34 +504,17 @@ def make_model_operational(generators_dict=None,
       return  model.bc[l, t] + model.bd[l, t] <= 1
     model.bcbd_rule = pyo.Constraint(model.BATTERIES, model.HTIME, rule=bcbd_rule)
    
-    # Defines LPSP constraint
-    def lpspcons_rule(model, t):
-      if t >= (model.tlpsp - 1):
-        rev = sum(model.d[t] for t in range((t-model.tlpsp+1), t+1)) 
-        if rev > 0:
-          return sum(model.s_minus[t] for t in range((t-model.tlpsp+1), t+1)) / sum(model.d[t] for t in range((t-model.tlpsp+1), t+1))  <= model.nse 
-        else:
-          return pyo.Constraint.Skip
-      else:
-        return pyo.Constraint.Skip
-    model.lpspcons = pyo.Constraint(model.HTIME, rule=lpspcons_rule)
+
     
     # Defines rule relation Solar - Diesel
     def dieselsolar_rule(model,k,t):
         gen = generators_dict[k]
         if gen.tec == 'S':
-            return model.v[k,t] <= sum( model.v[(k,t)] for k in model.GENERATORS if gen.tec == 'D')
+            return sum( model.v[k1,t] for k1 in model.GENERATORS if generators_dict[k1].tec == 'D') >= model.v[k,t]
         else:
             return pyo.Constraint.Skip
     model.dieselsolar_rule = pyo.Constraint(model.GENERATORS, model.HTIME, rule=dieselsolar_rule)
 
-    '''
-    # Defines Objective function with LPSP
-    def obj2_rule(model):
-      return ((model.TNPC + model.TNPC_OP) * model.CRF) / sum( model.d[t] for t in model.HTIME) +  model.w_cost * sum( model.s_plus[t] for t in model.HTIME) +  model.lpsp_cost * sum( model.s_minus[t] for t in model.HTIME)
-    model.LCOE_value = pyo.Objective(sense = pyo.minimize, rule=obj2_rule)    
-    '''
-    #Objective funtion       
 
     # Define TNPC operative constraint
     def tnpcop_rule(model):
@@ -533,10 +522,30 @@ def make_model_operational(generators_dict=None,
         return model.TNPC_OP == expr2
     model.tnpcop = pyo.Constraint(rule=tnpcop_rule)
 
-    # Defines Objective function
-    def obj2_rule(model):
-      return ((model.TNPC + model.TNPC_OP) * model.CRF) / sum( model.d[t] for t in model.HTIME) +  model.w_cost * sum( model.s_plus[t] for t in model.HTIME) 
-    model.LCOE_value = pyo.Objective(sense = pyo.minimize, rule=obj2_rule)
+    if model.lpsp_cost > 0:
+        # Defines Objective function with LPSP
+        def obj2_rule(model):
+          return ((model.TNPC + model.TNPC_OP) * model.CRF) / sum( model.d[t] for t in model.HTIME) +  model.w_cost * sum( model.s_plus[t] for t in model.HTIME) +  model.lpsp_cost * sum( model.s_minus[t] for t in model.HTIME)
+        model.LCOE_value = pyo.Objective(sense = pyo.minimize, rule=obj2_rule)    
+    else:
+        # Defines LPSP constraint
+        def lpspcons_rule(model, t):
+          if t >= (model.tlpsp - 1):
+            rev = sum(model.d[t] for t in range((t-model.tlpsp+1), t+1)) 
+            if rev > 0:
+              return sum(model.s_minus[t] for t in range((t-model.tlpsp+1), t+1)) / sum(model.d[t] for t in range((t-model.tlpsp+1), t+1))  <= model.nse 
+            else:
+              return pyo.Constraint.Skip
+          else:
+            return pyo.Constraint.Skip
+        model.lpspcons = pyo.Constraint(model.HTIME, rule=lpspcons_rule)
+    
+        # Defines Objective function
+        def obj2_rule(model):
+          return ((model.TNPC + model.TNPC_OP) * model.CRF) / sum( model.d[t] for t in model.HTIME) +  model.w_cost * sum( model.s_plus[t] for t in model.HTIME) 
+        model.LCOE_value = pyo.Objective(sense = pyo.minimize, rule=obj2_rule)
+        
+
     
     return model
 
