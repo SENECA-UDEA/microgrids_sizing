@@ -25,7 +25,6 @@ def make_model(generators_dict=None,
                maxtec = 1, 
                maxbr = 0,
                years = 1,
-               lpsp_cost = 0,
                w_cost = 0,
                tlpsp = 1):
     #generators_dict = dictionary of generators
@@ -38,7 +37,6 @@ def make_model(generators_dict=None,
     #nse = maximum allowed not supplied energy
     #maxtec = maximum number of technologies allowed
     #maxbr= maximum brands allowed by each technology
-    #lpsp_cost = cost of unssupplied load
     #w_cost = Penalized wasted energy cost
     #tlpsp = Number of lpsp periods for moving average
 
@@ -66,7 +64,6 @@ def make_model(generators_dict=None,
     CRF_calc = (model.ir * (1 + model.ir)**(model.t_years))/((1 + model.ir)**(model.t_years)-1) #CRF to LCOE
     model.CRF = pyo.Param(initialize = CRF_calc) #capital recovery factor 
     model.tlpsp = pyo.Param (initialize = tlpsp) #LPSP Time for moving average
-    model.lpsp_cost = pyo.Param (initialize = lpsp_cost)
     model.w_cost = pyo.Param (initialize = w_cost)
 
     # Variables
@@ -275,33 +272,26 @@ def make_model(generators_dict=None,
         expr2 = sum(sum(model.operative_cost[k,t] for t in model.HTIME) for k in model.GENERATORS)
         return model.TNPC_OP == expr2
     model.tnpcop = pyo.Constraint(rule=tnpcop_rule)
-    
-    
-    if model.lpsp_cost > 0:
-        # Defines objective function with LPSP
-        def obj2_rule(model):
-          return((model.TNPC + model.TNPC_OP ) * model.CRF) / sum( model.d[t] for t in model.HTIME) +  model.w_cost * sum( model.s_plus[t] for t in model.HTIME) +  model.lpsp_cost * sum( model.s_minus[t] for t in model.HTIME)
-        model.LCOE_value = pyo.Objective(sense = pyo.minimize, rule=obj2_rule)
-        #I put demand for linearity
-    else:
+        
+
     # Defines LPSP constraint
-        def lpspcons_rule(model, t):
-          if t >= (model.tlpsp - 1):
-            rev = sum(model.d[t] for t in range((t-model.tlpsp+1), t+1)) 
-            if rev > 0:
-              return sum(model.s_minus[t] for t in range((t-model.tlpsp+1), t+1)) / rev  <= model.nse 
-            else:
-              return pyo.Constraint.Skip
-          else:
-            return pyo.Constraint.Skip
-        model.lpspcons = pyo.Constraint(model.HTIME, rule=lpspcons_rule)
+    def lpspcons_rule(model, t):
+      if t >= (model.tlpsp - 1):
+        rev = sum(model.d[t] for t in range((t-model.tlpsp+1), t+1)) 
+        if rev > 0:
+          return sum(model.s_minus[t] for t in range((t-model.tlpsp+1), t+1)) / rev  <= model.nse 
+        else:
+          return pyo.Constraint.Skip
+      else:
+        return pyo.Constraint.Skip
+    model.lpspcons = pyo.Constraint(model.HTIME, rule=lpspcons_rule)
 
 
-        # Defines objective function
-        def obj2_rule(model):
-          return((model.TNPC + model.TNPC_OP ) * model.CRF) / sum( model.d[t] for t in model.HTIME) +  model.w_cost * sum( model.s_plus[t] for t in model.HTIME) 
-        model.LCOE_value = pyo.Objective(sense = pyo.minimize, rule=obj2_rule)
-        #I put demand for linearity
+    # Defines objective function
+    def obj2_rule(model):
+      return((model.TNPC + model.TNPC_OP ) * model.CRF) / sum( model.d[t] for t in model.HTIME) +  model.w_cost * sum( model.s_plus[t] for t in model.HTIME) 
+    model.LCOE_value = pyo.Objective(sense = pyo.minimize, rule=obj2_rule)
+    #I put demand for linearity
 
     
     return model
@@ -335,7 +325,6 @@ def make_model_operational(generators_dict=None,
                nse = 0, 
                TNPC = 0,
                CRF = 1,
-               lpsp_cost = 0,
                w_cost = 0,
                tlpsp = 1):
     #generators_dict = dictionary of generators - input (Sizing decision)
@@ -369,7 +358,6 @@ def make_model_operational(generators_dict=None,
     model.gen_area = pyo.Param(model.GENERATORS, initialize = {k:generators_dict[k].area for k in generators_dict.keys()})# Generator area
     model.bat_area = pyo.Param(model.BATTERIES, initialize = {k:batteries_dict[k].area for k in batteries_dict.keys()})# Battery area
     model.n_gen = pyo.Param(model.GENERATORS, initialize = {k:generators_dict[k].n for k in generators_dict.keys()})# Number of Generator
-    model.lpsp_cost = pyo.Param (initialize = lpsp_cost)
     model.w_cost = pyo.Param (initialize = w_cost)
 
     # Variables
@@ -522,29 +510,24 @@ def make_model_operational(generators_dict=None,
         return model.TNPC_OP == expr2
     model.tnpcop = pyo.Constraint(rule=tnpcop_rule)
 
-    if model.lpsp_cost > 0:
-        # Defines Objective function with LPSP
-        def obj2_rule(model):
-          return ((model.TNPC + model.TNPC_OP) * model.CRF) / sum( model.d[t] for t in model.HTIME) +  model.w_cost * sum( model.s_plus[t] for t in model.HTIME) +  model.lpsp_cost * sum( model.s_minus[t] for t in model.HTIME)
-        model.LCOE_value = pyo.Objective(sense = pyo.minimize, rule=obj2_rule)    
-    else:
-        # Defines LPSP constraint
-        def lpspcons_rule(model, t):
-          if t >= (model.tlpsp - 1):
-            rev = sum(model.d[t] for t in range((t-model.tlpsp+1), t+1)) 
-            if rev > 0:
-              return sum(model.s_minus[t] for t in range((t-model.tlpsp+1), t+1)) / sum(model.d[t] for t in range((t-model.tlpsp+1), t+1))  <= model.nse 
-            else:
-              return pyo.Constraint.Skip
-          else:
-            return pyo.Constraint.Skip
-        model.lpspcons = pyo.Constraint(model.HTIME, rule=lpspcons_rule)
+
+    # Defines LPSP constraint
+    def lpspcons_rule(model, t):
+      if t >= (model.tlpsp - 1):
+        rev = sum(model.d[t] for t in range((t-model.tlpsp+1), t+1)) 
+        if rev > 0:
+          return sum(model.s_minus[t] for t in range((t-model.tlpsp+1), t+1)) / sum(model.d[t] for t in range((t-model.tlpsp+1), t+1))  <= model.nse 
+        else:
+          return pyo.Constraint.Skip
+      else:
+        return pyo.Constraint.Skip
+    model.lpspcons = pyo.Constraint(model.HTIME, rule=lpspcons_rule)
+
+    # Defines Objective function
+    def obj2_rule(model):
+      return ((model.TNPC + model.TNPC_OP) * model.CRF) / sum( model.d[t] for t in model.HTIME) +  model.w_cost * sum( model.s_plus[t] for t in model.HTIME) 
+    model.LCOE_value = pyo.Objective(sense = pyo.minimize, rule=obj2_rule)
     
-        # Defines Objective function
-        def obj2_rule(model):
-          return ((model.TNPC + model.TNPC_OP) * model.CRF) / sum( model.d[t] for t in model.HTIME) +  model.w_cost * sum( model.s_plus[t] for t in model.HTIME) 
-        model.LCOE_value = pyo.Objective(sense = pyo.minimize, rule=obj2_rule)
-        
 
     
     return model
@@ -590,15 +573,11 @@ class Results():
         
         #Generator data frame
         generation = {k : [0]*len(model.HTIME) for k in model.GENERATORS}
-        percent_data = {k+'_%': [0]*len(model.HTIME) for k in model.GENERATORS}
         for (k,t), f in model.p.items():
           generation [k][t] = value(f)
-          if value(model.d[t]) != 0:
-              percent_data [k+'_%'][t] = value (f) / value(model.d[t])
           
         generation = pd.DataFrame(generation, columns=[*generation.keys()])
-        generation_percent = pd.DataFrame(percent_data, columns=[*percent_data.keys()])
-        
+               
         #Operative cost data frame
         generation_cost_data = {k+'_cost' : [0]*len(model.HTIME) for k in model.GENERATORS}
         for (k,t), f in model.operative_cost.items():
@@ -607,15 +586,11 @@ class Results():
         
         # batery charge and discharge
         b_discharge_data = {l+'_b-' : [0]*len(model.HTIME) for l in model.BATTERIES}
-        percent_battery = {l+'_%': [0]*len(model.HTIME) for l in model.BATTERIES}
         for (l,t), f in model.b_discharge.items():
           b_discharge_data [l+'_b-'][t] = value(f)
-          if value(model.d[t]) != 0:
-              percent_battery [l+'_%'][t] = value (f) / value(model.d[t])
         
         b_discharge_df = pd.DataFrame(b_discharge_data, columns=[*b_discharge_data.keys()])
-        battery_percent = pd.DataFrame(percent_battery, columns=[*percent_battery.keys()])
-
+        
         b_charge_data = {l+'_b+': [0]*len(model.HTIME) for l in model.BATTERIES}
         for (l,t), f in model.b_charge.items():
           b_charge_data [l+'_b+'][t] = value(f)
@@ -646,7 +621,7 @@ class Results():
         splus_df = pd.DataFrame(splus_data, columns = ['Wasted Energy'])
                 
 
-        self.df_results = pd.concat([demand, generation, b_discharge_df, b_charge_df, soc_df, sminus_df, splus_df, generation_cost, generation_percent, battery_percent ], axis=1) 
+        self.df_results = pd.concat([demand, generation, b_discharge_df, b_charge_df, soc_df, sminus_df, splus_df, generation_cost], axis=1) 
         
         # general descriptives of the solution
         self.descriptive = {}

@@ -34,7 +34,7 @@ class Solar(Generator):
     def Solargeneration(self, kt, t_amb, gt):    
             #Calculate generation over the time
             for t in list(gt.index.values):
-                Irad_panel = gt['gt'][t] #irradiacion en modulo W/m2
+                Irad_panel = gt[t] #irradiacion en modulo W/m2
                 if Irad_panel<=0:
                    self.gen_rule[t] = 0
                 else:

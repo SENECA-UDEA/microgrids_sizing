@@ -111,7 +111,6 @@ for i in range(20):
                                        nse =  instance_data['nse'], 
                                        TNPC = tnpc_calc,
                                        CRF = crf_calc,
-                                       lpsp_cost = instance_data['lpsp_cost'],
                                        w_cost = instance_data['w_cost'],
                                        tlpsp = instance_data['tlpsp']) 
     
@@ -138,6 +137,15 @@ for i in range(20):
 #df with the feasible solutions
 df_iterations = pd.DataFrame(rows_df, columns=["i", "feasible", "area", "LCOE_actual", "LCOE_Best"])
 
+column_data = {}
+for bat in sol_best.batteries_dict_sol.values(): 
+    if (sol_best.results.descriptive['batteries'][bat.id_bat] == 1):
+        column_data[bat.id_bat+'_%'] =  sol_best.results.df_results[bat.id_bat+'_b-'] / sol_best.results.df_results['demand']
+for gen in sol_best.generators_dict_sol.values(): 
+    if (sol_best.results.descriptive['generators'][gen.id_gen] == 1):
+        column_data[gen.id_gen+'_%'] =  sol_best.results.df_results[gen.id_gen] / sol_best.results.df_results['demand']
+   
+percent_df = pd.DataFrame(column_data, columns=[*column_data.keys()])
 
 
 '''
