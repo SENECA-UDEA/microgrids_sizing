@@ -40,13 +40,12 @@ def read_data(demand_filepath,
 
 def create_objects(generators, batteries, forecast_df, demand_df, instance_data):
     # Create generators and batteries
-    kt, w, caso, t_amb, gt = irradiance_panel (forecast_df, instance_data)
     generators_dict = {}
     for k in generators:
       if k['tec'] == 'S':
         obj_aux = Solar(*k.values())
-        obj_aux.Get_INOCT(w, caso)
-        obj_aux.Solargeneration(kt, t_amb, gt)
+        obj_aux.Get_INOCT(instance_data["caso"], instance_data["w"])
+        obj_aux.Solargeneration(instance_data["kt"], forecast_df['t_ambt'], forecast_df['DNI'])
       elif k['tec'] == 'W':
         obj_aux = Eolic(*k.values())
         obj_aux.Windgeneration(forecast_df['Wt'])
@@ -113,6 +112,10 @@ def calculate_sizingcost(generators_dict, batteries_dict, ir, years):
 
             return TNPC, CRF
 
+
+
+
+'''
 
 def min2hms(hm):
     """conversion min -> (horas, min, sec)
@@ -268,3 +271,4 @@ def irradiance_panel (forecast_df, instance_data):
     gt =  pd.DataFrame(gt_data.items(), columns = ['t','gt']) 
         
     return kt, w, caso, t_amb, gt
+'''
