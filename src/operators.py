@@ -40,7 +40,6 @@ class Operators():
                 else:
                     select_ob = d.id_gen
                 
-        solution.results.descriptive['area'] = solution.results.descriptive['area'] - dict_actual[select_ob].area
         if dict_actual[select_ob].tec == 'B':
             solution.batteries_dict_sol.pop(select_ob)
         else:
@@ -86,11 +85,30 @@ class Operators():
         else:
             solution.generators_dict_sol[select_ob] = dict_total[select_ob] 
         
-        solution.results.descriptive['area'] = solution.results.descriptive['area'] + dict_total[select_ob].area  
         solution.technologies_dict_sol, solution.renewables_dict_sol = create_technologies (solution.generators_dict_sol
                                                                                               , solution.batteries_dict_sol)
         return solution
     
+    def addrandomobject(self, sol_actual, availables): #add generator or battery
+        solution = copy.deepcopy(sol_actual)
+        dict_total = {**self.generators_dict,**self.batteries_dict}
+        select_ob = random.choice(availables)
+        if dict_total[select_ob].tec == 'B':
+            solution.batteries_dict_sol[select_ob] = dict_total[select_ob]
+        else:
+            solution.generators_dict_sol[select_ob] = dict_total[select_ob] 
+        
+        solution.technologies_dict_sol, solution.renewables_dict_sol = create_technologies (solution.generators_dict_sol
+                                                                                              , solution.batteries_dict_sol)
+        return solution
+
+    def calculate_area (self, sol_actual):
+        solution = copy.deepcopy(sol_actual)
+        dict_actual = {**solution.generators_dict_sol,**solution.batteries_dict_sol}
+        area = 0
+        for i in dict_actual.values():
+            area += i.area
+        return area
     
     def available(self, sol_actual, amax):
         solution = copy.deepcopy(sol_actual)
