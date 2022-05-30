@@ -80,7 +80,6 @@ movement = "Initial Solution"
 rows_df = []
 
 for i in range(20):
-    sol_current.results.descriptive['area'] = search_operator.calculate_area(sol_current)
     rows_df.append([i, sol_current.feasible, 
                     sol_current.results.descriptive['area'], 
                     sol_current.results.descriptive['LCOE'], 
@@ -137,7 +136,8 @@ for i in range(20):
         sol_try.results.descriptive['LCOE'] = None
         sol_current = copy.deepcopy(sol_try)
 
-                
+    sol_current.results.descriptive['area'] = search_operator.calculate_area(sol_current)
+         
                
                 
 #df with the feasible solutions
