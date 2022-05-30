@@ -74,30 +74,34 @@ sol_current = copy.deepcopy(sol_feasible)
 
 #check the available area
 amax =  instance_data['amax']
-
+movement = "Initial Solution"
 
 #df of solutions
 rows_df = []
 
 for i in range(20):
+    sol_current.results.descriptive['area'] = search_operator.calculate_area(sol_current)
     rows_df.append([i, sol_current.feasible, 
                     sol_current.results.descriptive['area'], 
                     sol_current.results.descriptive['LCOE'], 
-                    sol_best.results.descriptive['LCOE']])
+                    sol_best.results.descriptive['LCOE'], movement])
     if sol_current.feasible == True:     
         # save copy as the last solution feasible seen
         sol_feasible = copy.deepcopy(sol_current) 
         # Remove a generator or battery from the current solution
         sol_try = search_operator.removeobject(sol_current)
+        movement = "Remove"
     else:
         #  Create list of generators that could be added
         list_available = search_operator.available(sol_current, amax)
         if list_available != []:
             # Add a generator or battery to the current solution
-            sol_try = search_operator.addobject(sol_current, list_available, demand_df)
+            #sol_try = search_operator.addobject(sol_current, list_available, demand_df)
+            sol_try = search_operator.addrandomobject(sol_current, list_available)
+            movement = "Add"
         else:
             # return to the last feasible solution
-            sol_try = copy.deepcopy(sol_feasible)            
+            sol_try = copy.deepcopy(sol_feasible)
             continue # Skip running the model and go to the begining of the for loop
     tnpc_calc, crf_calc = calculate_sizingcost(sol_try.generators_dict_sol, 
                                                sol_try.batteries_dict_sol, 
@@ -119,6 +123,8 @@ for i in range(20):
                                            mipgap = 0.02,
                                             tee = True)
     
+    
+
     if termination['Temination Condition'] == 'optimal':
         sol_try.results.descriptive['LCOE'] = model.LCOE_value.expr()
         sol_try.results = opt.Results(model)
@@ -135,7 +141,7 @@ for i in range(20):
                
                 
 #df with the feasible solutions
-df_iterations = pd.DataFrame(rows_df, columns=["i", "feasible", "area", "LCOE_actual", "LCOE_Best"])
+df_iterations = pd.DataFrame(rows_df, columns=["i", "feasible", "area", "LCOE_actual", "LCOE_Best","Movement"])
 
 column_data = {}
 for bat in sol_best.batteries_dict_sol.values(): 
