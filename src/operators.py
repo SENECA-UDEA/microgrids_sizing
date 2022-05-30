@@ -9,6 +9,7 @@ from classes import Solution
 import random as random
 import copy
 import math
+import pandas as pd
 
 class Operators():
     def __init__(self, generators_dict, batteries_dict, demand_df, forecast_df,):
@@ -21,6 +22,7 @@ class Operators():
         solution = copy.deepcopy(sol_actual)
         dict_actual = {**solution.generators_dict_sol,**solution.batteries_dict_sol}
         min_relation = math.inf
+        #Check which one generates less energy at the highest cost
         for d in dict_actual.values(): 
             if d.tec == 'B':
                 op_cost = 0
@@ -30,8 +32,7 @@ class Operators():
                 sum_generation = solution.results.df_results[d.id_gen].sum(axis = 0, skipna = True)
                 op_cost = solution.results.df_results[d.id_gen+'_cost'].sum(axis = 0, skipna = True)
                 inv_cost = d.cost_up*d.n + d.cost_r*d.n + d.cost_om*d.n- d.cost_s*d.n
-                 
-         
+                
             relation = sum_generation / (inv_cost + op_cost)
             if relation <= min_relation:
                 min_relation = relation
@@ -39,7 +40,9 @@ class Operators():
                     select_ob = d.id_bat
                 else:
                     select_ob = d.id_gen
-                
+        
+        dic_remove =  pd.Series(solution.covered_demand[select_ob].values,index=solution.covered_demand[select_ob].keys()).to_dict()
+
         if dict_actual[select_ob].tec == 'B':
             solution.batteries_dict_sol.pop(select_ob)
         else:
@@ -47,51 +50,92 @@ class Operators():
         
         solution.technologies_dict_sol, solution.renewables_dict_sol = create_technologies (solution.generators_dict_sol
                                                                                               , solution.batteries_dict_sol)
-
         
-        return solution
+        return solution, dic_remove
     
-    def addobject(self, sol_actual, availables, demand_df): #add generator or battery
+
+
+    def calculate_demand_covered(self, sol_actual, demand_df):
+        #check the demand covered by each feasible object
         solution = copy.deepcopy(sol_actual)
-        dict_total = {**self.generators_dict,**self.batteries_dict}
-        min_relation = math.inf
-        for i in availables:
-            generation = 0
-            dic = dict_total[i]
-            if dic.tec == 'B':
-                inv_cost = dic.cost_up + dic.cost_r + dic.cost_om- dic.cost_s
-                #the maximum load posible - i divide into 2 because i can't charge and discharge at the same time
-                generation = (len(demand_df)/2)*(dic.soc_max - dic.soc_min)
-            else:
-                inv_cost = dic.cost_up + dic.cost_r + dic.cost_om- dic.cost_s
-                #check the power that can be supplied by the generator.
-                for t in list(demand_df['demand'].index.values):
-                    if dic.tec != 'D':
-                        aux = min(demand_df['demand'][t], dic.gen_rule[t])
-                        generation += aux
-                    else:
-                        aux = min(demand_df['demand'][t], dic.G_max)
-                        generation += aux
-            relation = generation / inv_cost
-            if relation <= min_relation:
-                min_relation = relation
-                if dic.tec == 'B':
-                    select_ob = dic.id_bat
+        dict_actual = {**solution.generators_dict_sol,**solution.batteries_dict_sol}     
+        covered = {k : [0]*len(solution.results.df_results['demand']) for k in dict_actual}
+        for k in dict_actual.values():
+            for t in list(solution.results.df_results['demand'].index.values):
+                #Check demand vs generation to avoid wasted energy in the equation
+                if (k.tec == 'B'):
+                    covered[k.id_bat][t] = min(solution.results.df_results[k.id_bat+'_b-'][t], solution.results.df_results['demand'][t])
                 else:
-                    select_ob = dic.id_gen          
-                
-        if dict_total[select_ob].tec == 'B':
-            solution.batteries_dict_sol[select_ob] = dict_total[select_ob]
-        else:
-            solution.generators_dict_sol[select_ob] = dict_total[select_ob] 
+                    covered[k.id_gen][t] = min(solution.results.df_results[k.id_gen][t], solution.results.df_results['demand'][t])
+
+        covered_df = pd.DataFrame(covered, columns=[*covered.keys()])
+        return covered_df
+    
         
+    
+
+    def addobject(self, sol_actual, available_bat, available_gen, dic_remove, demand_df): #add generator or battery
+        solution = copy.deepcopy(sol_actual)
+        pos_max = max(dic_remove, key=dic_remove.get)
+        gen_max = dic_remove[pos_max]
+        dict_total = {**self.generators_dict,**self.batteries_dict}
+        best_option = 0
+        best_cost = math.inf
+        #random select battery or generator
+        if available_gen == []:
+            tec_select = "Battery"
+        elif available_bat == []:
+            tec_select = "Generator"
+        else:
+            #same probability by each technology
+            set_select = ["Generator","Generator","Generator", "Battery"]
+            tec_select = random.choice(set_select)
+        
+        if tec_select == "Battery":
+            #select a random battery
+            select_ob = random.choice(available_bat)
+            solution.batteries_dict_sol[select_ob] = dict_total[select_ob]
+        
+        #check generation in max period that covers the remove object
+        elif tec_select == "Generator":
+            for i in available_gen:
+                dic = dict_total[i]
+                if dic.tec == 'D':
+                    gen_t = dic.G_max
+                else:
+                    gen_t = dic.gen_rule[pos_max]
+                
+                dif = min(gen_max, gen_t)
+                
+                if dif > best_option:
+                    best_option = dif
+                    select_ob = dic.id_gen
+                elif dif == best_option:
+                    inv_cost = dic.cost_up + dic.cost_r + dic.cost_om- dic.cost_s
+                    if inv_cost <= best_cost:
+                        best_cost = inv_cost
+                        best_option = dif
+                        select_ob = dic.id_gen
+                
+                
+            solution.generators_dict_sol[select_ob] = dict_total[select_ob] 
+            #update the dictionary
+            for t in list(demand_df['demand'].index.values):
+                if dict_total[select_ob].tec == 'D':
+                    dic_remove[t] = max(0,dic_remove[t]- dict_total[select_ob].G_max)
+                else:
+                    dic_remove[t] = max(0,dic_remove[t]- dict_total[select_ob].gen_rule[t])
+
+
+
         solution.technologies_dict_sol, solution.renewables_dict_sol = create_technologies (solution.generators_dict_sol
                                                                                               , solution.batteries_dict_sol)
-        return solution
+        return solution, dic_remove
     
-    def addrandomobject(self, sol_actual, availables): #add generator or battery
+    def addrandomobject(self, sol_actual, available_bat, available_gen): #add generator or battery
         solution = copy.deepcopy(sol_actual)
         dict_total = {**self.generators_dict,**self.batteries_dict}
+        availables = available_gen + available_bat
         select_ob = random.choice(availables)
         if dict_total[select_ob].tec == 'B':
             solution.batteries_dict_sol[select_ob] = dict_total[select_ob]
@@ -110,10 +154,12 @@ class Operators():
             area += i.area
         return area
     
+    
     def available(self, sol_actual, amax):
         solution = copy.deepcopy(sol_actual)
         available_area = amax - sol_actual.results.descriptive['area']
-        list_available = []
+        list_available_gen = []
+        list_available_bat = []
         dict_total = {**self.generators_dict,**self.batteries_dict}
         list_keys_total = dict_total.keys()
         dict_actual = {**solution.generators_dict_sol,**solution.batteries_dict_sol}     
@@ -124,11 +170,11 @@ class Operators():
             g = dict_total[i]
             if g.area <= available_area:
                 if g.tec == 'B':
-                    list_available.append(g.id_bat)
+                    list_available_bat.append(g.id_bat)
                 else:
-                    list_available.append(g.id_gen)
+                    list_available_gen.append(g.id_gen)
    
-        return list_available
+        return list_available_bat, list_available_gen
     
     def initial_solution (self, 
                           instance_data,
@@ -171,17 +217,31 @@ class Operators():
                                                mipgap = 0.02,
                                                tee = True)
         
+        dict_actual = {**generators_dict_sol,**batteries_dict_sol}     
+
         if termination['Temination Condition'] == 'optimal': 
             sol_results = opt.Results(model)
+            covered = {k : [0]*len(sol_results.df_results['demand']) for k in dict_actual}
+            for k in dict_actual.values():
+                for t in list(sol_results.df_results['demand'].index.values):
+                    if (k.tec == 'B'):
+                        covered[k.id_bat][t] = min(sol_results.df_results[k.id_bat][t], sol_results.df_results['demand'][t])
+                    else:
+                        covered[k.id_gen][t] = min(sol_results.df_results[k.id_gen][t], sol_results.df_results['demand'][t])
+
+            covered_df = pd.DataFrame(covered, columns=[*covered.keys()])
+            sol_covered_demand = covered_df
         else: 
             sol_results = None
+            sol_covered_demand = None
         
         sol_initial = Solution(generators_dict_sol, 
                                batteries_dict_sol, 
                                technologies_dict_sol, 
                                renewables_dict_sol,
-                               sol_results) 
+                               sol_results,
+                               sol_covered_demand) 
         sol_initial.feasible = True
-        
+
         
         return sol_initial

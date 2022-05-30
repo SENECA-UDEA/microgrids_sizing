@@ -143,10 +143,12 @@ class Solution():
                  batteries_dict_sol, 
                  technologies_dict_sol, 
                  renewables_dict_sol, 
-                 results):
+                 results,
+                 covered_demand):
         self.generators_dict_sol = generators_dict_sol
         self.batteries_dict_sol = batteries_dict_sol
         self.technologies_dict_sol = technologies_dict_sol
         self.renewables_dict_sol = renewables_dict_sol
         self.results = results
         self.feasible = False
+        self.covered_demand = covered_demand

@@ -55,9 +55,6 @@ search_operator = Operators(generators_dict,
                             demand_df,
                             forecast_df)
 
-#create a default solution
-
-
 
 #Update the initial solution
 sol_feasible = search_operator.initial_solution(instance_data,
@@ -79,6 +76,7 @@ movement = "Initial Solution"
 #df of solutions
 rows_df = []
 
+
 for i in range(20):
     rows_df.append([i, sol_current.feasible, 
                     sol_current.results.descriptive['area'], 
@@ -88,15 +86,15 @@ for i in range(20):
         # save copy as the last solution feasible seen
         sol_feasible = copy.deepcopy(sol_current) 
         # Remove a generator or battery from the current solution
-        sol_try = search_operator.removeobject(sol_current)
+        sol_try, dic_remove = search_operator.removeobject(sol_current)
         movement = "Remove"
     else:
         #  Create list of generators that could be added
-        list_available = search_operator.available(sol_current, amax)
-        if list_available != []:
+        list_available_bat, list_available_gen = search_operator.available(sol_current, amax)
+        if (list_available_gen != [] or list_available_bat != []):
             # Add a generator or battery to the current solution
-            #sol_try = search_operator.addobject(sol_current, list_available, demand_df)
-            sol_try = search_operator.addrandomobject(sol_current, list_available)
+            sol_try, dic_remove = search_operator.addobject(sol_current, list_available_bat, list_available_gen, dic_remove, demand_df)
+            #sol_try = search_operator.addrandomobject(sol_current, list_available_bat, list_available_gen)
             movement = "Add"
         else:
             # return to the last feasible solution
@@ -128,15 +126,18 @@ for i in range(20):
         sol_try.results.descriptive['LCOE'] = model.LCOE_value.expr()
         sol_try.results = opt.Results(model)
         sol_try.feasible = True
+        sol_try.covered_demand = search_operator.calculate_demand_covered(sol_try, demand_df)
+        sol_try.results.descriptive['area'] = search_operator.calculate_area(sol_try)
         sol_current = copy.deepcopy(sol_try)
         if sol_try.results.descriptive['LCOE'] <= sol_best.results.descriptive['LCOE']:
             sol_best = copy.deepcopy(sol_try)
     else:
         sol_try.feasible = False
+        sol_try.results.descriptive['area'] = search_operator.calculate_area(sol_try)
+        sol_try.covered_demand = None
         sol_try.results.descriptive['LCOE'] = None
         sol_current = copy.deepcopy(sol_try)
 
-    sol_current.results.descriptive['area'] = search_operator.calculate_area(sol_current)
          
                
                 
