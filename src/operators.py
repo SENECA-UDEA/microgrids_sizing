@@ -132,6 +132,20 @@ class Operators():
         solution.technologies_dict_sol, solution.renewables_dict_sol = create_technologies (solution.generators_dict_sol
                                                                                               , solution.batteries_dict_sol)
         return solution
+    
+    def removerandomobject(self, sol_actual): #add generator or battery
+        solution = copy.deepcopy(sol_actual)
+        dict_actual = {**solution.generators_dict_sol,**solution.batteries_dict_sol} 
+        select_ob = random.choice(list(dict_actual.keys()))
+        if dict_actual[select_ob].tec == 'B':
+            solution.batteries_dict_sol.pop(select_ob)
+        else:
+            solution.generators_dict_sol.pop(select_ob)
+
+        solution.technologies_dict_sol, solution.renewables_dict_sol = create_technologies (solution.generators_dict_sol
+                                                                                              , solution.batteries_dict_sol)        
+                                                                                    
+        return solution
 
     def calculate_area (self, sol_actual):
         solution = copy.deepcopy(sol_actual)

@@ -88,6 +88,7 @@ for i in range(20):
         sol_feasible = copy.deepcopy(sol_current) 
         # Remove a generator or battery from the current solution
         sol_try, dic_remove = search_operator.removeobject(sol_current)
+        #sol_try = search_operator.removerandomobject(sol_current)
         movement = "Remove"
     else:
         #  Create list of generators that could be added
