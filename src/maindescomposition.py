@@ -99,7 +99,7 @@ for i in range(20):
             movement = "Add"
         else:
             # return to the last feasible solution
-            sol_try = copy.deepcopy(sol_feasible)
+            sol_current = copy.deepcopy(sol_feasible)
             continue # Skip running the model and go to the begining of the for loop
     tnpc_calc, crf_calc = calculate_sizingcost(sol_try.generators_dict_sol, 
                                                sol_try.batteries_dict_sol, 
@@ -137,7 +137,6 @@ for i in range(20):
         sol_try.results.descriptive['LCOE'] = None
         sol_current = copy.deepcopy(sol_try)
 
-    print (dic_remove)
                 
 #df with the feasible solutions
 df_iterations = pd.DataFrame(rows_df, columns=["i", "feasible", "area", "LCOE_actual", "LCOE_Best","Movement"])
@@ -167,3 +166,7 @@ if termination['Temination Condition'] == 'optimal':
    plot(generation_graph)
    
 '''
+
+
+
+

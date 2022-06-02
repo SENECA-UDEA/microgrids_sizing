@@ -41,11 +41,12 @@ class Operators():
                 else:
                     select_ob = d.id_gen
 
-        dic_remove = dic_remove =  pd.Series(solution.results.df_results[select_ob].values,index=solution.results.df_results[select_ob].keys()).to_dict()
      
         if dict_actual[select_ob].tec == 'B':
+            dic_remove =  pd.Series(solution.results.df_results[select_ob+'_b-'].values,index=solution.results.df_results[select_ob+'_b-'].keys()).to_dict()
             solution.batteries_dict_sol.pop(select_ob)
         else:
+            dic_remove =  pd.Series(solution.results.df_results[select_ob].values,index=solution.results.df_results[select_ob].keys()).to_dict()
             solution.generators_dict_sol.pop(select_ob)
         
         solution.technologies_dict_sol, solution.renewables_dict_sol = create_technologies (solution.generators_dict_sol
@@ -71,7 +72,7 @@ class Operators():
         else:
             #same probability by each technology
             rand_tec = random.random()
-            if rand_tec < 0.75:
+            if rand_tec < 0.5:
                 tec_select = "Generator"
             else:
                 tec_select = "Battery"
@@ -95,6 +96,7 @@ class Operators():
                 if coverage < best_option:
                     best_option = coverage
                     select_ob = dic.id_gen
+                    best_cost = dic.cost_up + dic.cost_r + dic.cost_om- dic.cost_s
                 elif coverage == best_option:
                     inv_cost = dic.cost_up + dic.cost_r + dic.cost_om- dic.cost_s
                     if inv_cost <= best_cost:
