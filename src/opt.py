@@ -254,7 +254,7 @@ def make_model(generators_dict=None,
             return sum( model.v[k1,t] for k1 in model.GENERATORS if generators_dict[k1].tec == 'D') >= model.v[k,t]
         else:
             return pyo.Constraint.Skip
-    model.dieselsolar_rule = pyo.Constraint(model.GENERATORS, model.HTIME, rule=dieselsolar_rule)
+    #model.dieselsolar_rule = pyo.Constraint(model.GENERATORS, model.HTIME, rule=dieselsolar_rule)
 
     #Objective function
         
@@ -501,7 +501,7 @@ def make_model_operational(generators_dict=None,
             return sum( model.v[k1,t] for k1 in model.GENERATORS if generators_dict[k1].tec == 'D') >= model.v[k,t]
         else:
             return pyo.Constraint.Skip
-    model.dieselsolar_rule = pyo.Constraint(model.GENERATORS, model.HTIME, rule=dieselsolar_rule)
+    #model.dieselsolar_rule = pyo.Constraint(model.GENERATORS, model.HTIME, rule=dieselsolar_rule)
 
 
     # Define TNPC operative constraint
