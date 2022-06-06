@@ -73,7 +73,7 @@ class Solar(Generator):
   
 
 class Eolic(Generator):
-    def __init__(self, id_gen, tec, br, va_op, area, cost_up, cost_r, cost_om, cost_s, ef, s_in, s_rate, s_out, rp, n, n_eq):
+    def __init__(self, id_gen, tec, br, va_op, area, cost_up, cost_r, cost_om, cost_s, ef, s_in, s_rate, s_out, rp, n, n_eq, h):
         self.ef = ef #Efficiency
         self.s_in = s_in #Turbine Minimum Generating Speed (Input Speed)
         self.s_rate = s_rate #Rated speed of the wind turbine
@@ -82,12 +82,13 @@ class Eolic(Generator):
         self.n = n #number of wind turbines
         self.n_eq = n_eq #n to calculate the generation curve, usually 1,2 or 3
         self.gen_rule = {}
+        self.h = h #height
         super(Eolic, self).__init__(id_gen, tec, br, va_op, area, cost_up, cost_r, cost_om, cost_s)
     
-    def Windgeneration(self, forecastWt): #Wt = wind speed over the time
+    def Windgeneration(self, forecastWt, h2, coef_hel): #Wt = wind speed over the time
         #Calculate generation over the time
             for t in list(forecastWt.index.values):
-                i = forecastWt[t]
+                i = forecastWt[t] * (self.h/h2)^ coef_hel
                 if i <= self.s_in:
                   self.gen_rule[t] = 0
                 elif i < self.s_rate:
