@@ -88,7 +88,7 @@ class Eolic(Generator):
     def Windgeneration(self, forecastWt, h2, coef_hel): #Wt = wind speed over the time
         #Calculate generation over the time
             for t in list(forecastWt.index.values):
-                i = forecastWt[t] * (self.h/h2)^ coef_hel
+                i = forecastWt[t] * (self.h/h2)**coef_hel
                 if i <= self.s_in:
                   self.gen_rule[t] = 0
                 elif i < self.s_rate:
