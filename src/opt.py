@@ -23,6 +23,7 @@ def make_model(generators_dict=None,
                ir = 1, 
                nse = 0, 
                maxtec = 1, 
+               mintec = 1,
                maxbr = 0,
                years = 1,
                w_cost = 0,
@@ -36,6 +37,7 @@ def make_model(generators_dict=None,
     #ir = interest rate
     #nse = maximum allowed not supplied energy
     #maxtec = maximum number of technologies allowed
+    #mintec = minimum number of technologies allowed
     #maxbr= maximum brands allowed by each technology
     #w_cost = Penalized wasted energy cost
     #tlpsp = Number of lpsp periods for moving average
@@ -58,7 +60,8 @@ def make_model(generators_dict=None,
     model.d = pyo.Param(model.HTIME, initialize = demand_df) #demand    
     model.ir = pyo.Param(initialize=ir) #Interest rate
     model.nse = pyo.Param(initialize=nse) #Available not supplied demand 
-    model.maxtec = pyo.Param(initialize = maxtec) #Maximum technologies  
+    model.maxtec = pyo.Param(initialize = maxtec) #Maximum technologies 
+    model.mintec = pyo.Param(initialize = mintec) #Minimum technologies 
     model.maxbr = pyo.Param(model.TECHNOLOGIES, initialize = maxbr) #Maximum brand by each technology  
     model.t_years = pyo.Param(initialize = years) # Number of years evaluation of the project, for CRF
     CRF_calc = (model.ir * (1 + model.ir)**(model.t_years))/((1 + model.ir)**(model.t_years)-1) #CRF to LCOE
@@ -240,6 +243,11 @@ def make_model(generators_dict=None,
     def maxtec_rule(model):
       return sum(model.y[i] for i in model.TECHNOLOGIES) <= model.maxtec
     model.maxtec_rule = pyo.Constraint(rule=maxtec_rule)
+    
+    # Defines constraint of minimum number of technologies
+    def mintec_rule(model):
+      return sum(model.y[i] for i in model.TECHNOLOGIES) >= model.mintec
+    model.mintec_rule = pyo.Constraint(rule=mintec_rule)
 
     # Defines constraint of maximum number of brands
     def maxbr_rule (model, i):

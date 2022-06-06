@@ -3,6 +3,7 @@
     "ir" : 0.2, 
     "nse" : 0.5, 
     "maxtec" : 4, 
+    "mintec" : 2,
     "years" : 20,
     "tlpsp" : 1,
     "w_cost": 15,
