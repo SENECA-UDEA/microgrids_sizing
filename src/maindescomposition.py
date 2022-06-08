@@ -34,9 +34,6 @@ demand_df, forecast_df, generators, batteries, instance_data = read_data(demand_
                                                           units_filepath,
                                                           instanceData_filepath)
 
-# Probando nuevos componentes
-
-
 
 # Create objects and generation rule
 generators_dict, batteries_dict,  = create_objects(generators,
@@ -79,6 +76,7 @@ rows_df = []
 
 
 for i in range(20):
+    #fill df solutions
     rows_df.append([i, sol_current.feasible, 
                     sol_current.results.descriptive['area'], 
                     sol_current.results.descriptive['LCOE'], 
@@ -102,6 +100,8 @@ for i in range(20):
             # return to the last feasible solution
             sol_current = copy.deepcopy(sol_feasible)
             continue # Skip running the model and go to the begining of the for loop
+    
+    #run the model
     tnpc_calc, crf_calc = calculate_sizingcost(sol_try.generators_dict_sol, 
                                                sol_try.batteries_dict_sol, 
                                                ir = instance_data['ir'],
@@ -116,14 +116,14 @@ for i in range(20):
                                        CRF = crf_calc,
                                        w_cost = instance_data['w_cost'],
                                        tlpsp = instance_data['tlpsp']) 
-    
+    #get the results
     results, termination = opt.solve_model(model, 
                                            optimizer = 'gurobi',
                                            mipgap = 0.02,
                                             tee = True)
     
     
-
+    #check the termination condition for the next step
     if termination['Temination Condition'] == 'optimal':
         sol_try.results.descriptive['LCOE'] = model.LCOE_value.expr()
         sol_try.results = opt.Results(model)
@@ -142,6 +142,7 @@ for i in range(20):
 #df with the feasible solutions
 df_iterations = pd.DataFrame(rows_df, columns=["i", "feasible", "area", "LCOE_actual", "LCOE_Best","Movement"])
 
+#average of demand covered by each generator
 column_data = {}
 for bat in sol_best.batteries_dict_sol.values(): 
     if (sol_best.results.descriptive['batteries'][bat.id_bat] == 1):
@@ -152,21 +153,6 @@ for gen in sol_best.generators_dict_sol.values():
    
 percent_df = pd.DataFrame(column_data, columns=[*column_data.keys()])
 
-
-'''
-# solve model 
-results, termination = opt.solve_model(model, 
-                       optimizer = 'gurobi',
-                       mipgap = 0.02,
-                       tee = True)
-if termination['Temination Condition'] == 'optimal': 
-   model_results = opt.Results(model)
-   print(model_results.descriptive)
-   print(model_results.df_results)
-   generation_graph = model_results.generation_graph()
-   plot(generation_graph)
-   
-'''
 
 
 
