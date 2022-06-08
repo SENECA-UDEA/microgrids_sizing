@@ -13,6 +13,7 @@ import pandas as pd
 
 class Operators():
     def __init__(self, generators_dict, batteries_dict, demand_df, forecast_df,):
+        #total generators and batteries
         self.generators_dict = generators_dict
         self.batteries_dict = batteries_dict
         self.demand_df = demand_df
@@ -146,7 +147,7 @@ class Operators():
                                                                                               , solution.batteries_dict_sol)        
                                                                                     
         return solution
-
+    #calculate the area of a solution, in results set is overwriting
     def calculate_area (self, sol_actual):
         solution = copy.deepcopy(sol_actual)
         dict_actual = {**solution.generators_dict_sol,**solution.batteries_dict_sol}
@@ -155,7 +156,7 @@ class Operators():
             area += i.area
         return area
     
-    
+    #check the available objects according to area
     def available(self, sol_actual, amax):
         solution = copy.deepcopy(sol_actual)
         available_area = amax - sol_actual.results.descriptive['area']
@@ -177,6 +178,7 @@ class Operators():
    
         return list_available_bat, list_available_gen
     
+    #generate initial solution
     def initial_solution (self, 
                           instance_data,
                           generators_dict, 

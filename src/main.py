@@ -43,6 +43,7 @@ generators_dict, batteries_dict = create_objects(generators,
                                                  demand_df,
                                                  instance_data)
 
+#Create technologies and renewables set
 technologies_dict, renewables_dict = create_technologies (generators_dict,
                                                           batteries_dict)
 

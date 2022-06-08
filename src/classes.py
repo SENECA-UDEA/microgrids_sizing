@@ -20,8 +20,7 @@ class Generator(): #Superclass generators
 
 
 class Solar(Generator):
-    def __init__(self, id_gen, tec, br, va_op, area, cost_up, cost_r, cost_om, cost_s, ef, n, T_noct, G_noct, G_max, fpv):
-        self.ef = ef #Efficiency 
+    def __init__(self, id_gen, tec, br, va_op, area, cost_up, cost_r, cost_om, cost_s, n, T_noct, G_noct, G_max, fpv): 
         self.n = n #Number of panels
         self.T_noct = T_noct #Nominal Operating cell Tmperature
         self.G_noct = G_noct #Irradiance operating Normal Condition
@@ -34,7 +33,7 @@ class Solar(Generator):
     def Solargeneration(self, kt, t_amb, gt):    
             #Calculate generation over the time
             for t in list(gt.index.values):
-                Irad_panel = gt[t] #irradiacion en modulo W/m2
+                Irad_panel = gt[t] #irradiance in module W/m2
                 if Irad_panel<=0:
                    self.gen_rule[t] = 0
                 else:
@@ -42,7 +41,7 @@ class Solar(Generator):
                     self.gen_rule[t] = self.n *self.G_max*Irad_panel*(1 + kt*(TM-25))*self.fpv
             return self.gen_rule
 
-    # Modelo de temperatura 
+    # Temperature model
     def Get_INOCT(self, caso = 1 , w = 1):
         """caso 1: direct mount
             caso 2: stand-off
@@ -73,8 +72,7 @@ class Solar(Generator):
   
 
 class Eolic(Generator):
-    def __init__(self, id_gen, tec, br, va_op, area, cost_up, cost_r, cost_om, cost_s, ef, s_in, s_rate, s_out, rp, n, n_eq, h):
-        self.ef = ef #Efficiency
+    def __init__(self, id_gen, tec, br, va_op, area, cost_up, cost_r, cost_om, cost_s, s_in, s_rate, s_out, rp, n, n_eq, h):
         self.s_in = s_in #Turbine Minimum Generating Speed (Input Speed)
         self.s_rate = s_rate #Rated speed of the wind turbine
         self.s_out = s_out # Turbine Maximum Generation Speed (Output Speed)
@@ -88,6 +86,7 @@ class Eolic(Generator):
     def Windgeneration(self, forecastWt, h2, coef_hel): #Wt = wind speed over the time
         #Calculate generation over the time
             for t in list(forecastWt.index.values):
+                #Calculate Hellmann coefficient
                 i = forecastWt[t] * (self.h/h2)**coef_hel
                 if i <= self.s_in:
                   self.gen_rule[t] = 0
@@ -102,8 +101,7 @@ class Eolic(Generator):
 
                                
 class Diesel(Generator):
-    def __init__(self, id_gen, tec, br, va_op, area, cost_up, cost_r, cost_om, cost_s, ef, G_min, G_max, n, f0, f1):
-        self.ef = ef #efficiency
+    def __init__(self, id_gen, tec, br, va_op, area, cost_up, cost_r, cost_om, cost_s, G_min, G_max, n, f0, f1):
         self.G_min = G_min #Minimun generation to active the Diesel
         self.G_max = G_max #Rated power, maximum generation
         self.n = n #Number of diesel generators
@@ -138,7 +136,7 @@ class Battery():
         self.soc_min = self.soc_max * (1-self.dod_max)
         return self.soc_min
 
-
+#solution class to save a solution for two stage approach
 class Solution():
     def __init__(self, generators_dict_sol, 
                  batteries_dict_sol, 
