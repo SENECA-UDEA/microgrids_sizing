@@ -9,7 +9,7 @@ from utilities import read_data, create_objects, calculate_sizingcost, create_te
 import opt as opt
 import pandas as pd 
 import random as random
-from operators import Operators
+from operators import Sol_constructor, Search_operator
 from plotly.offline import plot
 import copy
 from classes import Solution
@@ -34,10 +34,6 @@ demand_df, forecast_df, generators, batteries, instance_data = read_data(demand_
                                                           units_filepath,
                                                           instanceData_filepath)
 
-# Probando nuevos componentes
-
-
-
 # Create objects and generation rule
 generators_dict, batteries_dict,  = create_objects(generators,
                                                    batteries,  
@@ -49,18 +45,14 @@ technologies_dict, renewables_dict = create_technologies (generators_dict,
                                                           batteries_dict)
 
 
-#create the operator
-search_operator = Operators(generators_dict, 
+#create the initial solution operator
+search_operator = Sol_constructor(generators_dict, 
                             batteries_dict,
                             demand_df,
                             forecast_df)
 
 #create a default solution
-
-
-
-#Update the initial solution
-sol_feasible = search_operator.initial_solution(instance_data,
+sol_feasible = Sol_constructor.initial_solution(instance_data,
                                                generators_dict, 
                                                batteries_dict, 
                                                technologies_dict, 
@@ -78,6 +70,12 @@ movement = "Initial Solution"
 
 #df of solutions
 rows_df = []
+
+# Create search operator
+search_operator = Search_operator(generators_dict, 
+                            batteries_dict,
+                            demand_df,
+                            forecast_df)
 
 for i in range(20):
     rows_df.append([i, sol_current.feasible, 

@@ -10,7 +10,71 @@ import random as random
 import copy
 import math
 
-class Operators():
+class Sol_constructor():
+    def __init__(self, generators_dict, batteries_dict, demand_df, forecast_df,):
+        self.generators_dict = generators_dict
+        self.batteries_dict = batteries_dict
+        self.demand_df = demand_df
+        self.forecast_df = forecast_df
+
+    def initial_solution (self, 
+                          instance_data,
+                          generators_dict, 
+                          batteries_dict, 
+                          technologies_dict, 
+                          renewables_dict): #initial Diesel solution
+        
+        generators_dict_sol = {}
+        area = 0
+        for g in self.generators_dict.values(): 
+            if g.tec == 'D':
+                generators_dict_sol[g.id_gen] = g
+                area += g.area
+        
+        batteries_dict_sol = {}
+        
+        technologies_dict_sol, renewables_dict_sol = create_technologies (generators_dict_sol, 
+                                                                          batteries_dict_sol)
+        
+        tnpc_calc, crf_calc = calculate_sizingcost(generators_dict_sol, 
+                                                   batteries_dict_sol, 
+                                                   ir = instance_data['ir'],
+                                                   years = instance_data['years'])
+        
+        model = opt.make_model_operational(generators_dict = generators_dict_sol,
+                                           batteries_dict = batteries_dict_sol,  
+                                           demand_df=dict(zip(self.demand_df.t, self.demand_df.demand)), 
+                                           technologies_dict = technologies_dict_sol,  
+                                           renewables_dict = renewables_dict_sol,
+                                           nse =  instance_data['nse'], 
+                                           TNPC = tnpc_calc,
+                                           CRF = crf_calc,
+                                           w_cost = instance_data['w_cost'],
+                                           tlpsp = instance_data['tlpsp'])  
+
+
+        results, termination = opt.solve_model(model, 
+                                               optimizer = 'gurobi',
+                                               mipgap = 0.02,
+                                               tee = True)
+        
+        if termination['Temination Condition'] == 'optimal': 
+            sol_results = opt.Results(model)
+        else: 
+            sol_results = None
+        
+        sol_initial = Solution(generators_dict_sol, 
+                               batteries_dict_sol, 
+                               technologies_dict_sol, 
+                               renewables_dict_sol,
+                               sol_results) 
+        sol_initial.feasible = True
+        
+        
+        return sol_initial
+
+
+class Search_operator():
     def __init__(self, generators_dict, batteries_dict, demand_df, forecast_df,):
         self.generators_dict = generators_dict
         self.batteries_dict = batteries_dict
@@ -129,59 +193,4 @@ class Operators():
                     list_available.append(g.id_gen)
    
         return list_available
-    
-    def initial_solution (self, 
-                          instance_data,
-                          generators_dict, 
-                          batteries_dict, 
-                          technologies_dict, 
-                          renewables_dict): #initial Diesel solution
-        
-        generators_dict_sol = {}
-        area = 0
-        for g in self.generators_dict.values(): 
-            if g.tec == 'D':
-                generators_dict_sol[g.id_gen] = g
-                area += g.area
-        
-        batteries_dict_sol = {}
-        
-        technologies_dict_sol, renewables_dict_sol = create_technologies (generators_dict_sol, 
-                                                                          batteries_dict_sol)
-        
-        tnpc_calc, crf_calc = calculate_sizingcost(generators_dict_sol, 
-                                                   batteries_dict_sol, 
-                                                   ir = instance_data['ir'],
-                                                   years = instance_data['years'])
-        
-        model = opt.make_model_operational(generators_dict = generators_dict_sol,
-                                           batteries_dict = batteries_dict_sol,  
-                                           demand_df=dict(zip(self.demand_df.t, self.demand_df.demand)), 
-                                           technologies_dict = technologies_dict_sol,  
-                                           renewables_dict = renewables_dict_sol,
-                                           nse =  instance_data['nse'], 
-                                           TNPC = tnpc_calc,
-                                           CRF = crf_calc,
-                                           w_cost = instance_data['w_cost'],
-                                           tlpsp = instance_data['tlpsp'])  
-
-
-        results, termination = opt.solve_model(model, 
-                                               optimizer = 'gurobi',
-                                               mipgap = 0.02,
-                                               tee = True)
-        
-        if termination['Temination Condition'] == 'optimal': 
-            sol_results = opt.Results(model)
-        else: 
-            sol_results = None
-        
-        sol_initial = Solution(generators_dict_sol, 
-                               batteries_dict_sol, 
-                               technologies_dict_sol, 
-                               renewables_dict_sol,
-                               sol_results) 
-        sol_initial.feasible = True
-        
-        
-        return sol_initial
+  
