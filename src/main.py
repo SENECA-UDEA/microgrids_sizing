@@ -43,6 +43,7 @@ generators_dict, batteries_dict = create_objects(generators,
                                                  demand_df,
                                                  instance_data)
 
+#Create technologies and renewables set
 technologies_dict, renewables_dict = create_technologies (generators_dict,
                                                           batteries_dict)
 
@@ -58,6 +59,7 @@ model = opt.make_model(generators_dict,
                        ir = instance_data['ir'], 
                        nse = instance_data['nse'], 
                        maxtec = instance_data['maxtec'], 
+                       mintec = instance_data['mintec'], 
                        maxbr = instance_data['max_brand'],
                        years = instance_data['years'],
                        w_cost = instance_data['w_cost'],

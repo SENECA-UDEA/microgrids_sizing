@@ -45,10 +45,10 @@ def create_objects(generators, batteries, forecast_df, demand_df, instance_data)
       if k['tec'] == 'S':
         obj_aux = Solar(*k.values())
         obj_aux.Get_INOCT(instance_data["caso"], instance_data["w"])
-        obj_aux.Solargeneration(instance_data["kt"], forecast_df['t_ambt'], forecast_df['DNI'])
+        obj_aux.Solargeneration( forecast_df['t_ambt'], forecast_df['DNI'])
       elif k['tec'] == 'W':
         obj_aux = Eolic(*k.values())
-        obj_aux.Windgeneration(forecast_df['Wt'])
+        obj_aux.Windgeneration(forecast_df['Wt'],instance_data["h2"],instance_data["coef_hel"] )
       elif k['tec'] == 'D':
         obj_aux = Diesel(*k.values())   
       generators_dict[k['id_gen']] = obj_aux
@@ -90,7 +90,7 @@ def create_technologies(generators_dict, batteries_dict):
     return technologies_dict, renewables_dict
  
     
-
+#calculate total cost for two stage approach
 def calculate_sizingcost(generators_dict, batteries_dict, ir, years):
             expr = 0
             for gen in generators_dict.values(): 
@@ -129,8 +129,8 @@ def min2hms(hm):
     return H,m,s
 
 def hd2hms(hd):
-    """conversion de hora decimales ->
-       (horas,minutos,segundos)
+    """decimal time conversion ->
+       (hours,minutes,seconds)
     """
     H = int(hd)
     m = (hd - H)*60
@@ -140,38 +140,38 @@ def hd2hms(hd):
     return H,M,S
 
 def Get_SolarP01(LT,TZ,dia,Long,Latit):
-    """LT: local time(en horas)
+    """LT: local time(hour)
        TZ: time zone
-       dia: contados desde el 1 de enero
-       Long: longitud en grados
-       Latit: latitud en grados
-       Calculo de la posicion solar.
-       retorna: Elevation,Azimuth en grados
+       dia: counted from January 1
+       Long: longitude in degrees
+       Latit: latitude in degrees
+       sun position calculation
+       return: Elevation,Azimuth in degrees
        version: 2019-02-05
        ref:https://www.pveducation.org/pvcdrom/2-properties-sunlight/suns-position
     """
     ka = 180/np.pi
     LSTM = 15*(TZ)#Local Standard Time Meridian(LSTM)
-    EoT = lambda x:9.87*np.sin(2*x)-7.53*np.cos(x)-1.5*np.sin(x)#x en radianes
+    EoT = lambda x:9.87*np.sin(2*x)-7.53*np.cos(x)-1.5*np.sin(x)#x in radians
     B = lambda d:((360/365)*d - 81)*(np.pi/180)
-    LT1 = LT*60 #conversion a minutos
+    LT1 = LT*60 #conversion to minutes
     TC = 4*(Long - LSTM) + EoT(B(dia))#Time Correction Factor (TC)
     LST = LT1 + (TC/60)#The Local Solar Time (LST)
     HRA = 15*((LST/60)-12)#Hour Angle (HRA)
     delta = 23.45*np.sin(B(dia))#declination angle (delta)
     Elevation = np.arcsin(np.sin(delta*np.pi/180)*np.sin(Latit*np.pi/180)+np.cos(delta*np.pi/180)*np.cos(Latit*np.pi/180)*np.cos(HRA*np.pi/180))
     
-    ##calculo Azimuth 
-    ## asumo que teta:latitud
+    ##calculate Azimuth 
+    ## asumes teta:latitude
     k_num = np.sin(delta*np.pi/180)*np.cos(Latit*np.pi/180)+np.cos(delta*np.pi/180)*np.sin(Latit*np.pi/180)*np.cos(HRA*np.pi/180)
     k_total = k_num/np.cos(Elevation)
 
-    if abs(k_total)>1.0:##ensayo vancouver??
+    if abs(k_total)>1.0:## vancouver essay
         k_total = k_total/abs(k_total)
     # print(k_total)
 
     Azimuth = np.arccos(k_total)
-    if min2hms(LST)[0]>=12:#Correccion despues de medio dia
+    if min2hms(LST)[0]>=12:#Correction after noon
         Azimuth = 2*np.pi - Azimuth
 
     return Elevation*ka, Azimuth*ka 
@@ -249,7 +249,6 @@ def irradiance_panel (forecast_df, instance_data):
     alpha = instance_data["alpha_albedo"]
     caso = instance_data["caso"] #Direct Mount, Stand off or Rack Mount
     w = instance_data["w"] #distance to the mount
-    kt = instance_data["kt"] #Coefficiente Temperature
     t_amb = forecast_df['t_ambt'] #Room temperature
     gt_data = {}
     for t in list(forecast_df['t'].index.values):
@@ -270,5 +269,5 @@ def irradiance_panel (forecast_df, instance_data):
     
     gt =  pd.DataFrame(gt_data.items(), columns = ['t','gt']) 
         
-    return kt, w, caso, t_amb, gt
+    return  w, caso, t_amb, gt
 '''

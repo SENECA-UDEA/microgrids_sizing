@@ -19,6 +19,26 @@ pd.options.display.max_columns = None
 demand_filepath = 'https://raw.githubusercontent.com/pmayaduque/MicrogridSizing/main/data/Leticia_Annual_Demand.csv' 
 forecast_filepath = 'https://raw.githubusercontent.com/pmayaduque/MicrogridSizing/main/data/Annual_Forecast.csv' 
 units_filepath  = 'https://raw.githubusercontent.com/pmayaduque/MicrogridSizing/main/data/parameters_P.json' 
+# -*- coding: utf-8 -*-
+"""
+Created on Wed Apr 20 11:14:21 2022
+@author: pmayaduque
+"""
+
+from utilities import read_data, create_objects, calculate_sizingcost, create_technologies
+import opt as opt
+import pandas as pd 
+import random as random
+from operators import Operators
+from plotly.offline import plot
+import copy
+from classes import Solution
+pd.options.display.max_columns = None
+
+# file paths github
+demand_filepath = 'https://raw.githubusercontent.com/pmayaduque/MicrogridSizing/main/data/Leticia_Annual_Demand.csv' 
+forecast_filepath = 'https://raw.githubusercontent.com/pmayaduque/MicrogridSizing/main/data/Annual_Forecast.csv' 
+units_filepath  = 'https://raw.githubusercontent.com/pmayaduque/MicrogridSizing/main/data/parameters_P.json' 
 # file paths local
 #demand_filepath = "../data/Leticia_Annual_Demand.csv"
 #forecast_filepath = '../data/Annual_Forescast.csv'
@@ -34,6 +54,7 @@ demand_df, forecast_df, generators, batteries, instance_data = read_data(demand_
                                                           units_filepath,
                                                           instanceData_filepath)
 
+
 # Create objects and generation rule
 generators_dict, batteries_dict,  = create_objects(generators,
                                                    batteries,  
@@ -45,14 +66,15 @@ technologies_dict, renewables_dict = create_technologies (generators_dict,
                                                           batteries_dict)
 
 
-#create the initial solution operator
-search_operator = Sol_constructor(generators_dict, 
+#create the operator
+search_operator = Operators(generators_dict, 
                             batteries_dict,
                             demand_df,
                             forecast_df)
 
-#create a default solution
-sol_feasible = Sol_constructor.initial_solution(instance_data,
+
+#Update the initial solution
+sol_feasible = search_operator.initial_solution(instance_data,
                                                generators_dict, 
                                                batteries_dict, 
                                                technologies_dict, 
@@ -71,13 +93,10 @@ movement = "Initial Solution"
 #df of solutions
 rows_df = []
 
-# Create search operator
-search_operator = Search_operator(generators_dict, 
-                            batteries_dict,
-                            demand_df,
-                            forecast_df)
+
 
 for i in range(20):
+    #fill df solutions
     rows_df.append([i, sol_current.feasible, 
                     sol_current.results.descriptive['area'], 
                     sol_current.results.descriptive['LCOE'], 
@@ -86,20 +105,23 @@ for i in range(20):
         # save copy as the last solution feasible seen
         sol_feasible = copy.deepcopy(sol_current) 
         # Remove a generator or battery from the current solution
-        sol_try = search_operator.removeobject(sol_current)
+        sol_try, dic_remove = search_operator.removeobject(sol_current)
+        #sol_try = search_operator.removerandomobject(sol_current)
         movement = "Remove"
     else:
         #  Create list of generators that could be added
-        list_available = search_operator.available(sol_current, amax)
-        if list_available != []:
+        list_available_bat, list_available_gen = search_operator.available(sol_current, amax)
+        if (list_available_gen != [] or list_available_bat != []):
             # Add a generator or battery to the current solution
-            #sol_try = search_operator.addobject(sol_current, list_available, demand_df)
-            sol_try = search_operator.addrandomobject(sol_current, list_available)
+            sol_try, dic_remove = search_operator.addobject(sol_current, list_available_bat, list_available_gen, dic_remove)
+            #sol_try = search_operator.addrandomobject(sol_current, list_available_bat, list_available_gen)
             movement = "Add"
         else:
             # return to the last feasible solution
-            sol_try = copy.deepcopy(sol_feasible)
+            sol_current = copy.deepcopy(sol_feasible)
             continue # Skip running the model and go to the begining of the for loop
+    
+    #run the model
     tnpc_calc, crf_calc = calculate_sizingcost(sol_try.generators_dict_sol, 
                                                sol_try.batteries_dict_sol, 
                                                ir = instance_data['ir'],
@@ -114,33 +136,33 @@ for i in range(20):
                                        CRF = crf_calc,
                                        w_cost = instance_data['w_cost'],
                                        tlpsp = instance_data['tlpsp']) 
-    
+    #get the results
     results, termination = opt.solve_model(model, 
                                            optimizer = 'gurobi',
                                            mipgap = 0.02,
                                             tee = True)
     
     
-
+    #check the termination condition for the next step
     if termination['Temination Condition'] == 'optimal':
         sol_try.results.descriptive['LCOE'] = model.LCOE_value.expr()
         sol_try.results = opt.Results(model)
         sol_try.feasible = True
+        sol_try.results.descriptive['area'] = search_operator.calculate_area(sol_try)
         sol_current = copy.deepcopy(sol_try)
         if sol_try.results.descriptive['LCOE'] <= sol_best.results.descriptive['LCOE']:
             sol_best = copy.deepcopy(sol_try)
     else:
         sol_try.feasible = False
+        sol_try.results.descriptive['area'] = search_operator.calculate_area(sol_try)
         sol_try.results.descriptive['LCOE'] = None
         sol_current = copy.deepcopy(sol_try)
 
-    sol_current.results.descriptive['area'] = search_operator.calculate_area(sol_current)
-         
-               
                 
 #df with the feasible solutions
 df_iterations = pd.DataFrame(rows_df, columns=["i", "feasible", "area", "LCOE_actual", "LCOE_Best","Movement"])
 
+#average of demand covered by each generator
 column_data = {}
 for bat in sol_best.batteries_dict_sol.values(): 
     if (sol_best.results.descriptive['batteries'][bat.id_bat] == 1):
@@ -150,19 +172,3 @@ for gen in sol_best.generators_dict_sol.values():
         column_data[gen.id_gen+'_%'] =  sol_best.results.df_results[gen.id_gen] / sol_best.results.df_results['demand']
    
 percent_df = pd.DataFrame(column_data, columns=[*column_data.keys()])
-
-
-'''
-# solve model 
-results, termination = opt.solve_model(model, 
-                       optimizer = 'gurobi',
-                       mipgap = 0.02,
-                       tee = True)
-if termination['Temination Condition'] == 'optimal': 
-   model_results = opt.Results(model)
-   print(model_results.descriptive)
-   print(model_results.df_results)
-   generation_graph = model_results.generation_graph()
-   plot(generation_graph)
-   
-'''

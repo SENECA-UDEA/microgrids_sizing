@@ -3,14 +3,16 @@
     "ir" : 0.2, 
     "nse" : 0.5, 
     "maxtec" : 4, 
+    "mintec" : 2,
     "years" : 20,
     "tlpsp" : 1,
     "w_cost": 15,
+    "h2" : 50,
+    "coef_hel" : 1,
     "max_brand" : {"S":2,
                    "D":3,
                    "W":3,
                    "B":2},
-    "kt": 0.00232,
     "w":1,
     "caso":1
 }
