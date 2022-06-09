@@ -12,6 +12,7 @@ import numpy as np
 import math
 
 
+
 def read_data(demand_filepath, 
               forecast_filepath,
               units_filepath,
@@ -113,7 +114,12 @@ def calculate_sizingcost(generators_dict, batteries_dict, ir, years):
             return TNPC, CRF
 
 
-
+def calculate_area (self, solution):
+    dict_actual = {**solution.generators_dict_sol,**solution.batteries_dict_sol}
+    area = 0
+    for i in dict_actual.values():
+        area += i.area
+    return area
 
 '''
 

@@ -5,7 +5,7 @@ Created on Wed Apr 20 11:14:21 2022
 @author: pmayaduque
 """
 
-from utilities import read_data, create_objects, calculate_sizingcost, create_technologies
+from utilities import read_data, create_objects, calculate_sizingcost, create_technologies, calculate_area
 import opt as opt
 import pandas as pd 
 import random as random
@@ -134,7 +134,7 @@ for i in range(20):
         sol_try.results.descriptive['LCOE'] = None
         sol_current = copy.deepcopy(sol_try)
 
-    sol_current.results.descriptive['area'] = search_operator.calculate_area(sol_current)
+    sol_current.results.descriptive['area'] = calculate_area(sol_current)
          
                
                 

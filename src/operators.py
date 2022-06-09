@@ -166,13 +166,6 @@ class Search_operator():
                                                                                               , solution.batteries_dict_sol)
         return solution
 
-    def calculate_area (self, sol_actual):
-        solution = copy.deepcopy(sol_actual)
-        dict_actual = {**solution.generators_dict_sol,**solution.batteries_dict_sol}
-        area = 0
-        for i in dict_actual.values():
-            area += i.area
-        return area
     
     def available(self, sol_actual, amax):
         solution = copy.deepcopy(sol_actual)
