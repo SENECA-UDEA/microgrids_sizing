@@ -45,7 +45,7 @@ def create_objects(generators, batteries, forecast_df, demand_df, instance_data)
       if k['tec'] == 'S':
         obj_aux = Solar(*k.values())
         obj_aux.Get_INOCT(instance_data["caso"], instance_data["w"])
-        obj_aux.Solargeneration(instance_data["kt"], forecast_df['t_ambt'], forecast_df['DNI'])
+        obj_aux.Solargeneration( forecast_df['t_ambt'], forecast_df['DNI'])
       elif k['tec'] == 'W':
         obj_aux = Eolic(*k.values())
         obj_aux.Windgeneration(forecast_df['Wt'],instance_data["h2"],instance_data["coef_hel"] )
@@ -249,7 +249,6 @@ def irradiance_panel (forecast_df, instance_data):
     alpha = instance_data["alpha_albedo"]
     caso = instance_data["caso"] #Direct Mount, Stand off or Rack Mount
     w = instance_data["w"] #distance to the mount
-    kt = instance_data["kt"] #Coefficiente Temperature
     t_amb = forecast_df['t_ambt'] #Room temperature
     gt_data = {}
     for t in list(forecast_df['t'].index.values):
@@ -270,5 +269,5 @@ def irradiance_panel (forecast_df, instance_data):
     
     gt =  pd.DataFrame(gt_data.items(), columns = ['t','gt']) 
         
-    return kt, w, caso, t_amb, gt
+    return  w, caso, t_amb, gt
 '''

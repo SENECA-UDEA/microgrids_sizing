@@ -14,7 +14,8 @@
             "T_noct": 20,
             "G_noct": 1000,
             "G_max": 200,
-            "fpv": 0.9
+            "fpv": 0.9,
+            "kt": 0.003
         },
         {
             "id_gen": "Solar2",
@@ -30,7 +31,8 @@
             "T_noct": 15,
             "G_noct": 900,
             "G_max": 150,
-            "fpv": 0.8
+            "fpv": 0.8,
+            "kt": 0.006
         },
         {
             "id_gen": "Wind1",
