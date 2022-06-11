@@ -10,6 +10,7 @@ import requests
 import json 
 import numpy as np
 import math
+import copy
 
 
 
@@ -97,12 +98,11 @@ def calculate_sizingcost(generators_dict, batteries_dict, ir, years):
             for gen in generators_dict.values(): 
                 expr += gen.cost_up*gen.n 
                 expr += gen.cost_r*gen.n 
-                expr += gen.cost_om*gen.n 
                 expr -= gen.cost_s*gen.n 
                 
             for bat in batteries_dict.values(): 
                 expr += bat.cost_up
-                expr += bat.cost_om
+                expr += bat.cost_opm
                 expr += bat.cost_r
                 expr -= bat.cost_s
                 
@@ -114,7 +114,8 @@ def calculate_sizingcost(generators_dict, batteries_dict, ir, years):
             return TNPC, CRF
 
 
-def calculate_area (self, solution):
+def calculate_area (sol_actual):
+    solution = copy.deepcopy(sol_actual)
     dict_actual = {**solution.generators_dict_sol,**solution.batteries_dict_sol}
     area = 0
     for i in dict_actual.values():
@@ -124,7 +125,7 @@ def calculate_area (self, solution):
 '''
 
 def min2hms(hm):
-    """conversion min -> (horas, min, sec)
+    """conversion min -> (hours, min, sec)
     
     """
     H = int(hm/60)
