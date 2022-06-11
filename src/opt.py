@@ -180,7 +180,7 @@ def make_model(generators_dict=None,
       if gen.tec == 'D': 
           return model.operative_cost[k,t] == gen.f0 * gen.G_max * gen.n * model.w[k] + gen.f1 * gen.n *  model.p[k,t] 
       else:
-          return model.operative_cost[k,t] == gen.va_op * model.p[k,t] 
+          return model.operative_cost[k,t] == gen.cost_opm * model.p[k,t] 
     model.cop_rule = pyo.Constraint(model.GENERATORS, model.HTIME, rule=cop_rule)
         
     #Batteries management
@@ -270,7 +270,7 @@ def make_model(generators_dict=None,
     def tnpcc_rule(model): 
             expr = sum(generators_dict[k].cost_up*model.n_gen[k]*model.w[k] for k in model.GENERATORS) + sum(batteries_dict[l].cost_up * model.q[l] for l in model.BATTERIES) 
             expr += sum(generators_dict[k].cost_r*model.n_gen[k]*model.w[k] for k in model.GENERATORS) + sum(batteries_dict[l].cost_r * model.q[l]  for l in model.BATTERIES) 
-            expr += sum(generators_dict[k].cost_om*model.n_gen[k]*model.w[k] for k in model.GENERATORS) + sum(batteries_dict[l].cost_om * model.q[l]  for l in model.BATTERIES)
+            expr += sum(batteries_dict[l].cost_opm * model.q[l]  for l in model.BATTERIES)
             expr -= sum(generators_dict[k].cost_s*model.n_gen[k]*model.w[k] for k in model.GENERATORS) + sum(batteries_dict[l].cost_s * model.q[l]  for l in model.BATTERIES)
             return model.TNPC == expr
     model.tnpcc = pyo.Constraint(rule=tnpcc_rule)
@@ -441,7 +441,7 @@ def make_model_operational(generators_dict=None,
       if gen.tec == 'D': 
           return model.operative_cost[k,t] == gen.f0 * gen.G_max * gen.n + gen.f1 * gen.n *  model.p[k,t] 
       else:
-          return model.operative_cost[k,t] == gen.va_op * model.p[k,t] 
+          return model.operative_cost[k,t] == gen.cost_opm * model.p[k,t] 
     model.cop_rule = pyo.Constraint(model.GENERATORS, model.HTIME, rule=cop_rule)
     
     # Batteries management

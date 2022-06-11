@@ -86,15 +86,15 @@ for i in range(20):
         # save copy as the last solution feasible seen
         sol_feasible = copy.deepcopy(sol_current) 
         # Remove a generator or battery from the current solution
-        sol_try = search_operator.removeobject(sol_current)
+        sol_try, dic_remove = search_operator.removeobject(sol_current)
         movement = "Remove"
     else:
         #  Create list of generators that could be added
-        list_available = search_operator.available(sol_current, amax)
-        if list_available != []:
+        list_available_bat, list_available_gen = search_operator.available(sol_current, amax)
+        if (list_available_gen != [] or list_available_bat != []):
             # Add a generator or battery to the current solution
-            #sol_try = search_operator.addobject(sol_current, list_available, demand_df)
-            sol_try = search_operator.addrandomobject(sol_current, list_available)
+            sol_try, dic_remove = search_operator.addobject(sol_current, list_available_bat, list_available_gen, dic_remove)
+            #sol_try = search_operator.addrandomobject(sol_current, list_available_bat, list_available_gen)
             movement = "Add"
         else:
             # return to the last feasible solution
