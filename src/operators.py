@@ -37,7 +37,7 @@ class Sol_constructor():
         
         for g in self.generators_dict.values(): 
             if g.tec == 'D':
-                auxiliar_dict_generator[g.id_gen] = g.G_max
+                auxiliar_dict_generator[g.id_gen] = g.DG_max
         
         
         sorted_generators = sorted(auxiliar_dict_generator, key=auxiliar_dict_generator.get,reverse=True) 
@@ -51,7 +51,7 @@ class Sol_constructor():
                 position = random.randint(0, len_candidate-1)
                 f = self.generators_dict[sorted_generators[position]]
                 area_gen = f.area
-                demand_gen = f.G_max
+                demand_gen = f.DG_max
                 if (demand_to_be_covered <= 0):
                     available_generators = False
                 elif (area_gen <= area_available):
@@ -182,18 +182,20 @@ class Search_operator():
             for i in available_gen:
                 dic = dict_total[i]
                 if dic.tec == 'D':
-                    gen_generator = dic.G_max
+                    gen_generator = dic.DG_max
                 else:
                     gen_generator = dic.gen_rule[pos_max]
                 
+                #choose the value closest to what is demanded
                 coverage = abs(gen_t - gen_generator)
                 
                 if coverage < best_option:
                     best_option = coverage
                     select_ob = dic.id_gen
-                    best_cost = dic.cost_up + dic.cost_r - dic.cost_s
+                    best_cost = dic.cost_up * dic.n + dic.cost_r * dic.n - dic.cost_s * dic.n
+                #If two options are equal, choose the one with the lowest cost.
                 elif coverage == best_option:
-                    inv_cost = dic.cost_up + dic.cost_r - dic.cost_s
+                    inv_cost = dic.cost_up * dic.n + dic.cost_r * dic.n - dic.cost_s * dic.n
                     if inv_cost <= best_cost:
                         best_cost = inv_cost
                         best_option = coverage

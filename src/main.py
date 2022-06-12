@@ -5,7 +5,7 @@ Created on Wed Apr 20 11:14:21 2022
 @author: pmayaduque
 """
 
-from utilities import read_data, create_objects, calculate_sizingcost, create_technologies
+from utilities import read_data, create_objects, calculate_sizingcost, create_technologies, script_generators 
 import opt as opt
 import pandas as pd 
 import random as random
@@ -34,10 +34,16 @@ demand_df, forecast_df, generators, batteries, instance_data = read_data(demand_
                                                           instanceData_filepath)
 
 
+#Create data with n for solar and Wind
+if (instance_data['create_generators'] == 'True'):
+    generators_def = script_generators(generators, instance_data['amax'])
+else:
+    generators_def = generators
+
 
 
 # Create objects and generation rule
-generators_dict, batteries_dict = create_objects(generators,
+generators_dict, batteries_dict = create_objects(generators_def,
                                                  batteries, 
                                                  forecast_df,
                                                  demand_df,
