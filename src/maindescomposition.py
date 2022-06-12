@@ -51,6 +51,8 @@ sol_constructor = Sol_constructor(generators_dict,
                             demand_df,
                             forecast_df)
 
+
+
 #create a default solution
 sol_feasible = sol_constructor.initial_solution(instance_data,
                                                generators_dict, 
@@ -65,9 +67,9 @@ sol_best = copy.deepcopy(sol_feasible)
 sol_current = copy.deepcopy(sol_feasible)
 
 #check the available area
-amax =  instance_data['amax']
-movement = "Initial Solution"
 
+movement = "Initial Solution"
+amax =  instance_data['amax']
 #df of solutions
 rows_df = []
 
