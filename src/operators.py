@@ -12,7 +12,7 @@ import math
 import pandas as pd
 
 class Sol_constructor():
-    def __init__(self, generators_dict, batteries_dict, demand_df, forecast_df,):
+    def __init__(self, generators_dict, batteries_dict, demand_df, forecast_df):
         self.generators_dict = generators_dict
         self.batteries_dict = batteries_dict
         self.demand_df = demand_df
@@ -26,12 +26,44 @@ class Sol_constructor():
                           renewables_dict): #initial Diesel solution
         
         generators_dict_sol = {}
+        #create auxiliar dict for the iterations
+        auxiliar_dict_generator = {}
+        #calculate the total available area
+        area_available = instance_data['amax']
         area = 0
+        
+        #Calculate the maximum area that the Diesel have to covered
+        demand_to_be_covered = max(self.demand_df['demand'])
+        
         for g in self.generators_dict.values(): 
             if g.tec == 'D':
-                generators_dict_sol[g.id_gen] = g
-                area += g.area
+                auxiliar_dict_generator[g.id_gen] = g.G_max
         
+        
+        sorted_generators = sorted(auxiliar_dict_generator, key=auxiliar_dict_generator.get,reverse=True) 
+        
+        available_generators = True
+        while available_generators == True:
+            if (len(sorted_generators) == 0 or area_available <= 0):
+                available_generators = False
+            else:
+                len_candidate = math.ceil(len(sorted_generators)*0.5)
+                position = random.randint(0, len_candidate-1)
+                f = self.generators_dict[sorted_generators[position]]
+                area_gen = f.area
+                demand_gen = f.G_max
+                if (demand_to_be_covered <= 0):
+                    available_generators = False
+                elif (area_gen <= area_available):
+                    generators_dict_sol[f.id_gen] = f
+                    area += g.area
+                    sorted_generators.pop(position)
+                    area_available = area_available - area_gen
+                    demand_to_be_covered = demand_to_be_covered - demand_gen
+                else:
+                    sorted_generators.pop(position)
+
+                   
         batteries_dict_sol = {}
         
         technologies_dict_sol, renewables_dict_sol = create_technologies (generators_dict_sol, 
@@ -76,7 +108,7 @@ class Sol_constructor():
 
 
 class Search_operator():
-    def __init__(self, generators_dict, batteries_dict, demand_df, forecast_df,):
+    def __init__(self, generators_dict, batteries_dict, demand_df, forecast_df):
         self.generators_dict = generators_dict
         self.batteries_dict = batteries_dict
         self.demand_df = demand_df

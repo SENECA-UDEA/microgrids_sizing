@@ -8,7 +8,7 @@
     "tlpsp" : 1,
     "w_cost": 2.8622,
     "h2" : 10,
-    "coef_hel" : 0.14285,
+    "coef_hel" : 0.1,
     "max_brand" : {"S":2,
                    "D":3,
                    "W":3,
