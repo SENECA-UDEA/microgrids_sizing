@@ -117,7 +117,7 @@ def make_model(generators_dict=None,
 
     # Defines area rule
     def area_rule(model):
-      return  sum(model.gen_area[k]*model.n_gen[k]*model.w[k] for k in model.GENERATORS) + sum(model.bat_area[l]*model.q[l] for l in model.BATTERIES) <= model.amax
+      return  sum(model.gen_area[k]*model.w[k] for k in model.GENERATORS) + sum(model.bat_area[l]*model.q[l] for l in model.BATTERIES) <= model.amax
     model.area_rule = pyo.Constraint(rule=area_rule)
 
     # Defines rule to activate or deactivate generators for each period of time
@@ -129,7 +129,7 @@ def make_model(generators_dict=None,
     def G_rule (model, k, t):
       gen = generators_dict[k]
       if gen.tec == 'D':
-          return model.p[k,t] <= gen.G_max * model.v[k,t]
+          return model.p[k,t] <= gen.DG_max * model.v[k,t]
       else:
           return model.p[k,t] == gen.gen_rule[t] * model.v[k,t]
     model.G_rule = pyo.Constraint(model.GENERATORS, model.HTIME, rule=G_rule)
@@ -138,7 +138,7 @@ def make_model(generators_dict=None,
     def G_mindiesel (model, k, t):
       gen = generators_dict[k]
       if gen.tec == 'D':
-          return model.p[k,t] >= gen.G_min * model.v[k,t]
+          return model.p[k,t] >= gen.DG_min * model.v[k,t]
       else:
           return pyo.Constraint.Skip
     model.G_mindiesel = pyo.Constraint(model.GENERATORS, model.HTIME, rule=G_mindiesel)
@@ -178,7 +178,7 @@ def make_model(generators_dict=None,
     def cop_rule(model,k, t):
       gen = generators_dict[k]
       if gen.tec == 'D': 
-          return model.operative_cost[k,t] == gen.f0 * gen.G_max * gen.n * model.w[k] + gen.f1 * gen.n *  model.p[k,t] 
+          return model.operative_cost[k,t] == gen.f0 * gen.DG_max * model.w[k] + gen.f1 * model.p[k,t] 
       else:
           return model.operative_cost[k,t] == gen.cost_opm * model.p[k,t] 
     model.cop_rule = pyo.Constraint(model.GENERATORS, model.HTIME, rule=cop_rule)
@@ -390,7 +390,7 @@ def make_model_operational(generators_dict=None,
     def G_rule (model, k, t):
       gen = generators_dict[k]
       if gen.tec == 'D':
-          return model.p[k,t] <= gen.G_max * model.v[k,t]
+          return model.p[k,t] <= gen.DG_max * model.v[k,t]
       else:
           return model.p[k,t] == gen.gen_rule[t] * model.v[k,t]
     model.G_rule = pyo.Constraint(model.GENERATORS, model.HTIME, rule=G_rule)
@@ -399,7 +399,7 @@ def make_model_operational(generators_dict=None,
     def G_mindiesel (model, k, t):
       gen = generators_dict[k]
       if gen.tec == 'D':
-          return model.p[k,t] >= gen.G_min * model.v[k,t]
+          return model.p[k,t] >= gen.DG_min * model.v[k,t]
       else:
           return pyo.Constraint.Skip
     model.G_mindiesel = pyo.Constraint(model.GENERATORS, model.HTIME, rule=G_mindiesel)
@@ -439,7 +439,7 @@ def make_model_operational(generators_dict=None,
     def cop_rule(model,k, t):
       gen = generators_dict[k]
       if gen.tec == 'D': 
-          return model.operative_cost[k,t] == gen.f0 * gen.G_max * gen.n + gen.f1 * gen.n *  model.p[k,t] 
+          return model.operative_cost[k,t] == gen.f0 * gen.DG_max  + gen.f1 *  model.p[k,t] 
       else:
           return model.operative_cost[k,t] == gen.cost_opm * model.p[k,t] 
     model.cop_rule = pyo.Constraint(model.GENERATORS, model.HTIME, rule=cop_rule)

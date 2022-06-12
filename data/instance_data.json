@@ -14,5 +14,6 @@
                    "W":3,
                    "B":2},
     "w":1,
-    "caso":1
+    "caso":1,
+    "create_generators": "True"
 }
