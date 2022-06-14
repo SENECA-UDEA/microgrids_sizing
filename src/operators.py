@@ -206,7 +206,7 @@ class Search_operator():
             #update the dictionary
             for t in dic_remove.keys():
                 if dict_total[select_ob].tec == 'D':
-                    dic_remove[t] = max(0,dic_remove[t]- dict_total[select_ob].G_max)
+                    dic_remove[t] = max(0,dic_remove[t]- dict_total[select_ob].DG_max)
                 else:
                     dic_remove[t] = max(0,dic_remove[t]- dict_total[select_ob].gen_rule[t])
 

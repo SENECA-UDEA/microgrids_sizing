@@ -36,10 +36,25 @@ units_filepath = "../data/Test/parameters_Test.json"
 instanceData_filepath = "../data/Test/instance_data_Test.json"
 # file paths local PN
 demand_filepath = "../data/Puerto_Nar/demand_PN.csv"
-forecast_filepath = '../data/ Puerto_Nar/forecast_PN.csv'
-units_filepath = "../data/ Puerto_Nar/parameters_PN.json"
-instanceData_filepath = "../data/ Puerto_Nar/instance_data_PN.json"
+forecast_filepath = '../data/Puerto_Nar/forecast_PN.csv'
+units_filepath = "../data/Puerto_Nar/parameters_PN.json"
+instanceData_filepath = "../data/Puerto_Nar/instance_data_PN.json"
+# file paths local TEST
+demand_filepath = "../data/Test/demand_day.csv"
+forecast_filepath = '../data/Test/forecast_day.csv'
+units_filepath = "../data/Test/parameters_Test.json"
+instanceData_filepath = "../data/Test/instance_data_Test.json"
 
+demand_filepath = "../data/Puerto_Nar/demand_PN.csv"
+forecast_filepath = '../data/Puerto_Nar/forecast_PN.csv'
+units_filepath = "../data/Puerto_Nar/parameters_PN.json"
+instanceData_filepath = "../data/Puerto_Nar/instance_data_PN.json"
+# file paths local PR
+demand_filepath = "../data/Providencia/demand_P.csv"
+forecast_filepath = '../data/Providencia/forecast_P.csv'
+units_filepath = "../data/Providencia/parameters_P.json"
+instanceData_filepath = "../data/Providencia/instance_data_P.json"
+# file paths local TEST
 
 # read data
 demand_df, forecast_df, generators, batteries, instance_data = read_data(demand_filepath,
@@ -164,7 +179,7 @@ for i in range(20):
                 
 #df with the feasible solutions
 df_iterations = pd.DataFrame(rows_df, columns=["i", "feasible", "area", "LCOE_actual", "LCOE_Best","Movement"])
-
+'''
 column_data = {}
 for bat in sol_best.batteries_dict_sol.values(): 
     if (sol_best.results.descriptive['batteries'][bat.id_bat] == 1):
@@ -174,7 +189,7 @@ for gen in sol_best.generators_dict_sol.values():
         column_data[gen.id_gen+'_%'] =  sol_best.results.df_results[gen.id_gen] / sol_best.results.df_results['demand']
    
 percent_df = pd.DataFrame(column_data, columns=[*column_data.keys()])
-
+'''
 
 '''
 # solve model 
