@@ -214,6 +214,7 @@ class Search_operator():
 
         solution.technologies_dict_sol, solution.renewables_dict_sol = create_technologies (solution.generators_dict_sol
                                                                                               , solution.batteries_dict_sol)
+        
         return solution, dic_remove
     
     def addrandomobject(self, sol_actual, available_bat, available_gen): #add generator or battery

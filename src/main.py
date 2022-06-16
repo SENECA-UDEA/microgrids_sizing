@@ -38,11 +38,7 @@ demand_filepath = "../data/Puerto_Nar/demand_PN.csv"
 forecast_filepath = '../data/Puerto_Nar/forecast_PN.csv'
 units_filepath = "../data/Puerto_Nar/parameters_PN.json"
 instanceData_filepath = "../data/Puerto_Nar/instance_data_PN.json"
-# file paths local TEST
-demand_filepath = "../data/Puerto_Nar/demand_PN.csv"
-forecast_filepath = '../data/Puerto_Nar/forecast_PN.csv'
-units_filepath = "../data/Puerto_Nar/parameters_PN.json"
-instanceData_filepath = "../data/Puerto_Nar/instance_data_PN.json"
+
 
 # read data
 demand_df, forecast_df, generators, batteries, instance_data = read_data(demand_filepath,
