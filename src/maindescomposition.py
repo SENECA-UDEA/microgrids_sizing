@@ -93,6 +93,7 @@ sol_current = copy.deepcopy(sol_feasible)
 movement = "Initial Solution"
 amax =  instance_data['amax']
 Alpha_random_gen = instance_data['Alpha_random_gen']
+N_iterations = instance_data['N_iterations']
 #df of solutions
 rows_df = []
 
@@ -102,7 +103,7 @@ search_operator = Search_operator(generators_dict,
                             demand_df,
                             forecast_df)
 
-for i in range(20):
+for i in range(N_iterations):
     rows_df.append([i, sol_current.feasible, 
                     sol_current.results.descriptive['area'], 
                     sol_current.results.descriptive['LCOE'], 

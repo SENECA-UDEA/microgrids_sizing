@@ -18,5 +18,6 @@
     "G_stc": 1000,
     "Alpha_shortlist": 0.5,
     "Alpha_random_gen": 0.5,
+    "N_iterations": 20,
     "create_generators": "True"
 }
