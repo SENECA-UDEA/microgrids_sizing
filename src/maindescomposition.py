@@ -29,16 +29,16 @@ demand_filepath = "../data/Providencia/demand_P.csv"
 forecast_filepath = '../data/Providencia/forecast_P.csv'
 units_filepath = "../data/Providencia/parameters_P.json"
 instanceData_filepath = "../data/Providencia/instance_data_P.json"
-# file paths local TEST
-demand_filepath = "../data/Test/demand_day.csv"
-forecast_filepath = '../data/Test/forecast_day.csv'
-units_filepath = "../data/Test/parameters_Test.json"
-instanceData_filepath = "../data/Test/instance_data_Test.json"
 # file paths local PN
 demand_filepath = "../data/Puerto_Nar/demand_PN.csv"
 forecast_filepath = '../data/Puerto_Nar/forecast_PN.csv'
 units_filepath = "../data/Puerto_Nar/parameters_PN.json"
 instanceData_filepath = "../data/Puerto_Nar/instance_data_PN.json"
+# file paths local TEST
+demand_filepath = "../data/Test/demand_day.csv"
+forecast_filepath = '../data/Test/forecast_day.csv'
+units_filepath = "../data/Test/parameters_Test.json"
+instanceData_filepath = "../data/Test/instance_data_Test.json"
 
 
 # read data
@@ -92,6 +92,7 @@ sol_current = copy.deepcopy(sol_feasible)
 
 movement = "Initial Solution"
 amax =  instance_data['amax']
+Alpha_random_gen = instance_data['Alpha_random_gen']
 #df of solutions
 rows_df = []
 
@@ -117,7 +118,7 @@ for i in range(20):
         list_available_bat, list_available_gen = search_operator.available(sol_current, amax)
         if (list_available_gen != [] or list_available_bat != []):
             # Add a generator or battery to the current solution
-            sol_try, dic_remove = search_operator.addobject(sol_current, list_available_bat, list_available_gen, dic_remove)
+            sol_try, dic_remove = search_operator.addobject(sol_current, list_available_bat, list_available_gen, dic_remove, Alpha_random_gen)
             #sol_try = search_operator.addrandomobject(sol_current, list_available_bat, list_available_gen)
             movement = "Add"
         else:

@@ -30,6 +30,7 @@ class Sol_constructor():
         auxiliar_dict_generator = {}
         #calculate the total available area
         area_available = instance_data['amax']
+        Alpha_shortlist = instance_data['Alpha_shortlist']
         area = 0
         
         #Calculate the maximum area that the Diesel have to covered
@@ -47,7 +48,7 @@ class Sol_constructor():
             if (len(sorted_generators) == 0 or area_available <= 0):
                 available_generators = False
             else:
-                len_candidate = math.ceil(len(sorted_generators)*0.5)
+                len_candidate = math.ceil(len(sorted_generators)*Alpha_shortlist)
                 position = random.randint(0, len_candidate-1)
                 f = self.generators_dict[sorted_generators[position]]
                 area_gen = f.area
@@ -150,7 +151,7 @@ class Search_operator():
         
         return solution, dic_remove
     
-    def addobject(self, sol_actual, available_bat, available_gen, dic_remove): #add generator or battery
+    def addobject(self, sol_actual, available_bat, available_gen, dic_remove, Alpha_random_gen): #add generator or battery
         solution = copy.deepcopy(sol_actual)
         #get the position with maximum generation of removed object
         pos_max = max(dic_remove, key=dic_remove.get)
@@ -167,7 +168,7 @@ class Search_operator():
         else:
             #same probability by each technology
             rand_tec = random.random()
-            if rand_tec < 0.5:
+            if rand_tec < Alpha_random_gen:
                 tec_select = "Generator"
             else:
                 tec_select = "Battery"

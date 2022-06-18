@@ -28,17 +28,16 @@ demand_filepath = "../data/Providencia/demand_P.csv"
 forecast_filepath = '../data/Providencia/forecast_P.csv'
 units_filepath = "../data/Providencia/parameters_P.json"
 instanceData_filepath = "../data/Providencia/instance_data_P.json"
-# file paths local TEST
-demand_filepath = "../data/Test/demand_day.csv"
-forecast_filepath = '../data/Test/forecast_day.csv'
-units_filepath = "../data/Test/parameters_Test.json"
-instanceData_filepath = "../data/Test/instance_data_Test.json"
 # file paths local PN
 demand_filepath = "../data/Puerto_Nar/demand_PN.csv"
 forecast_filepath = '../data/Puerto_Nar/forecast_PN.csv'
 units_filepath = "../data/Puerto_Nar/parameters_PN.json"
 instanceData_filepath = "../data/Puerto_Nar/instance_data_PN.json"
-
+# file paths local TEST
+demand_filepath = "../data/Test/demand_day.csv"
+forecast_filepath = '../data/Test/forecast_day.csv'
+units_filepath = "../data/Test/parameters_Test.json"
+instanceData_filepath = "../data/Test/instance_data_Test.json"
 
 # read data
 demand_df, forecast_df, generators, batteries, instance_data = read_data(demand_filepath,

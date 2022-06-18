@@ -1,5 +1,5 @@
 {   
-    "amax": 30, 
+    "amax": 20, 
     "ir" : 0.0808, 
     "nse" : 0.5, 
     "maxtec" : 4, 
@@ -7,13 +7,16 @@
     "years" : 20,
     "tlpsp" : 1,
     "w_cost": 2.8622,
-    "h2" : 10,
-    "coef_hel" : 0.1,
-    "max_brand" : {"S":3,
+    "max_brand" : {"S":2,
                    "D":3,
                    "W":3,
-                   "B":3},
+                   "B":2},
+    "h2" : 10,
+    "coef_hel" : 0.1,
     "w":1,
     "caso":1,
+    "G_stc": 1000,
+    "Alpha_shortlist": 0.5,
+    "Alpha_random_gen": 0.5,
     "create_generators": "True"
 }

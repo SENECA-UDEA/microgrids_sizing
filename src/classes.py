@@ -30,7 +30,8 @@ class Solar(Generator):
         self.INOCT = 0
         super(Solar, self).__init__(id_gen, tec, br,area, cost_up,  cost_r, cost_s)
 
-    def Solargeneration(self, t_amb, gt):    
+    def Solargeneration(self, t_amb, gt,G_stc):  
+            #G_stc: Standar solar radiation
             #Calculate generation over the time
             for t in list(gt.index.values):
                 Irad_panel = gt[t] #irradiance in module W/m2
@@ -38,7 +39,7 @@ class Solar(Generator):
                    self.gen_rule[t] = 0
                 else:
                     TM = t_amb[t] + (self.INOCT - 20)*(Irad_panel/self.G_noct)
-                    self.gen_rule[t] = self.n *self.Ppv_stc*Irad_panel*(1 + self.kt*(TM-25))*self.fpv
+                    self.gen_rule[t] = self.n *self.Ppv_stc*(Irad_panel/G_stc)*(1 + self.kt*(TM-25))*self.fpv
             return self.gen_rule
 
     # Temperature model

@@ -47,7 +47,7 @@ def create_objects(generators, batteries, forecast_df, demand_df, instance_data)
       if k['tec'] == 'S':
         obj_aux = Solar(*k.values())
         obj_aux.Get_INOCT(instance_data["caso"], instance_data["w"])
-        obj_aux.Solargeneration( forecast_df['t_ambt'], forecast_df['DNI'])
+        obj_aux.Solargeneration( forecast_df['t_ambt'], forecast_df['DNI'], instance_data["G_stc"])
       elif k['tec'] == 'W':
         obj_aux = Eolic(*k.values())
         obj_aux.Windgeneration(forecast_df['Wt'],instance_data["h2"],instance_data["coef_hel"] )
