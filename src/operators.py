@@ -153,8 +153,12 @@ class Search_operator():
     
     def addobject(self, sol_actual, available_bat, available_gen, dic_remove, Alpha_random_gen): #add generator or battery
         solution = copy.deepcopy(sol_actual)
-        #get the position with maximum generation of removed object
-        pos_max = max(dic_remove, key=dic_remove.get)
+        #get the maximum generation of removed object
+        val_max = max(dic_remove.values())
+        #get all the position with the same maximum value
+        list_max = [k for k,v in dic_remove.items() if v == val_max]
+        #random select: one position with the maximum value
+        pos_max = random.choice(list_max)
         #get the generation in the period of maximum selected
         gen_t = dic_remove[pos_max]
         dict_total = {**self.generators_dict,**self.batteries_dict}
@@ -177,8 +181,7 @@ class Search_operator():
             #select a random battery
             select_ob = random.choice(available_bat)
             solution.batteries_dict_sol[select_ob] = dict_total[select_ob]
-        
-        #check generation in max period that covers the remove object
+            #check generation in max period that covers the remove object
         elif tec_select == "Generator":
             for i in available_gen:
                 dic = dict_total[i]
