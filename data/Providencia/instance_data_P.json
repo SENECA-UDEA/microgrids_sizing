@@ -1,7 +1,7 @@
 {   
     "amax": 20, 
     "ir" : 0.0808, 
-    "nse" : 0.5, 
+    "nse" : 0.25, 
     "maxtec" : 4, 
     "mintec" : 2,
     "years" : 20,
