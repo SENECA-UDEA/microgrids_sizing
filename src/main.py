@@ -8,7 +8,6 @@ Created on Wed Apr 20 11:14:21 2022
 from utilities import read_data, create_objects, calculate_sizingcost, create_technologies, script_generators 
 import opt as opt
 import pandas as pd 
-import random as random
 from plotly.offline import plot
 import copy
 from classes import Solution
