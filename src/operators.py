@@ -123,12 +123,12 @@ class Search_operator():
         for d in dict_actual.values(): 
             if d.tec == 'B':
                 op_cost = 0
-                inv_cost = d.cost_up + d.cost_r - d.cost_s
+                inv_cost = d.cost_up + d.cost_r + d.cost_fopm - d.cost_s
                 sum_generation = solution.results.df_results[d.id_bat+'_b-'].sum(axis = 0, skipna = True)          
             else:
                 sum_generation = solution.results.df_results[d.id_gen].sum(axis = 0, skipna = True)
                 op_cost = solution.results.df_results[d.id_gen+'_cost'].sum(axis = 0, skipna = True)
-                inv_cost = d.cost_up*d.n + d.cost_r*d.n - d.cost_s*d.n
+                inv_cost = d.cost_up*d.n + d.cost_r*d.n + d.cost_fopm*d.n - d.cost_s*d.n
                  
             relation = sum_generation / (inv_cost + op_cost)
             if relation <= min_relation:
@@ -196,10 +196,10 @@ class Search_operator():
                 if coverage < best_option:
                     best_option = coverage
                     select_ob = dic.id_gen
-                    best_cost = dic.cost_up * dic.n + dic.cost_r * dic.n - dic.cost_s * dic.n
+                    best_cost = dic.cost_up * dic.n + dic.cost_r * dic.n + dic.cost_fopm * dic.n  - dic.cost_s * dic.n
                 #If two options are equal, choose the one with the lowest cost.
                 elif coverage == best_option:
-                    inv_cost = dic.cost_up * dic.n + dic.cost_r * dic.n - dic.cost_s * dic.n
+                    inv_cost = dic.cost_up * dic.n + dic.cost_r * dic.n + dic.cost_fopm * dic.n - dic.cost_s * dic.n
                     if inv_cost <= best_cost:
                         best_cost = inv_cost
                         best_option = coverage

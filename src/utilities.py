@@ -98,11 +98,12 @@ def calculate_sizingcost(generators_dict, batteries_dict, ir, years):
             for gen in generators_dict.values(): 
                 expr += gen.cost_up*gen.n 
                 expr += gen.cost_r*gen.n 
+                expr += gen.cost_fopm*gen.n 
                 expr -= gen.cost_s*gen.n 
                 
             for bat in batteries_dict.values(): 
                 expr += bat.cost_up
-                expr += bat.cost_opm
+                expr += bat.cost_fopm
                 expr += bat.cost_r
                 expr -= bat.cost_s
                 
