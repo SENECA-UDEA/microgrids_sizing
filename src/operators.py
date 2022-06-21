@@ -48,11 +48,13 @@ class Sol_constructor():
             if (len(sorted_generators) == 0 or area_available <= 0):
                 available_generators = False
             else:
+                #shortlist candidates
                 len_candidate = math.ceil(len(sorted_generators)*Alpha_shortlist)
                 position = random.randint(0, len_candidate-1)
                 f = self.generators_dict[sorted_generators[position]]
                 area_gen = f.area
                 demand_gen = f.DG_max
+                #check if already supplies all demand
                 if (demand_to_be_covered <= 0):
                     available_generators = False
                 elif (area_gen <= area_available):

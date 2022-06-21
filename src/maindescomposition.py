@@ -170,6 +170,7 @@ for i in range(N_iterations):
 #df with the feasible solutions
 df_iterations = pd.DataFrame(rows_df, columns=["i", "feasible", "area", "LCOE_actual", "LCOE_Best","Movement"])
 
+#print results best solution
 print(sol_best.results.descriptive)
 print(sol_best.results.df_results)
 generation_graph = sol_best.results.generation_graph()

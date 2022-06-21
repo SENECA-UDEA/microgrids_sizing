@@ -164,7 +164,9 @@ def script_generators(generators, amax):
     '''
     return generators_def
 
+#Calculate energy total, for eevery brand, technology or renewable 
 def calculate_energy(batteries_dict, generators_dict, model_results, demand_df):  
+   #create auxiliar sets
    column_data = {}
    energy_data = {}
    aux_energy_data = []
@@ -175,15 +177,19 @@ def calculate_energy(batteries_dict, generators_dict, model_results, demand_df):
    brand_data = {}
    aux_brand_data = []
    for bat in batteries_dict.values(): 
+       #check that the battery is installed
        if (model_results.descriptive['batteries'][bat.id_bat] == 1):
            column_data[bat.id_bat+'_%'] =  model_results.df_results[bat.id_bat+'_b-'] / model_results.df_results['demand']
            aux_total_data = model_results.df_results[bat.id_bat+'_b-']
+           #sum all generation
            total_data += aux_total_data
+           #check the key for create or continue in the same dict
            key_energy_total = bat.tec+ 'total'
            key_brand_total = bat.br + 'total'
            if key_energy_total in energy_data:
                aux_energy_data = []
                aux_energy_data = energy_data[key_energy_total] +  model_results.df_results[bat.id_bat+'_b-']
+               #fill the dictionary
                energy_data[key_energy_total] = aux_energy_data
            else:
                energy_data[key_energy_total] =  model_results.df_results[bat.id_bat+'_b-']           
@@ -191,20 +197,25 @@ def calculate_energy(batteries_dict, generators_dict, model_results, demand_df):
            if key_brand_total in brand_data:
                aux_brand_data = []
                aux_brand_data = brand_data[key_brand_total] +  model_results.df_results[bat.id_bat+'_b-']
+               #fill the dictionary
                brand_data[key_brand_total] = aux_brand_data
            else:
                brand_data[key_brand_total] =  model_results.df_results[bat.id_bat+'_b-']           
       
    for gen in generators_dict.values():
+       #check that the generator is installed
        if (model_results.descriptive['generators'][gen.id_gen] == 1):
            column_data[gen.id_gen+'_%'] =  model_results.df_results[gen.id_gen] / model_results.df_results['demand']
+           #check the key for create or continue in the same dict
            key_energy_total = gen.tec + 'total'
            key_renew_total = gen.tec + 'total'
            key_brand_total = gen.br + 'total'
+           #sum all generation
            total_data += model_results.df_results[gen.id_gen]
            if key_energy_total in energy_data:
                aux_energy_data = []
                aux_energy_data = energy_data[key_energy_total] +  model_results.df_results[gen.id_gen]
+               #fill the dictionary
                energy_data[key_energy_total] = aux_energy_data
            else:
                energy_data[key_energy_total] =  model_results.df_results[gen.id_gen]           
@@ -212,6 +223,7 @@ def calculate_energy(batteries_dict, generators_dict, model_results, demand_df):
            if key_brand_total in brand_data:
                aux_brand_data = []
                aux_brand_data = brand_data[key_brand_total] +  model_results.df_results[gen.id_gen]
+               #fill the dictionary
                brand_data[key_brand_total] = aux_brand_data
            else:
                brand_data[key_brand_total] =  model_results.df_results[gen.id_gen]           
@@ -219,10 +231,11 @@ def calculate_energy(batteries_dict, generators_dict, model_results, demand_df):
                if key_renew_total in renew_data:
                    aux_renew_data = []
                    aux_renew_data = renew_data[key_renew_total] +  model_results.df_results[gen.id_gen]
+                   #fill the dictionary
                    renew_data[key_renew_total] = aux_renew_data
                else:
                    renew_data[key_renew_total] =  model_results.df_results[gen.id_gen]           
-
+   #Create dataframes
    percent_df = pd.DataFrame(column_data, columns=[*column_data.keys()])
    energy_df = pd.DataFrame(energy_data, columns=[*energy_data.keys()])
    renew_df = pd.DataFrame(renew_data, columns=[*renew_data.keys()])
