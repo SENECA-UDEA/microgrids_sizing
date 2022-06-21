@@ -94,6 +94,7 @@ movement = "Initial Solution"
 amax =  instance_data['amax']
 Alpha_random_gen = instance_data['Alpha_random_gen']
 N_iterations = instance_data['N_iterations']
+size_add = instance_data["size_add"]
 #df of solutions
 rows_df = []
 
@@ -119,7 +120,7 @@ for i in range(N_iterations):
         list_available_bat, list_available_gen = search_operator.available(sol_current, amax)
         if (list_available_gen != [] or list_available_bat != []):
             # Add a generator or battery to the current solution
-            sol_try, dic_remove = search_operator.addobject(sol_current, list_available_bat, list_available_gen, dic_remove, Alpha_random_gen)
+            sol_try, dic_remove = search_operator.addobject(sol_current, list_available_bat, list_available_gen, dic_remove, Alpha_random_gen, size_add)
             #sol_try = search_operator.addrandomobject(sol_current, list_available_bat, list_available_gen)
             movement = "Add"
         else:
@@ -161,7 +162,9 @@ for i in range(N_iterations):
         sol_current = copy.deepcopy(sol_try)
 
     sol_current.results.descriptive['area'] = calculate_area(sol_current)
-         
+    
+    print(sol_current.generators_dict_sol)
+    print(sol_current.batteries_dict_sol)
                
                 
 #df with the feasible solutions

@@ -151,7 +151,7 @@ class Search_operator():
         
         return solution, dic_remove
     
-    def addobject(self, sol_actual, available_bat, available_gen, dic_remove, Alpha_random_gen): #add generator or battery
+    def addobject(self, sol_actual, available_bat, available_gen, dic_remove, Alpha_random_gen, size_add): #add generator or battery
         solution = copy.deepcopy(sol_actual)
         #get the maximum generation of removed object
         val_max = max(dic_remove.values())
@@ -162,7 +162,7 @@ class Search_operator():
         #get the generation in the period of maximum selected
         gen_t = dic_remove[pos_max]
         dict_total = {**self.generators_dict,**self.batteries_dict}
-        best_option = math.inf
+        best_option = -math.inf
         best_cost = math.inf
         #random select battery or generator
         if available_gen == []:
@@ -191,18 +191,18 @@ class Search_operator():
                     gen_generator = dic.gen_rule[pos_max]
                 
                 #choose the value closest to what is demanded
-                coverage = abs(gen_t - gen_generator)
+                diff = gen_generator - gen_t
                 
-                if coverage < best_option:
-                    best_option = coverage
+                if diff > best_option and gen_generator < size_add*gen_t:
+                    best_option = diff
                     select_ob = dic.id_gen
                     best_cost = dic.cost_up * dic.n + dic.cost_r * dic.n + dic.cost_fopm * dic.n  - dic.cost_s * dic.n
                 #If two options are equal, choose the one with the lowest cost.
-                elif coverage == best_option:
+                elif diff == best_option:
                     inv_cost = dic.cost_up * dic.n + dic.cost_r * dic.n + dic.cost_fopm * dic.n - dic.cost_s * dic.n
                     if inv_cost <= best_cost:
                         best_cost = inv_cost
-                        best_option = coverage
+                        best_option = diff
                         select_ob = dic.id_gen
                 
                 
