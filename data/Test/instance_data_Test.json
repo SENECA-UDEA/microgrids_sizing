@@ -16,8 +16,9 @@
     "w":1,
     "caso":1,
     "G_stc": 1000,
-    "Alpha_shortlist": 0.5,
-    "Alpha_random_gen": 0.5,
+    "Alpha_shortlist": 0.3,
+    "Alpha_random_gen": 0.75,
+    "size_add": 2,
     "N_iterations": 20,
     "create_generators": "True"
 }
