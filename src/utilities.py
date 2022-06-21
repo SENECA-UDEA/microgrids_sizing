@@ -164,6 +164,73 @@ def script_generators(generators, amax):
     '''
     return generators_def
 
+def calculate_energy(batteries_dict, generators_dict, model_results, demand_df):  
+   column_data = {}
+   energy_data = {}
+   aux_energy_data = []
+   renew_data = {}
+   aux_renew_data = []
+   total_data = [0]*len(demand_df)
+   aux_total_data = []
+   brand_data = {}
+   aux_brand_data = []
+   for bat in batteries_dict.values(): 
+       if (model_results.descriptive['batteries'][bat.id_bat] == 1):
+           column_data[bat.id_bat+'_%'] =  model_results.df_results[bat.id_bat+'_b-'] / model_results.df_results['demand']
+           aux_total_data = model_results.df_results[bat.id_bat+'_b-']
+           total_data += aux_total_data
+           key_energy_total = bat.tec+ 'total'
+           key_brand_total = bat.br + 'total'
+           if key_energy_total in energy_data:
+               aux_energy_data = []
+               aux_energy_data = energy_data[key_energy_total] +  model_results.df_results[bat.id_bat+'_b-']
+               energy_data[key_energy_total] = aux_energy_data
+           else:
+               energy_data[key_energy_total] =  model_results.df_results[bat.id_bat+'_b-']           
+    
+           if key_brand_total in brand_data:
+               aux_brand_data = []
+               aux_brand_data = brand_data[key_brand_total] +  model_results.df_results[bat.id_bat+'_b-']
+               brand_data[key_brand_total] = aux_brand_data
+           else:
+               brand_data[key_brand_total] =  model_results.df_results[bat.id_bat+'_b-']           
+      
+   for gen in generators_dict.values():
+       if (model_results.descriptive['generators'][gen.id_gen] == 1):
+           column_data[gen.id_gen+'_%'] =  model_results.df_results[gen.id_gen] / model_results.df_results['demand']
+           key_energy_total = gen.tec + 'total'
+           key_renew_total = gen.tec + 'total'
+           key_brand_total = gen.br + 'total'
+           total_data += model_results.df_results[gen.id_gen]
+           if key_energy_total in energy_data:
+               aux_energy_data = []
+               aux_energy_data = energy_data[key_energy_total] +  model_results.df_results[gen.id_gen]
+               energy_data[key_energy_total] = aux_energy_data
+           else:
+               energy_data[key_energy_total] =  model_results.df_results[gen.id_gen]           
+           
+           if key_brand_total in brand_data:
+               aux_brand_data = []
+               aux_brand_data = brand_data[key_brand_total] +  model_results.df_results[gen.id_gen]
+               brand_data[key_brand_total] = aux_brand_data
+           else:
+               brand_data[key_brand_total] =  model_results.df_results[gen.id_gen]           
+           if (gen.tec == 'S' or gen.tec == 'W'):
+               if key_renew_total in renew_data:
+                   aux_renew_data = []
+                   aux_renew_data = renew_data[key_renew_total] +  model_results.df_results[gen.id_gen]
+                   renew_data[key_renew_total] = aux_renew_data
+               else:
+                   renew_data[key_renew_total] =  model_results.df_results[gen.id_gen]           
+
+   percent_df = pd.DataFrame(column_data, columns=[*column_data.keys()])
+   energy_df = pd.DataFrame(energy_data, columns=[*energy_data.keys()])
+   renew_df = pd.DataFrame(renew_data, columns=[*renew_data.keys()])
+   arraydf = np.array(total_data)
+   total_df = pd.DataFrame(arraydf, columns=['Total energy'])
+   brand_df = pd.DataFrame(brand_data, columns=[*brand_data.keys()])
+   
+   return percent_df, energy_df, renew_df, total_df, brand_df
 
 
 '''
