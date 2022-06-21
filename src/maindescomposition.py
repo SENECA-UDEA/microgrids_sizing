@@ -5,7 +5,7 @@ Created on Wed Apr 20 11:14:21 2022
 @author: pmayaduque
 """
 
-from utilities import read_data, create_objects, calculate_sizingcost, create_technologies, calculate_area, script_generators
+from utilities import read_data, create_objects, calculate_sizingcost, create_technologies, calculate_area, script_generators, calculate_energy
 import opt as opt
 import pandas as pd 
 import random as random
@@ -169,6 +169,15 @@ for i in range(N_iterations):
                 
 #df with the feasible solutions
 df_iterations = pd.DataFrame(rows_df, columns=["i", "feasible", "area", "LCOE_actual", "LCOE_Best","Movement"])
+
+print(sol_best.results.descriptive)
+print(sol_best.results.df_results)
+generation_graph = sol_best.results.generation_graph()
+plot(generation_graph)
+percent_df, energy_df, renew_df, total_df, brand_df = calculate_energy(sol_best.batteries_dict_sol, sol_best.generators_dict_sol, sol_best.results, demand_df)
+
+
+
 '''
 column_data = {}
 for bat in sol_best.batteries_dict_sol.values(): 

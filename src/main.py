@@ -5,7 +5,7 @@ Created on Wed Apr 20 11:14:21 2022
 @author: pmayaduque
 """
 
-from utilities import read_data, create_objects, calculate_sizingcost, create_technologies, script_generators 
+from utilities import read_data, create_objects, calculate_sizingcost, create_technologies, script_generators, calculate_energy
 import opt as opt
 import pandas as pd 
 from plotly.offline import plot
@@ -99,12 +99,4 @@ if termination['Temination Condition'] == 'optimal':
    print(model_results.df_results)
    generation_graph = model_results.generation_graph()
    plot(generation_graph)
-   column_data = {}
-   for bat in batteries_dict.values(): 
-       if (model_results.descriptive['batteries'][bat.id_bat] == 1):
-           column_data[bat.id_bat+'_%'] =  model_results.df_results[bat.id_bat+'_b-'] / model_results.df_results['demand']
-   for gen in generators_dict.values():
-       if (model_results.descriptive['generators'][gen.id_gen] == 1):
-           column_data[gen.id_gen+'_%'] =  model_results.df_results[gen.id_gen] / model_results.df_results['demand']
-   
-   percent_df = pd.DataFrame(column_data, columns=[*column_data.keys()])
+   percent_df, energy_df, renew_df, total_df, brand_df = calculate_energy(batteries_dict, generators_dict, model_results, demand_df)
