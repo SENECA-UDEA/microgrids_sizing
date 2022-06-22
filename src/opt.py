@@ -20,6 +20,7 @@ def make_model(generators_dict=None,
                technologies_dict = None,  
                renewables_dict = None,
                amax = 0, 
+               fuel_cost = 0,
                ir = 1, 
                nse = 0, 
                maxtec = 1, 
@@ -54,6 +55,7 @@ def make_model(generators_dict=None,
 
     # Parameters
     model.amax = pyo.Param(initialize=amax) #Maximum area
+    model.fuel_cost = pyo.Param(initialize=fuel_cost) #Fuel Cost
     model.gen_area = pyo.Param(model.GENERATORS, initialize = {k:generators_dict[k].area for k in generators_dict.keys()})# Generator area
     model.bat_area = pyo.Param(model.BATTERIES, initialize = {k:batteries_dict[k].area for k in batteries_dict.keys()})# Battery area
     model.n_gen = pyo.Param(model.GENERATORS, initialize = {k:generators_dict[k].n for k in generators_dict.keys()})# Number of Generator
@@ -152,7 +154,7 @@ def make_model(generators_dict=None,
     def cop_rule(model,k, t):
       gen = generators_dict[k]
       if gen.tec == 'D': 
-          return model.operative_cost[k,t] == gen.f0 * gen.DG_max * model.w[k] + gen.f1 * model.p[k,t] 
+          return model.operative_cost[k,t] == (gen.f0 * gen.DG_max * model.w[k] + gen.f1 * model.p[k,t])*model.fuel_cost
       else:
           return model.operative_cost[k,t] == gen.cost_vopm * model.p[k,t] 
     model.cop_rule = pyo.Constraint(model.GENERATORS, model.HTIME, rule=cop_rule)
@@ -313,7 +315,8 @@ def make_model_operational(generators_dict=None,
                batteries_dict=None,  
                demand_df=None, 
                technologies_dict = None,  
-               renewables_dict = None,                
+               renewables_dict = None,     
+               fuel_cost = 0,
                nse = 0, 
                TNPC = 0,
                CRF = 1,
@@ -343,6 +346,7 @@ def make_model_operational(generators_dict=None,
 
     # Parameters 
     model.d = pyo.Param(model.HTIME, initialize = demand_df) #demand     
+    model.fuel_cost = pyo.Param(initialize=fuel_cost) #Fuel Cost
     model.nse = pyo.Param(initialize=nse) # Available unsupplied demand  
     model.TNPC = pyo.Param(initialize = TNPC) #Total net present cost (Sizing decision)
     model.CRF = pyo.Param (initialize = CRF) #Capital recovery factor (Sizing decision)
@@ -397,7 +401,7 @@ def make_model_operational(generators_dict=None,
     def cop_rule(model,k, t):
       gen = generators_dict[k]
       if gen.tec == 'D': 
-          return model.operative_cost[k,t] == gen.f0 * gen.DG_max  + gen.f1 *  model.p[k,t] 
+          return model.operative_cost[k,t] == (gen.f0 * gen.DG_max  + gen.f1 *  model.p[k,t])*model.fuel_cost
       else:
           return model.operative_cost[k,t] == gen.cost_vopm * model.p[k,t] 
     model.cop_rule = pyo.Constraint(model.GENERATORS, model.HTIME, rule=cop_rule)
