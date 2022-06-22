@@ -80,7 +80,8 @@ sol_feasible = sol_constructor.initial_solution(instance_data,
                                                generators_dict, 
                                                batteries_dict, 
                                                technologies_dict, 
-                                               renewables_dict)
+                                               renewables_dict,
+                                               instance_data['nse'])
 
 # set the initial solution as the best so far
 sol_best = copy.deepcopy(sol_feasible)
@@ -136,6 +137,7 @@ for i in range(N_iterations):
                                        demand_df=dict(zip(demand_df.t, demand_df.demand)), 
                                        technologies_dict = sol_try.technologies_dict_sol,  
                                        renewables_dict = sol_try.renewables_dict_sol,
+                                       fuel_cost =  instance_data['fuel_cost'],
                                        nse =  instance_data['nse'], 
                                        TNPC = tnpc_calc,
                                        CRF = crf_calc,

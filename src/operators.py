@@ -23,7 +23,8 @@ class Sol_constructor():
                           generators_dict, 
                           batteries_dict, 
                           technologies_dict, 
-                          renewables_dict): #initial Diesel solution
+                          renewables_dict,
+                          nse): #initial Diesel solution
         
         generators_dict_sol = {}
         #create auxiliar dict for the iterations
@@ -33,8 +34,9 @@ class Sol_constructor():
         Alpha_shortlist = instance_data['Alpha_shortlist']
         area = 0
         
-        #Calculate the maximum area that the Diesel have to covered
-        demand_to_be_covered = max(self.demand_df['demand'])
+        #Calculate the maximum demand that the Diesel have to covered
+        demand_to_be_covered = max(self.demand_df['demand']) 
+        demand_to_be_covered = demand_to_be_covered * (1 - nse)
         
         for g in self.generators_dict.values(): 
             if g.tec == 'D':
@@ -82,6 +84,7 @@ class Sol_constructor():
                                            demand_df=dict(zip(self.demand_df.t, self.demand_df.demand)), 
                                            technologies_dict = technologies_dict_sol,  
                                            renewables_dict = renewables_dict_sol,
+                                           fuel_cost =  instance_data['fuel_cost'],
                                            nse =  instance_data['nse'], 
                                            TNPC = tnpc_calc,
                                            CRF = crf_calc,
