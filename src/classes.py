@@ -39,7 +39,7 @@ class Solar(Generator):
                    self.gen_rule[t] = 0
                 else:
                     TM = t_amb[t] + (self.INOCT - 20)*(Irad_panel/self.G_noct)
-                    self.gen_rule[t] = self.n *self.Ppv_stc*(Irad_panel/G_stc)*(1 + self.kt*(TM-25))*self.fpv
+                    self.gen_rule[t] = self.Ppv_stc*(Irad_panel/G_stc)*(1 + self.kt*(TM-25))*self.fpv
             return self.gen_rule
 
     # Temperature model
@@ -73,13 +73,12 @@ class Solar(Generator):
   
 
 class Eolic(Generator):
-    def __init__(self, id_gen, tec, br, area, cost_up, cost_r, cost_s, cost_fopm, cost_vopm, s_in, s_rate, s_out, P_y, n, n_eq, h):
+    def __init__(self, id_gen, tec, br, area, cost_up, cost_r, cost_s, cost_fopm, cost_vopm, s_in, s_rate, s_out, P_y, n_eq, h):
         self.cost_vopm = cost_vopm #Variable Operation & Maintenance cost 
         self.s_in = s_in #Turbine Minimum Generating Speed (Input Speed)
         self.s_rate = s_rate #Rated speed of the wind turbine
         self.s_out = s_out # Turbine Maximum Generation Speed (Output Speed)
         self.P_y = P_y #Rated power of the wind turbine
-        self.n = n #number of wind turbines
         self.n_eq = n_eq #n to calculate the generation curve, usually 1,2 or 3
         self.gen_rule = {}
         self.h = h #height
@@ -94,9 +93,9 @@ class Eolic(Generator):
             if i <= self.s_in:
               self.gen_rule[t] = 0
             elif i < self.s_rate:
-              self.gen_rule[t] =  self.n * self.P_y*((i**self.n_eq-self.s_in**self.n_eq)/(self.s_rate**self.n_eq-self.s_in**self.n_eq))
+              self.gen_rule[t] = self.P_y*((i**self.n_eq-self.s_in**self.n_eq)/(self.s_rate**self.n_eq-self.s_in**self.n_eq))
             elif i <= self.s_out:                  
-              self.gen_rule[t] = self.n * self.P_y
+              self.gen_rule[t] =  self.P_y
             else:
               self.gen_rule[t] = 0
         return self.gen_rule
@@ -104,10 +103,9 @@ class Eolic(Generator):
 
                                
 class Diesel(Generator):
-    def __init__(self, id_gen, tec, br, area, cost_up, cost_r, cost_s, cost_fopm, DG_min, DG_max, n, f0, f1):
+    def __init__(self, id_gen, tec, br, area, cost_up, cost_r, cost_s, cost_fopm, DG_min, DG_max, f0, f1):
         self.DG_min = DG_min #Minimun generation to active the Diesel
         self.DG_max = DG_max #Rated power, maximum generation
-        self.n = n #Number of diesel generators
         self.f0 = f0 #fuel consumption curve coefficient
         self.f1 = f1 #fuel consumption curve coefficient
         super(Diesel, self).__init__(id_gen, tec, br, area, cost_up, cost_r,  cost_s, cost_fopm)

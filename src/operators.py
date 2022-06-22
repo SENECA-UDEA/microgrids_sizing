@@ -133,7 +133,7 @@ class Search_operator():
             else:
                 sum_generation = solution.results.df_results[d.id_gen].sum(axis = 0, skipna = True)
                 op_cost = solution.results.df_results[d.id_gen+'_cost'].sum(axis = 0, skipna = True)
-                inv_cost = d.cost_up*d.n + d.cost_r*d.n + d.cost_fopm*d.n - d.cost_s*d.n
+                inv_cost = d.cost_up + d.cost_r + d.cost_fopm - d.cost_s
                  
             relation = sum_generation / (inv_cost + op_cost)
             if relation <= min_relation:
@@ -201,10 +201,10 @@ class Search_operator():
                 if diff > best_option and gen_generator < size_add*gen_t:
                     best_option = diff
                     select_ob = dic.id_gen
-                    best_cost = dic.cost_up * dic.n + dic.cost_r * dic.n + dic.cost_fopm * dic.n  - dic.cost_s * dic.n
+                    best_cost = dic.cost_up + dic.cost_r + dic.cost_fopm - dic.cost_s 
                 #If two options are equal, choose the one with the lowest cost.
                 elif diff == best_option:
-                    inv_cost = dic.cost_up * dic.n + dic.cost_r * dic.n + dic.cost_fopm * dic.n - dic.cost_s * dic.n
+                    inv_cost = dic.cost_up  + dic.cost_r  + dic.cost_fopm - dic.cost_s 
                     if inv_cost <= best_cost:
                         best_cost = inv_cost
                         best_option = diff

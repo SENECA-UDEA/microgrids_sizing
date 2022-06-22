@@ -5,12 +5,10 @@ Created on Wed Apr 20 11:14:21 2022
 @author: pmayaduque
 """
 
-from utilities import read_data, create_objects, calculate_sizingcost, create_technologies, script_generators, calculate_energy
+from utilities import read_data, create_objects, create_technologies, calculate_energy
 import opt as opt
 import pandas as pd 
 from plotly.offline import plot
-import copy
-from classes import Solution
 pd.options.display.max_columns = None
 
 # file paths github
@@ -45,16 +43,10 @@ demand_df, forecast_df, generators, batteries, instance_data = read_data(demand_
                                                           instanceData_filepath)
 
 
-#Create data with n for solar and Wind
-if (instance_data['create_generators'] == 'True'):
-    generators_def = script_generators(generators, instance_data['amax'])
-else:
-    generators_def = generators
-
 
 
 # Create objects and generation rule
-generators_dict, batteries_dict = create_objects(generators_def,
+generators_dict, batteries_dict = create_objects(generators,
                                                  batteries, 
                                                  forecast_df,
                                                  demand_df,

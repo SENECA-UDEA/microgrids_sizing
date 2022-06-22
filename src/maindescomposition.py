@@ -5,10 +5,9 @@ Created on Wed Apr 20 11:14:21 2022
 @author: pmayaduque
 """
 
-from utilities import read_data, create_objects, calculate_sizingcost, create_technologies, calculate_area, script_generators, calculate_energy
+from utilities import read_data, create_objects, calculate_sizingcost, create_technologies, calculate_area, calculate_energy
 import opt as opt
 import pandas as pd 
-import random as random
 from operators import Sol_constructor, Search_operator
 from plotly.offline import plot
 import copy
@@ -47,17 +46,10 @@ demand_df, forecast_df, generators, batteries, instance_data = read_data(demand_
                                                           units_filepath,
                                                           instanceData_filepath)
 
-#Create data with n for solar and Wind
-if (instance_data['create_generators'] == 'True'):
-    generators_def = script_generators(generators, instance_data['amax'])
-else:
-    generators_def = generators
-
-
 
 
 # Create objects and generation rule
-generators_dict, batteries_dict,  = create_objects(generators_def,
+generators_dict, batteries_dict,  = create_objects(generators,
                                                    batteries,  
                                                    forecast_df,
                                                    demand_df,
@@ -181,29 +173,3 @@ percent_df, energy_df, renew_df, total_df, brand_df = calculate_energy(sol_best.
 
 
 
-'''
-column_data = {}
-for bat in sol_best.batteries_dict_sol.values(): 
-    if (sol_best.results.descriptive['batteries'][bat.id_bat] == 1):
-        column_data[bat.id_bat+'_%'] =  sol_best.results.df_results[bat.id_bat+'_b-'] / sol_best.results.df_results['demand']
-for gen in sol_best.generators_dict_sol.values(): 
-    if (sol_best.results.descriptive['generators'][gen.id_gen] == 1):
-        column_data[gen.id_gen+'_%'] =  sol_best.results.df_results[gen.id_gen] / sol_best.results.df_results['demand']
-   
-percent_df = pd.DataFrame(column_data, columns=[*column_data.keys()])
-'''
-
-'''
-# solve model 
-results, termination = opt.solve_model(model, 
-                       optimizer = 'gurobi',
-                       mipgap = 0.02,
-                       tee = True)
-if termination['Temination Condition'] == 'optimal': 
-   model_results = opt.Results(model)
-   print(model_results.descriptive)
-   print(model_results.df_results)
-   generation_graph = model_results.generation_graph()
-   plot(generation_graph)
-   
-'''
