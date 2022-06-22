@@ -96,10 +96,10 @@ def create_technologies(generators_dict, batteries_dict):
 def calculate_sizingcost(generators_dict, batteries_dict, ir, years):
             expr = 0
             for gen in generators_dict.values(): 
-                expr += gen.cost_up*gen.n 
-                expr += gen.cost_r*gen.n 
-                expr += gen.cost_fopm*gen.n 
-                expr -= gen.cost_s*gen.n 
+                expr += gen.cost_up
+                expr += gen.cost_r 
+                expr += gen.cost_fopm 
+                expr -= gen.cost_s
                 
             for bat in batteries_dict.values(): 
                 expr += bat.cost_up
@@ -123,46 +123,6 @@ def calculate_area (sol_actual):
         area += i.area 
     return area
 
-
-def script_generators(generators, amax):
-    aux_generators = []
-    generators_def = []
-    generators_transformed = copy.deepcopy(generators)
-    
-    for i in generators_transformed:
-        if (i['tec'] == 'S' or i['tec'] == 'W'):
-            #calculate the number of n that can create
-            total_n = math.floor(amax/i['area'])
-            #save the name of the generator
-            name = i['id_gen']
-            #save the area
-            area = i['area']
-            #cont to rename the new object of the dictionary
-            cont = 1
-            for j in range(1, total_n + 1):
-                aux_generators = []
-                aux_generators = i
-                #create a name
-                aux_generators['id_gen'] = name + ' n: ' + str(cont)
-                cont = cont + 1
-                #change the n
-                aux_generators['n'] = j
-                aux_generators['area'] = j * area
-                generators_def.append(copy.deepcopy(aux_generators))
-        else:
-            #Diesel
-            name = i['id_gen']
-            aux_generators = []
-            aux_generators = i
-            aux_generators['id_gen'] = name
-            aux_generators['n'] = 1
-            generators_def.append(copy.deepcopy(aux_generators))
-            
-    '''        
-    with open("student.json", "w") as write_file:
-        json.dump(generators_def, write_file, indent=4)
-    '''
-    return generators_def
 
 #Calculate energy total, for eevery brand, technology or renewable 
 def calculate_energy(batteries_dict, generators_dict, model_results, demand_df):  

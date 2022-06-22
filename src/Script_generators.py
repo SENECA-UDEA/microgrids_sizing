@@ -2,7 +2,7 @@ import json
 import requests
 import copy
 
-units_filepath = "../data/Providencia/parameters_P.json"
+units_filepath = "../data/San_Andres/parameters_SA.json"
 
 try:
     generators_data =  requests.get(units_filepath)
@@ -67,6 +67,6 @@ total_def["generators"] = generators_def
 total_def["batteries"] = batteries_def
         
     
-with open('..\\data\\San_Andres\\json_da.json', 'w') as outfile:
+with open('..\\data\\San_Andres\\json_example.json', 'w') as outfile:
     json.dump(total_def, outfile, indent=4)
 

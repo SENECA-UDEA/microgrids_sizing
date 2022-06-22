@@ -58,7 +58,6 @@ def make_model(generators_dict=None,
     model.fuel_cost = pyo.Param(initialize=fuel_cost) #Fuel Cost
     model.gen_area = pyo.Param(model.GENERATORS, initialize = {k:generators_dict[k].area for k in generators_dict.keys()})# Generator area
     model.bat_area = pyo.Param(model.BATTERIES, initialize = {k:batteries_dict[k].area for k in batteries_dict.keys()})# Battery area
-    model.n_gen = pyo.Param(model.GENERATORS, initialize = {k:generators_dict[k].n for k in generators_dict.keys()})# Number of Generator
     model.d = pyo.Param(model.HTIME, initialize = demand_df) #demand    
     model.ir = pyo.Param(initialize=ir) #Interest rate
     model.nse = pyo.Param(initialize=nse) #Available not supplied demand 
@@ -254,10 +253,10 @@ def make_model(generators_dict=None,
         
     # Defines TNPC constraint
     def tnpcc_rule(model): 
-            expr = sum(generators_dict[k].cost_up*model.n_gen[k]*model.w[k] for k in model.GENERATORS) + sum(batteries_dict[l].cost_up * model.q[l] for l in model.BATTERIES) 
-            expr += sum(generators_dict[k].cost_r*model.n_gen[k]*model.w[k] for k in model.GENERATORS) + sum(batteries_dict[l].cost_r * model.q[l]  for l in model.BATTERIES) 
-            expr += sum(generators_dict[k].cost_fopm*model.n_gen[k]*model.w[k] for k in model.GENERATORS) + sum(batteries_dict[l].cost_fopm * model.q[l]  for l in model.BATTERIES)
-            expr -= sum(generators_dict[k].cost_s*model.n_gen[k]*model.w[k] for k in model.GENERATORS) + sum(batteries_dict[l].cost_s * model.q[l]  for l in model.BATTERIES)
+            expr = sum(generators_dict[k].cost_up*model.w[k] for k in model.GENERATORS) + sum(batteries_dict[l].cost_up * model.q[l] for l in model.BATTERIES) 
+            expr += sum(generators_dict[k].cost_r*model.w[k] for k in model.GENERATORS) + sum(batteries_dict[l].cost_r * model.q[l]  for l in model.BATTERIES) 
+            expr += sum(generators_dict[k].cost_fopm*model.w[k] for k in model.GENERATORS) + sum(batteries_dict[l].cost_fopm * model.q[l]  for l in model.BATTERIES)
+            expr -= sum(generators_dict[k].cost_s*model.w[k] for k in model.GENERATORS) + sum(batteries_dict[l].cost_s * model.q[l]  for l in model.BATTERIES)
             return model.TNPC == expr
     model.tnpcc = pyo.Constraint(rule=tnpcc_rule)
 
@@ -353,7 +352,6 @@ def make_model_operational(generators_dict=None,
     model.tlpsp = pyo.Param (initialize = tlpsp) #LPSP for moving average
     model.gen_area = pyo.Param(model.GENERATORS, initialize = {k:generators_dict[k].area for k in generators_dict.keys()})# Generator area
     model.bat_area = pyo.Param(model.BATTERIES, initialize = {k:batteries_dict[k].area for k in batteries_dict.keys()})# Battery area
-    model.n_gen = pyo.Param(model.GENERATORS, initialize = {k:generators_dict[k].n for k in generators_dict.keys()})# Number of Generator
     model.w_cost = pyo.Param (initialize = w_cost)
 
     # Variables
