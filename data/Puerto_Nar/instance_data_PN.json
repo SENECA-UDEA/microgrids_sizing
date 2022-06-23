@@ -1,6 +1,7 @@
 {   
     "amax": 25, 
-    "ir" : 0.0808, 
+    "i_f" : 0.0808, 
+    "inf": 0.1,
     "nse" : 0.25, 
     "maxtec" : 4, 
     "mintec" : 2,
@@ -20,6 +21,6 @@
     "Alpha_shortlist": 0.3,
     "Alpha_random_gen": 0.75,
     "size_add": 2,
-    "N_iterations": 20,
+    "N_iterations": 50,
     "create_generators": "True"
 }

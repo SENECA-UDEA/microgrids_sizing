@@ -255,7 +255,6 @@ def make_model(generators_dict=None,
     def tnpcc_rule(model): 
             expr = sum(generators_dict[k].cost_up*model.w[k] for k in model.GENERATORS) + sum(batteries_dict[l].cost_up * model.q[l] for l in model.BATTERIES) 
             expr += sum(generators_dict[k].cost_r*model.w[k] for k in model.GENERATORS) + sum(batteries_dict[l].cost_r * model.q[l]  for l in model.BATTERIES) 
-            expr += sum(generators_dict[k].cost_fopm*model.w[k] for k in model.GENERATORS) + sum(batteries_dict[l].cost_fopm * model.q[l]  for l in model.BATTERIES)
             expr -= sum(generators_dict[k].cost_s*model.w[k] for k in model.GENERATORS) + sum(batteries_dict[l].cost_s * model.q[l]  for l in model.BATTERIES)
             return model.TNPC == expr
     model.tnpcc = pyo.Constraint(rule=tnpcc_rule)
@@ -263,6 +262,7 @@ def make_model(generators_dict=None,
     # Define TNPC operative constraint
     def tnpcop_rule(model):
         expr2 = sum(sum(model.operative_cost[k,t] for t in model.HTIME) for k in model.GENERATORS)
+        expr2 += sum(generators_dict[k].cost_fopm*model.w[k] for k in model.GENERATORS) + sum(batteries_dict[l].cost_fopm * model.q[l]  for l in model.BATTERIES)
         return model.TNPC_OP == expr2
     model.tnpcop = pyo.Constraint(rule=tnpcop_rule)
         
@@ -282,7 +282,7 @@ def make_model(generators_dict=None,
 
     # Defines objective function
     def obj2_rule(model):
-      return((model.TNPC + model.TNPC_OP ) * model.CRF) / sum( model.d[t] for t in model.HTIME) +  model.w_cost * sum( model.s_plus[t] for t in model.HTIME) 
+      return ((model.TNPC * model.CRF + model.TNPC_OP) / sum( model.d[t] for t in model.HTIME)) +  model.w_cost * sum( model.s_plus[t] for t in model.HTIME) 
     model.LCOE_value = pyo.Objective(sense = pyo.minimize, rule=obj2_rule)
     #I put demand for linearity
 
@@ -317,8 +317,7 @@ def make_model_operational(generators_dict=None,
                renewables_dict = None,     
                fuel_cost = 0,
                nse = 0, 
-               TNPC = 0,
-               CRF = 1,
+               TNPCCRF = 0,
                w_cost = 0,
                tlpsp = 1):
     #generators_dict = dictionary of generators - input (Sizing decision)
@@ -347,8 +346,7 @@ def make_model_operational(generators_dict=None,
     model.d = pyo.Param(model.HTIME, initialize = demand_df) #demand     
     model.fuel_cost = pyo.Param(initialize=fuel_cost) #Fuel Cost
     model.nse = pyo.Param(initialize=nse) # Available unsupplied demand  
-    model.TNPC = pyo.Param(initialize = TNPC) #Total net present cost (Sizing decision)
-    model.CRF = pyo.Param (initialize = CRF) #Capital recovery factor (Sizing decision)
+    model.TNPCCRF = pyo.Param(initialize = TNPCCRF) #Total net present cost (Sizing decision)
     model.tlpsp = pyo.Param (initialize = tlpsp) #LPSP for moving average
     model.gen_area = pyo.Param(model.GENERATORS, initialize = {k:generators_dict[k].area for k in generators_dict.keys()})# Generator area
     model.bat_area = pyo.Param(model.BATTERIES, initialize = {k:batteries_dict[k].area for k in batteries_dict.keys()})# Battery area
@@ -493,7 +491,7 @@ def make_model_operational(generators_dict=None,
 
     # Defines Objective function
     def obj2_rule(model):
-      return ((model.TNPC + model.TNPC_OP) * model.CRF) / sum( model.d[t] for t in model.HTIME) +  model.w_cost * sum( model.s_plus[t] for t in model.HTIME) 
+      return ((model.TNPCCRF + model.TNPC_OP) / sum( model.d[t] for t in model.HTIME)) +  model.w_cost * sum( model.s_plus[t] for t in model.HTIME) 
     model.LCOE_value = pyo.Objective(sense = pyo.minimize, rule=obj2_rule)
     
 
