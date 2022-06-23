@@ -95,24 +95,23 @@ def create_technologies(generators_dict, batteries_dict):
 #calculate total cost for two stage approach
 def calculate_sizingcost(generators_dict, batteries_dict, ir, years):
             expr = 0
+            expr2 = 0
             for gen in generators_dict.values(): 
                 expr += gen.cost_up
                 expr += gen.cost_r 
-                expr += gen.cost_fopm 
                 expr -= gen.cost_s
-                
+                expr2 += gen.cost_fopm 
             for bat in batteries_dict.values(): 
                 expr += bat.cost_up
-                expr += bat.cost_fopm
                 expr += bat.cost_r
                 expr -= bat.cost_s
-                
-                
-                
-            TNPC = expr
-            CRF = (ir * (1 + ir)**(years))/((1 + ir)**(years)-1) 
-
-            return TNPC, CRF
+                expr2 += bat.cost_fopm
+             
+            CRF = (ir * (1 + ir)**(years))/((1 + ir)**(years)-1)    
+            #Operative cost doesn't take into account the crf
+            TNPCCRF = expr*CRF + expr2
+            
+            return TNPCCRF
 
 
 def calculate_area (sol_actual):
@@ -205,7 +204,11 @@ def calculate_energy(batteries_dict, generators_dict, model_results, demand_df):
    
    return percent_df, energy_df, renew_df, total_df, brand_df
 
-
+def interest_rate (i_f, inf):
+    #inf = inflation
+    #i_f = nominal rate
+    ir = (inf - i_f)/(1 + i_f)
+    return ir
 '''
 
 def min2hms(hm):

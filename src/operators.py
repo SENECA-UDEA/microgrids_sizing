@@ -3,7 +3,7 @@
 Created on Wed May 11 10:23:49 2022
 @author: pmayaduque
 """
-from utilities import create_technologies, calculate_sizingcost
+from utilities import create_technologies, calculate_sizingcost, interest_rate
 import opt as opt
 from classes import Solution
 import random as random
@@ -73,11 +73,11 @@ class Sol_constructor():
         
         technologies_dict_sol, renewables_dict_sol = create_technologies (generators_dict_sol, 
                                                                           batteries_dict_sol)
-        
-        tnpc_calc, crf_calc = calculate_sizingcost(generators_dict_sol, 
-                                                   batteries_dict_sol, 
-                                                   ir = instance_data['ir'],
-                                                   years = instance_data['years'])
+        ir = interest_rate(instance_data['i_f'],instance_data['inf'])
+        tnpccrf_calc = calculate_sizingcost(generators_dict_sol, 
+                                            batteries_dict_sol, 
+                                            ir = ir,
+                                            years = instance_data['years'])
         
         model = opt.make_model_operational(generators_dict = generators_dict_sol,
                                            batteries_dict = batteries_dict_sol,  
@@ -86,8 +86,7 @@ class Sol_constructor():
                                            renewables_dict = renewables_dict_sol,
                                            fuel_cost =  instance_data['fuel_cost'],
                                            nse =  instance_data['nse'], 
-                                           TNPC = tnpc_calc,
-                                           CRF = crf_calc,
+                                           TNPCCRF = tnpccrf_calc,
                                            w_cost = instance_data['w_cost'],
                                            tlpsp = instance_data['tlpsp'])  
 

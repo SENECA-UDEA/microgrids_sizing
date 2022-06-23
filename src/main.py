@@ -5,7 +5,7 @@ Created on Wed Apr 20 11:14:21 2022
 @author: pmayaduque
 """
 
-from utilities import read_data, create_objects, create_technologies, calculate_energy
+from utilities import read_data, create_objects, create_technologies, calculate_energy, interest_rate
 import opt as opt
 import pandas as pd 
 from plotly.offline import plot
@@ -58,6 +58,8 @@ technologies_dict, renewables_dict = create_technologies (generators_dict,
 
 
 
+#Calculate interest rate
+ir = interest_rate(instance_data['i_f'],instance_data['inf'])
 # Create model          
 model = opt.make_model(generators_dict, 
                        batteries_dict, 
@@ -66,7 +68,7 @@ model = opt.make_model(generators_dict,
                        renewables_dict, 
                        amax = instance_data['amax'], 
                        fuel_cost =  instance_data['fuel_cost'],
-                       ir = instance_data['ir'], 
+                       ir = ir, 
                        nse = instance_data['nse'], 
                        maxtec = instance_data['maxtec'], 
                        mintec = instance_data['mintec'], 
