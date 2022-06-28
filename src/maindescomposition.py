@@ -18,12 +18,17 @@ pd.options.display.max_columns = None
 demand_filepath = 'https://raw.githubusercontent.com/pmayaduque/MicrogridSizing/main/data/San_Andres/demand_SA.csv' 
 forecast_filepath = 'https://raw.githubusercontent.com/pmayaduque/MicrogridSizing/main/data/San_Andres/forecast_SA.csv' 
 units_filepath  = 'https://raw.githubusercontent.com/pmayaduque/MicrogridSizing/main/data/San_Andres/parameters_SA.json' 
-# file paths local SA
+# file paths local San Andrés
 demand_filepath = "../data/San_Andres/demand_SA.csv"
 forecast_filepath = '../data/San_Andres/forecast_SA.csv'
 units_filepath = "../data/San_Andres/parameters_SA.json"
 instanceData_filepath = "../data/San_Andres/instance_data_SA.json"
-# file paths local PR
+# file paths local Leticia
+demand_filepath = "../data/Leticia/demand_L.csv"
+forecast_filepath = '../data/Leticia/forecast_L.csv'
+units_filepath = "../data/Leticia/parameters_L.json"
+instanceData_filepath = "../data/Leticia/instance_data_L.json"
+# file paths local Providencia
 demand_filepath = "../data/Providencia/demand_P.csv"
 forecast_filepath = '../data/Providencia/forecast_P.csv'
 units_filepath = "../data/Providencia/parameters_P.json"
@@ -33,7 +38,7 @@ demand_filepath = "../data/Test/demand_day.csv"
 forecast_filepath = '../data/Test/forecast_day.csv'
 units_filepath = "../data/Test/parameters_Test.json"
 instanceData_filepath = "../data/Test/instance_data_Test.json"
-# file paths local PN
+# file paths local Puerto Nariño
 demand_filepath = "../data/Puerto_Nar/demand_PN.csv"
 forecast_filepath = '../data/Puerto_Nar/forecast_PN.csv'
 units_filepath = "../data/Puerto_Nar/parameters_PN.json"
