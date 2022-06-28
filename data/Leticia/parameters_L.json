@@ -3685,7 +3685,7 @@
             "dod_max": 0.5,
             "alpha": 8.3e-05,
             "area": 0.26208,
-            "cost_up": 766.08,
+            "cost_up": 949.9392,
             "cost_fopm": 0,
             "cost_r": 0,
             "cost_s": 0
@@ -3701,7 +3701,7 @@
             "dod_max": 0.5,
             "alpha": 8.3e-05,
             "area": 0.26208,
-            "cost_up": 766.08,
+            "cost_up": 949.9392,
             "cost_fopm": 0,
             "cost_r": 0,
             "cost_s": 0
@@ -3717,7 +3717,7 @@
             "dod_max": 0.5,
             "alpha": 8.3e-05,
             "area": 0.314496,
-            "cost_up": 1134,
+            "cost_up": 1406.16,
             "cost_fopm": 0,
             "cost_r": 0,
             "cost_s": 0
@@ -3733,7 +3733,7 @@
             "dod_max": 0.5,
             "alpha": 8.3e-05,
             "area": 0.314496,
-            "cost_up": 1134,
+            "cost_up": 1406.16,
             "cost_fopm": 0,
             "cost_r": 0,
             "cost_s": 0
@@ -3749,7 +3749,7 @@
             "dod_max": 0.5,
             "alpha": 8.3e-05,
             "area": 0.366912,
-            "cost_up": 1542.24,
+            "cost_up": 1912.3776,
             "cost_fopm": 0,
             "cost_r": 0,
             "cost_s": 0
@@ -3765,7 +3765,7 @@
             "dod_max": 0.5,
             "alpha": 8.3e-05,
             "area": 0.366912,
-            "cost_up": 1542.24,
+            "cost_up": 1912.3776,
             "cost_fopm": 0,
             "cost_r": 0,
             "cost_s": 0
@@ -3781,7 +3781,7 @@
             "dod_max": 0.5,
             "alpha": 8.3e-05,
             "area": 0.454272,
-            "cost_up": 2009.28,
+            "cost_up": 2491.5072,
             "cost_fopm": 0,
             "cost_r": 0,
             "cost_s": 0
@@ -3797,7 +3797,7 @@
             "dod_max": 0.5,
             "alpha": 8.3e-05,
             "area": 0.454272,
-            "cost_up": 2009.28,
+            "cost_up": 2491.5072,
             "cost_fopm": 0,
             "cost_r": 0,
             "cost_s": 0
@@ -3813,7 +3813,7 @@
             "dod_max": 0.5,
             "alpha": 8.3e-05,
             "area": 0.541632,
-            "cost_up": 2767.68,
+            "cost_up": 3431.9232,
             "cost_fopm": 0,
             "cost_r": 0,
             "cost_s": 0
@@ -3829,7 +3829,7 @@
             "dod_max": 0.5,
             "alpha": 8.3e-05,
             "area": 0.541632,
-            "cost_up": 2767.68,
+            "cost_up": 3431.9232,
             "cost_fopm": 0,
             "cost_r": 0,
             "cost_s": 0
@@ -3845,7 +3845,7 @@
             "dod_max": 0.5,
             "alpha": 8.3e-05,
             "area": 0.637728,
-            "cost_up": 3679.2,
+            "cost_up": 4562.208,
             "cost_fopm": 0,
             "cost_r": 0,
             "cost_s": 0
@@ -3861,7 +3861,7 @@
             "dod_max": 0.5,
             "alpha": 8.3e-05,
             "area": 0.794976,
-            "cost_up": 5110.56,
+            "cost_up": 6337.0944,
             "cost_fopm": 0,
             "cost_r": 0,
             "cost_s": 0
@@ -3877,7 +3877,7 @@
             "dod_max": 0.5,
             "alpha": 8.3e-05,
             "area": 0.934752,
-            "cost_up": 7781.04,
+            "cost_up": 9648.4896,
             "cost_fopm": 0,
             "cost_r": 0,
             "cost_s": 0
@@ -3893,7 +3893,7 @@
             "dod_max": 0.5,
             "alpha": 8.3e-05,
             "area": 1.065792,
-            "cost_up": 9662.4,
+            "cost_up": 11981.376,
             "cost_fopm": 0,
             "cost_r": 0,
             "cost_s": 0
@@ -3909,7 +3909,7 @@
             "dod_max": 0.5,
             "alpha": 8.3e-05,
             "area": 1.196832,
-            "cost_up": 11869.68,
+            "cost_up": 14718.4032,
             "cost_fopm": 0,
             "cost_r": 0,
             "cost_s": 0
@@ -3925,7 +3925,7 @@
             "dod_max": 0.5,
             "alpha": 8.3e-05,
             "area": 1.327872,
-            "cost_up": 14190.72,
+            "cost_up": 17596.4928,
             "cost_fopm": 0,
             "cost_r": 0,
             "cost_s": 0
@@ -3941,7 +3941,7 @@
             "dod_max": 0.5,
             "alpha": 8.3e-05,
             "area": 1.458912,
-            "cost_up": 17074.08,
+            "cost_up": 21171.8592,
             "cost_fopm": 0,
             "cost_r": 0,
             "cost_s": 0
@@ -3957,7 +3957,7 @@
             "dod_max": 0.5,
             "alpha": 8.3e-05,
             "area": 1.589952,
-            "cost_up": 20092.8,
+            "cost_up": 24915.072,
             "cost_fopm": 0,
             "cost_r": 0,
             "cost_s": 0
@@ -3973,7 +3973,7 @@
             "dod_max": 0.5,
             "alpha": 8.3e-05,
             "area": 1.895712,
-            "cost_up": 28019.04,
+            "cost_up": 34743.6096,
             "cost_fopm": 0,
             "cost_r": 0,
             "cost_s": 0
@@ -3989,7 +3989,7 @@
             "dod_max": 0.5,
             "alpha": 8.3e-05,
             "area": 2.218944,
-            "cost_up": 40477.44,
+            "cost_up": 50192.0256,
             "cost_fopm": 0,
             "cost_r": 0,
             "cost_s": 0
@@ -4005,7 +4005,7 @@
             "dod_max": 0.5,
             "alpha": 8.3e-05,
             "area": 2.53344,
-            "cost_up": 51782.4,
+            "cost_up": 64210.176,
             "cost_fopm": 0,
             "cost_r": 0,
             "cost_s": 0
@@ -4021,7 +4021,7 @@
             "dod_max": 0.5,
             "alpha": 8.3e-05,
             "area": 2.8392,
-            "cost_up": 65052,
+            "cost_up": 80664.48,
             "cost_fopm": 0,
             "cost_r": 0,
             "cost_s": 0
@@ -4037,7 +4037,7 @@
             "dod_max": 0.5,
             "alpha": 8.3e-05,
             "area": 3.153696,
-            "cost_up": 78495.84,
+            "cost_up": 97334.8416,
             "cost_fopm": 0,
             "cost_r": 0,
             "cost_s": 0
@@ -4053,7 +4053,7 @@
             "dod_max": 0.5,
             "alpha": 8.3e-05,
             "area": 3.476928,
-            "cost_up": 93705.12,
+            "cost_up": 116194.3488,
             "cost_fopm": 0,
             "cost_r": 0,
             "cost_s": 0
@@ -4069,7 +4069,7 @@
             "dod_max": 0.5,
             "alpha": 8.3e-05,
             "area": 3.791424,
-            "cost_up": 109992.96,
+            "cost_up": 136391.2704,
             "cost_fopm": 0,
             "cost_r": 0,
             "cost_s": 0
@@ -4085,7 +4085,7 @@
             "dod_max": 0.5,
             "alpha": 8.3e-05,
             "area": 4.10592,
-            "cost_up": 123741.6,
+            "cost_up": 153439.584,
             "cost_fopm": 0,
             "cost_r": 0,
             "cost_s": 0
@@ -4101,7 +4101,7 @@
             "dod_max": 0.5,
             "alpha": 8.3e-05,
             "area": 8.21184,
-            "cost_up": 247483.2,
+            "cost_up": 306879.168,
             "cost_fopm": 0,
             "cost_r": 0,
             "cost_s": 0
@@ -4117,7 +4117,7 @@
             "dod_max": 0.5,
             "alpha": 8.3e-05,
             "area": 12.31776,
-            "cost_up": 371224.8,
+            "cost_up": 460318.752,
             "cost_fopm": 0,
             "cost_r": 0,
             "cost_s": 0

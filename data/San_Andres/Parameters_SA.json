@@ -405,8 +405,8 @@
         }
     ],
 
-    "batteries":[
-    	{
+"batteries": [
+        {
             "id_bat": "sun power V L 2-280",
             "tec": "B",
             "br": "sun power",
@@ -415,14 +415,14 @@
             "eb_zero": 6.72,
             "soc_max": 6.72,
             "dod_max": 0.5,
-            "alpha": 0.000083,
+            "alpha": 8.3e-05,
             "area": 0.26208,
-            "cost_up": 766.08,
+            "cost_up": 949.9392,
             "cost_fopm": 0,
             "cost_r": 0,
-            "cost_s": 0 
-    	},
-    	{
+            "cost_s": 0
+        },
+        {
             "id_bat": "sun power V L 2-350",
             "tec": "B",
             "br": "sun power",
@@ -431,14 +431,14 @@
             "eb_zero": 8.4,
             "soc_max": 8.4,
             "dod_max": 0.5,
-            "alpha": 0.000083,
+            "alpha": 8.3e-05,
             "area": 0.314496,
-            "cost_up": 1134,
+            "cost_up": 1406.16,
             "cost_fopm": 0,
             "cost_r": 0,
-            "cost_s": 0 
-    	},
-    	{
+            "cost_s": 0
+        },
+        {
             "id_bat": "sun power V L 2-420",
             "tec": "B",
             "br": "sun power",
@@ -447,14 +447,14 @@
             "eb_zero": 10.08,
             "soc_max": 10.08,
             "dod_max": 0.5,
-            "alpha": 0.000083,
+            "alpha": 8.3e-05,
             "area": 0.366912,
-            "cost_up": 1542.24,
+            "cost_up": 1912.3776,
             "cost_fopm": 0,
             "cost_r": 0,
-            "cost_s": 0 
-    	},
-    	{
+            "cost_s": 0
+        },
+        {
             "id_bat": "sun power V L 2-520",
             "tec": "B",
             "br": "sun power",
@@ -463,14 +463,14 @@
             "eb_zero": 12.48,
             "soc_max": 12.48,
             "dod_max": 0.5,
-            "alpha": 0.000083,
+            "alpha": 8.3e-05,
             "area": 0.454272,
-            "cost_up": 2009.28,
+            "cost_up": 2491.5072,
             "cost_fopm": 0,
             "cost_r": 0,
-            "cost_s": 0 
-    	},
-    	{
+            "cost_s": 0
+        },
+        {
             "id_bat": "sun power V L 2-620",
             "tec": "B",
             "br": "sun power",
@@ -479,14 +479,14 @@
             "eb_zero": 14.88,
             "soc_max": 14.88,
             "dod_max": 0.5,
-            "alpha": 0.000083,
+            "alpha": 8.3e-05,
             "area": 0.541632,
-            "cost_up": 2767.68,
+            "cost_up": 3431.9232,
             "cost_fopm": 0,
             "cost_r": 0,
-            "cost_s": 0 
-    	},
-    	{
+            "cost_s": 0
+        },
+        {
             "id_bat": "sun power V L 2-730",
             "tec": "B",
             "br": "sun power",
@@ -495,30 +495,14 @@
             "eb_zero": 17.52,
             "soc_max": 17.52,
             "dod_max": 0.5,
-            "alpha": 0.000083,
+            "alpha": 8.3e-05,
             "area": 0.637728,
-            "cost_up": 3679.2,
+            "cost_up": 4562.208,
             "cost_fopm": 0,
             "cost_r": 0,
-            "cost_s": 0 
-    	},
-    	{
-            "id_bat": "sun power V L 2-910",
-            "tec": "B",
-            "br": "sun power",
-            "efc": 0.9,
-            "efd": 1,
-            "eb_zero": 21.84,
-            "soc_max": 21.84,
-            "dod_max": 0.5,
-            "alpha": 0.000083,
-            "area": 0.794976,
-            "cost_up": 5110.56,
-            "cost_fopm": 0,
-            "cost_r": 0,
-            "cost_s": 0 
-    	},
-    	{
+            "cost_s": 0
+        },
+        {
             "id_bat": "sun power V L 2-1070",
             "tec": "B",
             "br": "sun power",
@@ -527,30 +511,14 @@
             "eb_zero": 25.68,
             "soc_max": 25.68,
             "dod_max": 0.5,
-            "alpha": 0.000083,
+            "alpha": 8.3e-05,
             "area": 0.934752,
-            "cost_up": 7781.04,
+            "cost_up": 9648.4896,
             "cost_fopm": 0,
             "cost_r": 0,
-            "cost_s": 0 
-    	},
-    	{
-            "id_bat": "sun power V L 2-1220",
-            "tec": "B",
-            "br": "sun power",
-            "efc": 0.9,
-            "efd": 1,
-            "eb_zero": 29.28,
-            "soc_max": 29.28,
-            "dod_max": 0.5,
-            "alpha": 0.000083,
-            "area": 1.065792,
-            "cost_up": 9662.4,
-            "cost_fopm": 0,
-            "cost_r": 0,
-            "cost_s": 0 
-    	},
-    	{
+            "cost_s": 0
+        },
+        {
             "id_bat": "sun power V L 2-1370",
             "tec": "B",
             "br": "sun power",
@@ -559,14 +527,14 @@
             "eb_zero": 32.88,
             "soc_max": 32.88,
             "dod_max": 0.5,
-            "alpha": 0.000083,
+            "alpha": 8.3e-05,
             "area": 1.196832,
-            "cost_up": 11869.68,
+            "cost_up": 14718.4032,
             "cost_fopm": 0,
             "cost_r": 0,
-            "cost_s": 0 
-    	},
-    	{
+            "cost_s": 0
+        },
+        {
             "id_bat": "sun power V L 2-1520",
             "tec": "B",
             "br": "sun power",
@@ -575,14 +543,14 @@
             "eb_zero": 36.48,
             "soc_max": 36.48,
             "dod_max": 0.5,
-            "alpha": 0.000083,
+            "alpha": 8.3e-05,
             "area": 1.327872,
-            "cost_up": 14190.72,
+            "cost_up": 17596.4928,
             "cost_fopm": 0,
             "cost_r": 0,
-            "cost_s": 0 
-    	},
-    	{
+            "cost_s": 0
+        },
+        {
             "id_bat": "sun power V L 2-1670",
             "tec": "B",
             "br": "sun power",
@@ -591,14 +559,14 @@
             "eb_zero": 40.08,
             "soc_max": 40.08,
             "dod_max": 0.5,
-            "alpha": 0.000083,
+            "alpha": 8.3e-05,
             "area": 1.458912,
-            "cost_up": 17074.08,
+            "cost_up": 21171.8592,
             "cost_fopm": 0,
             "cost_r": 0,
-            "cost_s": 0 
-    	},
-    	{
+            "cost_s": 0
+        },
+        {
             "id_bat": "sun power V L 2-1820",
             "tec": "B",
             "br": "sun power",
@@ -607,14 +575,14 @@
             "eb_zero": 43.68,
             "soc_max": 43.68,
             "dod_max": 0.5,
-            "alpha": 0.000083,
+            "alpha": 8.3e-05,
             "area": 1.589952,
-            "cost_up": 20092.8,
+            "cost_up": 24915.072,
             "cost_fopm": 0,
             "cost_r": 0,
-            "cost_s": 0  
-    	},
-    	{
+            "cost_s": 0
+        },
+        {
             "id_bat": "sun power V L 2-2170",
             "tec": "B",
             "br": "sun power",
@@ -623,14 +591,14 @@
             "eb_zero": 52.08,
             "soc_max": 52.08,
             "dod_max": 0.5,
-            "alpha": 0.000083,
+            "alpha": 8.3e-05,
             "area": 1.895712,
-            "cost_up": 28019.04,
+            "cost_up": 34743.6096,
             "cost_fopm": 0,
             "cost_r": 0,
-            "cost_s": 0 
-    	},
-    	{
+            "cost_s": 0
+        },
+        {
             "id_bat": "sun power V L 2-2540",
             "tec": "B",
             "br": "sun power",
@@ -639,14 +607,14 @@
             "eb_zero": 60.96,
             "soc_max": 60.96,
             "dod_max": 0.5,
-            "alpha": 0.000083,
+            "alpha": 8.3e-05,
             "area": 2.218944,
-            "cost_up": 40477.44,
+            "cost_up": 50192.0256,
             "cost_fopm": 0,
             "cost_r": 0,
-            "cost_s": 0 
-    	},
-    	{
+            "cost_s": 0
+        },
+        {
             "id_bat": "sun power V L 2-2900",
             "tec": "B",
             "br": "sun power",
@@ -655,14 +623,14 @@
             "eb_zero": 69.6,
             "soc_max": 69.6,
             "dod_max": 0.5,
-            "alpha": 0.000083,
+            "alpha": 8.3e-05,
             "area": 2.53344,
-            "cost_up": 51782.4,
+            "cost_up": 64210.176,
             "cost_fopm": 0,
             "cost_r": 0,
-            "cost_s": 0 
-    	},
-    	{
+            "cost_s": 0
+        },
+        {
             "id_bat": "sun power V L 2-3250",
             "tec": "B",
             "br": "sun power",
@@ -671,14 +639,14 @@
             "eb_zero": 78,
             "soc_max": 78,
             "dod_max": 0.5,
-            "alpha": 0.000083,
+            "alpha": 8.3e-05,
             "area": 2.8392,
-            "cost_up": 65052,
+            "cost_up": 80664.48,
             "cost_fopm": 0,
             "cost_r": 0,
-            "cost_s": 0 
-    	},
-    	{
+            "cost_s": 0
+        },
+        {
             "id_bat": "sun power V L 2-3610",
             "tec": "B",
             "br": "B1",
@@ -687,14 +655,14 @@
             "eb_zero": 86.64,
             "soc_max": 86.64,
             "dod_max": 0.5,
-            "alpha": 0.000083,
+            "alpha": 8.3e-05,
             "area": 3.153696,
-            "cost_up": 78495.84,
+            "cost_up": 97334.8416,
             "cost_fopm": 0,
             "cost_r": 0,
-            "cost_s": 0 
-    	},
-    	{
+            "cost_s": 0
+        },
+        {
             "id_bat": "sun power V L 2-3980",
             "tec": "B",
             "br": "sun power",
@@ -703,14 +671,14 @@
             "eb_zero": 95.52,
             "soc_max": 95.52,
             "dod_max": 0.5,
-            "alpha": 0.000083,
+            "alpha": 8.3e-05,
             "area": 3.476928,
-            "cost_up": 93705.12,
+            "cost_up": 116194.3488,
             "cost_fopm": 0,
             "cost_r": 0,
-            "cost_s": 0  
-    	},
-    	{
+            "cost_s": 0
+        },
+        {
             "id_bat": "sun power V L 2-4340",
             "tec": "B",
             "br": "sun power",
@@ -719,14 +687,14 @@
             "eb_zero": 104.16,
             "soc_max": 104.16,
             "dod_max": 0.5,
-            "alpha": 0.000083,
+            "alpha": 8.3e-05,
             "area": 3.791424,
-            "cost_up": 109992.96,
+            "cost_up": 136391.2704,
             "cost_fopm": 0,
             "cost_r": 0,
-            "cost_s": 0 
-    	},
-    	{
+            "cost_s": 0
+        },
+        {
             "id_bat": "sun power V L 2-4700",
             "tec": "B",
             "br": "sun power",
@@ -735,14 +703,14 @@
             "eb_zero": 112.8,
             "soc_max": 112.8,
             "dod_max": 0.5,
-            "alpha": 0.000083,
+            "alpha": 8.3e-05,
             "area": 4.10592,
-            "cost_up": 123741.6,
+            "cost_up": 153439.584,
             "cost_fopm": 0,
             "cost_r": 0,
-            "cost_s": 0 
-    	},
-	    {
+            "cost_s": 0
+        },
+        {
             "id_bat": "sun power V L 2-4700 - 24",
             "tec": "B",
             "br": "sun power",
@@ -751,14 +719,14 @@
             "eb_zero": 225.6,
             "soc_max": 225.6,
             "dod_max": 0.5,
-            "alpha": 0.000083,
+            "alpha": 8.3e-05,
             "area": 8.21184,
-            "cost_up": 247483.2,
+            "cost_up": 306879.168,
             "cost_fopm": 0,
             "cost_r": 0,
-            "cost_s": 0 
-    	},
-	    {
+            "cost_s": 0
+        },
+        {
             "id_bat": "sun power V L 2-4700 - 36",
             "tec": "B",
             "br": "sun power",
@@ -767,14 +735,13 @@
             "eb_zero": 338.4,
             "soc_max": 338.4,
             "dod_max": 0.5,
-            "alpha": 0.000083,
+            "alpha": 8.3e-05,
             "area": 12.31776,
-            "cost_up": 371224.8,
+            "cost_up": 460318.752,
             "cost_fopm": 0,
             "cost_r": 0,
-            "cost_s": 0 
-    	}
-    	
-     ]
-
+            "cost_s": 0
+        }
+    ]
 }
+
