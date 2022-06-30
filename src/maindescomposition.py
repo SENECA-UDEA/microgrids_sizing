@@ -177,3 +177,7 @@ percent_df, energy_df, renew_df, total_df, brand_df = calculate_energy(sol_best.
 
 
 
+'''
+TRM = 3910
+LCOE_COP = TRM * model_results.descriptive['LCOE']
+'''

@@ -100,3 +100,9 @@ if termination['Temination Condition'] == 'optimal':
    generation_graph = model_results.generation_graph()
    plot(generation_graph)
    percent_df, energy_df, renew_df, total_df, brand_df = calculate_energy(batteries_dict, generators_dict, model_results, demand_df)
+
+
+'''
+TRM = 3910
+LCOE_COP = TRM * model_results.descriptive['LCOE']
+'''
