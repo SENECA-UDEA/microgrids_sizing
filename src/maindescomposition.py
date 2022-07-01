@@ -53,6 +53,7 @@ demand_df, forecast_df, generators, batteries, instance_data = read_data(demand_
 
 #Calculate interest rate
 ir = interest_rate(instance_data['i_f'],instance_data['inf'])
+CRF = (ir * (1 + ir)**(instance_data['years']))/((1 + ir)**(instance_data['years'])-1)  
 # Create objects and generation rule
 generators_dict, batteries_dict,  = create_objects(generators,
                                                    batteries,  
@@ -92,7 +93,6 @@ movement = "Initial Solution"
 amax =  instance_data['amax']
 Alpha_random_gen = instance_data['Alpha_random_gen']
 N_iterations = instance_data['N_iterations']
-size_add = instance_data["size_add"]
 #df of solutions
 rows_df = []
 
@@ -118,8 +118,8 @@ for i in range(N_iterations):
         list_available_bat, list_available_gen = search_operator.available(sol_current, amax)
         if (list_available_gen != [] or list_available_bat != []):
             # Add a generator or battery to the current solution
-            #sol_try, dic_remove = search_operator.addobject(sol_current, list_available_bat, list_available_gen, dic_remove, Alpha_random_gen, size_add)
-            sol_try = search_operator.addrandomobject(sol_current, list_available_bat, list_available_gen)
+            sol_try, dic_remove = search_operator.addobject(sol_current, list_available_bat, list_available_gen, dic_remove, Alpha_random_gen, CRF, instance_data['fuel_cost'])
+            #sol_try = search_operator.addrandomobject(sol_current, list_available_bat, list_available_gen)
             movement = "Add"
         else:
             # return to the last feasible solution
