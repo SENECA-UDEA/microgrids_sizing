@@ -155,7 +155,7 @@ class Search_operator():
         
         return solution, dic_remove
     
-    def addobject(self, sol_actual, available_bat, available_gen, dic_remove, Alpha_random_gen, size_add): #add generator or battery
+    def addobject(self, sol_actual, available_bat, available_gen, dic_remove, Alpha_random_gen, CRF, fuel_cost): #add generator or battery
         solution = copy.deepcopy(sol_actual)
         #get the maximum generation of removed object
         val_max = max(dic_remove.values())
@@ -164,9 +164,8 @@ class Search_operator():
         #random select: one position with the maximum value
         pos_max = random.choice(list_max)
         #get the generation in the period of maximum selected
-        gen_t = dic_remove[pos_max]
+        gen_reference = dic_remove[pos_max]
         dict_total = {**self.generators_dict,**self.batteries_dict}
-        best_option = -math.inf
         best_cost = math.inf
         #random select battery or generator
         if available_gen == []:
@@ -187,6 +186,7 @@ class Search_operator():
             solution.batteries_dict_sol[select_ob] = dict_total[select_ob]
             #check generation in max period that covers the remove object
         elif tec_select == "Generator":
+            select_ob = random.choice(available_gen)
             for i in available_gen:
                 dic = dict_total[i]
                 if dic.tec == 'D':
@@ -194,19 +194,16 @@ class Search_operator():
                 else:
                     gen_generator = dic.gen_rule[pos_max]
                 
-                #choose the value closest to what is demanded
-                diff = gen_generator - gen_t
-                
-                if diff > best_option and gen_generator < size_add*gen_t:
-                    best_option = diff
-                    select_ob = dic.id_gen
-                    best_cost = dic.cost_up + dic.cost_r + dic.cost_fopm - dic.cost_s 
-                #If two options are equal, choose the one with the lowest cost.
-                elif diff == best_option:
-                    inv_cost = dic.cost_up  + dic.cost_r  + dic.cost_fopm - dic.cost_s 
-                    if inv_cost <= best_cost:
-                        best_cost = inv_cost
-                        best_option = diff
+                #check if is better than dict remove
+                if gen_generator > gen_reference:
+                    lcoe_inf = (dic.cost_up + dic.cost_r - dic.cost_s) * CRF
+                    if dic.tec == 'D':
+                        lcoe_op = dic.cost_fopm + (dic.f0 + dic.f1)*dic.DG_max*fuel_cost * len(dic_remove)
+                    else:
+                        lcoe_op = dic.cost_fopm + dic.cost_vopm * sum(dic.gen_rule.values())
+                    total_lcoe = lcoe_inf + lcoe_op
+                    if total_lcoe <= best_cost:
+                        best_cost = total_lcoe
                         select_ob = dic.id_gen
                 
                 

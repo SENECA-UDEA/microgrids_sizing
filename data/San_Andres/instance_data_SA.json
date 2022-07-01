@@ -20,7 +20,6 @@
     "fuel_cost": 5,
     "Alpha_shortlist": 0.3,
     "Alpha_random_gen": 0.75,
-    "size_add": 2,
     "N_iterations": 20,
     "create_generators": "True"
 }
