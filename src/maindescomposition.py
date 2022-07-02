@@ -91,7 +91,6 @@ sol_current = copy.deepcopy(sol_feasible)
 
 movement = "Initial Solution"
 amax =  instance_data['amax']
-Alpha_random_gen = instance_data['Alpha_random_gen']
 N_iterations = instance_data['N_iterations']
 #df of solutions
 rows_df = []
@@ -100,7 +99,8 @@ rows_df = []
 search_operator = Search_operator(generators_dict, 
                             batteries_dict,
                             demand_df,
-                            forecast_df)
+                            forecast_df,
+                            technologies_dict)
 
 for i in range(N_iterations):
     rows_df.append([i, sol_current.feasible, 
@@ -118,7 +118,7 @@ for i in range(N_iterations):
         list_available_bat, list_available_gen = search_operator.available(sol_current, amax)
         if (list_available_gen != [] or list_available_bat != []):
             # Add a generator or battery to the current solution
-            sol_try, dic_remove = search_operator.addobject(sol_current, list_available_bat, list_available_gen, dic_remove, Alpha_random_gen, CRF, instance_data['fuel_cost'])
+            sol_try, dic_remove = search_operator.addobject(sol_current, list_available_bat, list_available_gen, dic_remove,  CRF, instance_data['fuel_cost'])
             #sol_try = search_operator.addrandomobject(sol_current, list_available_bat, list_available_gen)
             movement = "Add"
         else:

@@ -19,7 +19,6 @@
     "G_stc": 1000,
     "fuel_cost": 5,
     "Alpha_shortlist": 0.3,
-    "Alpha_random_gen": 0.75,
-    "N_iterations": 50,
+    "N_iterations": 60,
     "create_generators": "True"
 }

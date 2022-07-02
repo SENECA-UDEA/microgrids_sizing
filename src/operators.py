@@ -113,11 +113,12 @@ class Sol_constructor():
 
 
 class Search_operator():
-    def __init__(self, generators_dict, batteries_dict, demand_df, forecast_df):
+    def __init__(self, generators_dict, batteries_dict, demand_df, forecast_df, technologies_dict):
         self.generators_dict = generators_dict
         self.batteries_dict = batteries_dict
         self.demand_df = demand_df
         self.forecast_df = forecast_df
+        self.technologies_dict = technologies_dict
         
     def removeobject(self, sol_actual): #remove one generator or battery
         solution = copy.deepcopy(sol_actual)
@@ -155,7 +156,7 @@ class Search_operator():
         
         return solution, dic_remove
     
-    def addobject(self, sol_actual, available_bat, available_gen, dic_remove, Alpha_random_gen, CRF, fuel_cost): #add generator or battery
+    def addobject(self, sol_actual, available_bat, available_gen, dic_remove, CRF, fuel_cost): #add generator or battery
         solution = copy.deepcopy(sol_actual)
         #get the maximum generation of removed object
         val_max = max(dic_remove.values())
@@ -169,44 +170,42 @@ class Search_operator():
         best_cost = math.inf
         #random select battery or generator
         if available_gen == []:
-            tec_select = "Battery"
+            rand_tec = "B"
         elif available_bat == []:
-            tec_select = "Generator"
+            rand_tec = "Generator"
         else:
-            #same probability by each technology
-            rand_tec = random.random()
-            if rand_tec < Alpha_random_gen:
-                tec_select = "Generator"
-            else:
-                tec_select = "Battery"
+            rand_tec = random.choice(list(self.technologies_dict))
         
-        if tec_select == "Battery":
+        if rand_tec == "B":
             #select a random battery
             select_ob = random.choice(available_bat)
             solution.batteries_dict_sol[select_ob] = dict_total[select_ob]
             #check generation in max period that covers the remove object
-        elif tec_select == "Generator":
+        else:
+            #Intial random object
             select_ob = random.choice(available_gen)
             for i in available_gen:
                 dic = dict_total[i]
-                if dic.tec == 'D':
-                    gen_generator = dic.DG_max
-                else:
-                    gen_generator = dic.gen_rule[pos_max]
-                
-                #check if is better than dict remove
-                if gen_generator > gen_reference:
-                    lcoe_inf = (dic.cost_up + dic.cost_r - dic.cost_s) * CRF
+                #tecnhology = random
+                if dic.tec == rand_tec:
                     if dic.tec == 'D':
-                        lcoe_op = dic.cost_fopm + (dic.f0 + dic.f1)*dic.DG_max*fuel_cost * len(dic_remove)
+                        gen_generator = dic.DG_max
                     else:
-                        lcoe_op = dic.cost_fopm + dic.cost_vopm * sum(dic.gen_rule.values())
-                    total_lcoe = lcoe_inf + lcoe_op
-                    if total_lcoe <= best_cost:
-                        best_cost = total_lcoe
-                        select_ob = dic.id_gen
-                
-                
+                        gen_generator = dic.gen_rule[pos_max]
+                    
+                    #check if is better than dict remove
+                    if gen_generator > gen_reference:
+                        lcoe_inf = (dic.cost_up + dic.cost_r - dic.cost_s) * CRF
+                        if dic.tec == 'D':
+                            lcoe_op = dic.cost_fopm + (dic.f0 + dic.f1)*dic.DG_max*fuel_cost * len(dic_remove)
+                        else:
+                            lcoe_op = dic.cost_fopm + dic.cost_vopm * sum(dic.gen_rule.values())
+                        total_lcoe = lcoe_inf + lcoe_op
+                        if total_lcoe <= best_cost:
+                            best_cost = total_lcoe
+                            select_ob = dic.id_gen
+                    
+                    
             solution.generators_dict_sol[select_ob] = dict_total[select_ob] 
             #update the dictionary
             for t in dic_remove.keys():
