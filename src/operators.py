@@ -59,18 +59,20 @@ class Sol_constructor():
                 #check if already supplies all demand
                 if (demand_to_be_covered <= 0):
                     available_generators = False
+                #add the generator to the solution
                 elif (area_gen <= area_available):
                     generators_dict_sol[f.id_gen] = f
                     area += g.area
                     sorted_generators.pop(position)
                     area_available = area_available - area_gen
                     demand_to_be_covered = demand_to_be_covered - demand_gen
+                #the generator cannot enter to the solution
                 else:
                     sorted_generators.pop(position)
 
                    
         batteries_dict_sol = {}
-        
+        #create the initial solution solved
         technologies_dict_sol, renewables_dict_sol = create_technologies (generators_dict_sol, 
                                                                           batteries_dict_sol)
         ir = interest_rate(instance_data['i_f'],instance_data['inf'])
@@ -120,22 +122,24 @@ class Search_operator():
         self.forecast_df = forecast_df
         self.technologies_dict = technologies_dict
         
-    def removeobject(self, sol_actual): #remove one generator or battery
+    def removeobject(self, sol_actual, CRF): #remove one generator or battery
         solution = copy.deepcopy(sol_actual)
         dict_actual = {**solution.generators_dict_sol,**solution.batteries_dict_sol}
         min_relation = math.inf
         #Check which one generates less energy at the highest cost
         for d in dict_actual.values(): 
             if d.tec == 'B':
-                op_cost = 0
-                inv_cost = d.cost_up + d.cost_r + d.cost_fopm - d.cost_s
+                #Operation cost
+                op_cost = d.cost_fopm 
+                #Investment cost
+                inv_cost = d.cost_up + d.cost_r - d.cost_s
                 sum_generation = solution.results.df_results[d.id_bat+'_b-'].sum(axis = 0, skipna = True)          
             else:
                 sum_generation = solution.results.df_results[d.id_gen].sum(axis = 0, skipna = True)
-                op_cost = solution.results.df_results[d.id_gen+'_cost'].sum(axis = 0, skipna = True)
-                inv_cost = d.cost_up + d.cost_r + d.cost_fopm - d.cost_s
+                op_cost = d.cost_fopm + solution.results.df_results[d.id_gen+'_cost'].sum(axis = 0, skipna = True)
+                inv_cost = d.cost_up + d.cost_r - d.cost_s
                  
-            relation = sum_generation / (inv_cost + op_cost)
+            relation = sum_generation / (inv_cost * CRF + op_cost)
             if relation <= min_relation:
                 min_relation = relation
                 if d.tec == 'B':
@@ -197,8 +201,10 @@ class Search_operator():
                     if gen_generator > gen_reference:
                         lcoe_inf = (dic.cost_up + dic.cost_r - dic.cost_s) * CRF
                         if dic.tec == 'D':
+                            #Operation cost at maximum capacity
                             lcoe_op = dic.cost_fopm + (dic.f0 + dic.f1)*dic.DG_max*fuel_cost * len(dic_remove)
                         else:
+                            #Operation cost with generation rule
                             lcoe_op = dic.cost_fopm + dic.cost_vopm * sum(dic.gen_rule.values())
                         total_lcoe = lcoe_inf + lcoe_op
                         if total_lcoe <= best_cost:
@@ -258,6 +264,7 @@ class Search_operator():
         list_keys_total = dict_total.keys()
         dict_actual = {**solution.generators_dict_sol,**solution.batteries_dict_sol}     
         list_keys_actual = dict_actual.keys()
+        #Check the object that is not in the current solution
         non_actual = list(set(list_keys_total) - set(list_keys_actual))
         
         for i in non_actual: 

@@ -1,9 +1,5 @@
 # -*- coding: utf-8 -*-
-"""
-Created on Wed Apr 20 11:04:49 2022
 
-@author: pmayaduque
-"""
 
 class Generator(): #Superclass generators
 
@@ -25,7 +21,7 @@ class Solar(Generator):
         self.G_noct = G_noct #Irradiance operating Normal Condition
         self.Ppv_stc = Ppv_stc #Rated power
         self.fpv = fpv #derating factor
-        self.kt = kt
+        self.kt = kt #Temperature coefficient
         self.gen_rule = {}
         self.INOCT = 0
         super(Solar, self).__init__(id_gen, tec, br,area, cost_up,  cost_r, cost_s, cost_fopm)
@@ -80,8 +76,8 @@ class Eolic(Generator):
         self.s_out = s_out # Turbine Maximum Generation Speed (Output Speed)
         self.P_y = P_y #Rated power of the wind turbine
         self.n_eq = n_eq #n to calculate the generation curve, usually 1,2 or 3
-        self.gen_rule = {}
         self.h = h #height
+        self.gen_rule = {}
         super(Eolic, self).__init__(id_gen, tec, br, area, cost_up, cost_r, cost_s, cost_fopm)
     
     def Windgeneration(self, forecastWt, h2, coef_hel): #Wt = wind speed over the time
@@ -130,7 +126,6 @@ class Battery():
         self.cost_r = cost_r #Replacement cost
         self.cost_s = cost_s #Salvament cost
         self.soc_min = 0 #Minimum level of energy that must be in the battery
-        #TODO: check if the battery need n
         
     def calculatesoc(self): #Calculate soc_min with soc_max and dod_max
         self.soc_min = self.soc_max * (1-self.dod_max)

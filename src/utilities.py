@@ -64,7 +64,7 @@ def create_objects(generators, batteries, forecast_df, demand_df, instance_data)
 
 
 def create_technologies(generators_dict, batteries_dict):
-    # Create technologies dictionarry
+    # Create technologies dictionary
     technologies_dict = dict()
     for bat in batteries_dict.values(): 
       if not (bat.tec in technologies_dict.keys()):

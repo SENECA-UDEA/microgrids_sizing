@@ -92,7 +92,7 @@ results, termination = opt.solve_model(model,
 print("Model optimized")
 
 
-#TODO:  ext_time?
+
 if termination['Temination Condition'] == 'optimal': 
    model_results = opt.Results(model)
    print(model_results.descriptive)

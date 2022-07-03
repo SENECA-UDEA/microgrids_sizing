@@ -11,7 +11,6 @@ import pandas as pd
 from operators import Sol_constructor, Search_operator
 from plotly.offline import plot
 import copy
-from classes import Solution
 pd.options.display.max_columns = None
 
 # file paths github
@@ -53,6 +52,7 @@ demand_df, forecast_df, generators, batteries, instance_data = read_data(demand_
 
 #Calculate interest rate
 ir = interest_rate(instance_data['i_f'],instance_data['inf'])
+#Calculate CRF
 CRF = (ir * (1 + ir)**(instance_data['years']))/((1 + ir)**(instance_data['years'])-1)  
 # Create objects and generation rule
 generators_dict, batteries_dict,  = create_objects(generators,
@@ -60,7 +60,7 @@ generators_dict, batteries_dict,  = create_objects(generators,
                                                    forecast_df,
                                                    demand_df,
                                                    instance_data)
-
+#create technologies
 technologies_dict, renewables_dict = create_technologies (generators_dict,
                                                           batteries_dict)
 
@@ -89,6 +89,7 @@ sol_current = copy.deepcopy(sol_feasible)
 
 #check the available area
 
+#nputs for the model
 movement = "Initial Solution"
 amax =  instance_data['amax']
 N_iterations = instance_data['N_iterations']
@@ -111,7 +112,7 @@ for i in range(N_iterations):
         # save copy as the last solution feasible seen
         sol_feasible = copy.deepcopy(sol_current) 
         # Remove a generator or battery from the current solution
-        sol_try, dic_remove = search_operator.removeobject(sol_current)
+        sol_try, dic_remove = search_operator.removeobject(sol_current, CRF)
         movement = "Remove"
     else:
         #  Create list of generators that could be added
@@ -161,8 +162,8 @@ for i in range(N_iterations):
 
     sol_current.results.descriptive['area'] = calculate_area(sol_current)
     
-    print(sol_current.generators_dict_sol)
-    print(sol_current.batteries_dict_sol)
+    #print(sol_current.generators_dict_sol)
+    #print(sol_current.batteries_dict_sol)
                
                 
 #df with the feasible solutions
