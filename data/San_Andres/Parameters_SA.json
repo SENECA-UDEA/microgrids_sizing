@@ -205,6 +205,23 @@
             "h" : 11
         },
         {
+            "id_gen": "Enair E70",
+            "tec": "W",
+            "br": "Enair",
+            "area": 14.62,
+            "cost_up": 11500,
+            "cost_r": 0,
+            "cost_s": 0,
+            "cost_fopm": 0,
+            "cost_vopm": 0,
+            "s_in": 2,
+            "s_rate": 11,
+            "s_out": 12,
+            "p_y": 4,
+            "n_eq": 2,
+            "h" : 5
+        },
+        {
             "id_gen": "Southwest:AirX",
             "tec": "W",
             "br": "Southwest",

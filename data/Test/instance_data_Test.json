@@ -4,7 +4,7 @@
     "inf": 0.1,
     "nse" : 0.1, 
     "maxtec" : 4, 
-    "mintec" : 2,
+    "mintec" : 4,
     "years" : 20,
     "tlpsp" : 1,
     "w_cost": 1,
