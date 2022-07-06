@@ -17,7 +17,8 @@ import copy
 def read_data(demand_filepath, 
               forecast_filepath,
               units_filepath,
-              instance_data):
+              instance_filepath,
+              fiscal_filepath):
     
     forecast_df = pd.read_csv(forecast_filepath)
     demand_df = pd.read_csv(demand_filepath)
@@ -31,13 +32,20 @@ def read_data(demand_filepath,
     batteries = generators_data['batteries']
     
     try:
-        instance_data =  requests.get(instance_data)
+        instance_data =  requests.get(instance_filepath)
         instance_data = json.loads(instance_data.text)
     except:
-        f = open(instance_data)
+        f = open(instance_filepath)
         instance_data = json.load(f) 
-    
-    return demand_df, forecast_df, generators, batteries, instance_data
+
+    try:
+        fiscal_data =  requests.get(fiscal_filepath)
+        fiscal_data = json.loads(fiscal_data.text)
+    except:
+        f = open(fiscal_filepath)
+        fiscal_data = json.load(f) 
+        
+    return demand_df, forecast_df, generators, batteries, instance_data, fiscal_data
 
 
 def create_objects(generators, batteries, forecast_df, demand_df, instance_data):
@@ -93,16 +101,19 @@ def create_technologies(generators_dict, batteries_dict):
  
     
 #calculate total cost for two stage approach
-def calculate_sizingcost(generators_dict, batteries_dict, ir, years):
+def calculate_sizingcost(generators_dict, batteries_dict, ir, years, delta):
             expr = 0
             expr2 = 0
             for gen in generators_dict.values(): 
-                expr += gen.cost_up
-                expr += gen.cost_r 
-                expr -= gen.cost_s
+                if (gen.tec != 'D'): 
+                    expr += gen.cost_up * delta
+                else:
+                    expr += gen.cost_up
+                expr += gen.cost_r * delta
+                expr -= gen.cost_s * delta
                 expr2 += gen.cost_fopm 
             for bat in batteries_dict.values(): 
-                expr += bat.cost_up
+                expr += bat.cost_up * delta
                 expr += bat.cost_r
                 expr -= bat.cost_s
                 expr2 += bat.cost_fopm
@@ -209,6 +220,26 @@ def interest_rate (i_f, inf):
     #i_f = nominal rate
     ir = (i_f - inf)/(1 + inf)
     return ir
+
+
+def fiscal_incentive (credit, depreciation, corporate_tax, ir, T1, T2):
+    #corporate_tax = effective corporate tax income rate
+    #Credit = investment tax credit
+    #Depreciation = depreciation factor expressed as percentage of investment cost over T2 year
+    #ir = Interest rate
+    #T1 = Maximum number of years to apply the investment tax credit
+    #T2 = useful life of the power generating facility for accelerated depreciation purpose (in year)
+    delta = 0
+    expr = 0
+    for j in range(1,int(T1) + 1):
+        expr += credit/((1 + ir)**j)
+
+    for j in range(1,int(T2) + 1):
+        expr += depreciation/((1 + ir)**j)
+    
+    delta = (1/(1-corporate_tax))*(1-corporate_tax*expr)
+    
+    return delta
 '''
 
 def min2hms(hm):

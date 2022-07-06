@@ -28,7 +28,8 @@ def make_model(generators_dict=None,
                maxbr = 0,
                years = 1,
                w_cost = 0,
-               tlpsp = 1):
+               tlpsp = 1,
+               delta = 1):
     #generators_dict = dictionary of generators
     #batteries_dict = dictionary of batteries
     #demand_df = demand dataframe
@@ -42,6 +43,7 @@ def make_model(generators_dict=None,
     #maxbr= maximum brands allowed by each technology
     #w_cost = Penalized wasted energy cost
     #tlpsp = Number of lpsp periods for moving average
+    #Delta = tax incentive
 
     
     # Sets
@@ -69,6 +71,7 @@ def make_model(generators_dict=None,
     model.CRF = pyo.Param(initialize = CRF_calc) #capital recovery factor 
     model.tlpsp = pyo.Param (initialize = tlpsp) #LPSP Time for moving average
     model.w_cost = pyo.Param (initialize = w_cost)
+    model.delta = pyo.Param (initialize = delta)
 
     # Variables
     model.y = pyo.Var(model.TECHNOLOGIES, within=pyo.Binary) #select or not the technology
@@ -249,7 +252,9 @@ def make_model(generators_dict=None,
         
     # Defines TNPC constraint
     def tnpcc_rule(model): 
-            expr = sum(generators_dict[k].cost_up*model.w[k] for k in model.GENERATORS) + sum(batteries_dict[l].cost_up * model.q[l] for l in model.BATTERIES) 
+            expr =  sum(batteries_dict[l].cost_up * model.delta * model.q[l] for l in model.BATTERIES) 
+            expr += sum(generators_dict[k].cost_up*model.w[k] for k in model.GENERATORS if generators_dict[k].tec == 'D')
+            expr += sum(generators_dict[k].cost_up* model.delta *model.w[k] for k in model.GENERATORS if generators_dict[k].tec != 'D')
             expr += sum(generators_dict[k].cost_r*model.w[k] for k in model.GENERATORS) + sum(batteries_dict[l].cost_r * model.q[l]  for l in model.BATTERIES) 
             expr -= sum(generators_dict[k].cost_s*model.w[k] for k in model.GENERATORS) + sum(batteries_dict[l].cost_s * model.q[l]  for l in model.BATTERIES)
             return model.TNPC == expr
