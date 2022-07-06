@@ -2,7 +2,7 @@ import json
 import requests
 import copy
 
-units_filepath = "../data/San_Andres/parameters_SA.json"
+units_filepath = "../data/San_Andres/json_cost.json"
 
 try:
     generators_data =  requests.get(units_filepath)

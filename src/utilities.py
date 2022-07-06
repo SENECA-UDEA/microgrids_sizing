@@ -207,7 +207,7 @@ def calculate_energy(batteries_dict, generators_dict, model_results, demand_df):
 def interest_rate (i_f, inf):
     #inf = inflation
     #i_f = nominal rate
-    ir = (inf - i_f)/(1 + i_f)
+    ir = (i_f - inf)/(1 + inf)
     return ir
 '''
 
