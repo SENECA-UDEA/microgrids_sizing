@@ -24,7 +24,8 @@ class Sol_constructor():
                           batteries_dict, 
                           technologies_dict, 
                           renewables_dict,
-                          nse): #initial Diesel solution
+                          nse,
+                          delta): #initial Diesel solution
         
         generators_dict_sol = {}
         #create auxiliar dict for the iterations
@@ -79,7 +80,8 @@ class Sol_constructor():
         tnpccrf_calc = calculate_sizingcost(generators_dict_sol, 
                                             batteries_dict_sol, 
                                             ir = ir,
-                                            years = instance_data['years'])
+                                            years = instance_data['years'],
+                                            delta = delta)
         
         model = opt.make_model_operational(generators_dict = generators_dict_sol,
                                            batteries_dict = batteries_dict_sol,  

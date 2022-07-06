@@ -6,6 +6,7 @@ Created on Wed Apr 20 11:14:21 2022
 """
 
 from utilities import read_data, create_objects, create_technologies, calculate_energy, interest_rate
+from utilities import fiscal_incentive 
 import opt as opt
 import pandas as pd 
 from plotly.offline import plot
@@ -40,14 +41,15 @@ demand_filepath = "../data/Test/demand_day.csv"
 forecast_filepath = '../data/Test/forecast_day.csv'
 units_filepath = "../data/Test/parameters_Test.json"
 instanceData_filepath = "../data/Test/instance_data_Test.json"
+#fiscal Data
+fiscalData_filepath = "../data/fiscal_incentive.json"
 
 # read data
-demand_df, forecast_df, generators, batteries, instance_data = read_data(demand_filepath,
-                                                          forecast_filepath,
-                                                          units_filepath,
-                                                          instanceData_filepath)
-
-
+demand_df, forecast_df, generators, batteries, instance_data, fisc_data = read_data(demand_filepath,
+                                                                                    forecast_filepath,
+                                                                                    units_filepath,
+                                                                                    instanceData_filepath,
+                                                                                    fiscalData_filepath)
 
 
 # Create objects and generation rule
@@ -65,6 +67,16 @@ technologies_dict, renewables_dict = create_technologies (generators_dict,
 
 #Calculate interest rate
 ir = interest_rate(instance_data['i_f'],instance_data['inf'])
+
+#Calculate fiscal incentives
+credit = fisc_data['credit']
+depreciation = fisc_data['depreciation']
+corporate_tax = fisc_data['corporate_tax']
+T1 = fisc_data['T1']
+T2 = fisc_data['T2']
+delta = fiscal_incentive(credit, depreciation, corporate_tax, ir, T1, T2)
+
+
 # Create model          
 model = opt.make_model(generators_dict, 
                        batteries_dict, 
@@ -80,7 +92,8 @@ model = opt.make_model(generators_dict,
                        maxbr = instance_data['max_brand'],
                        years = instance_data['years'],
                        w_cost = instance_data['w_cost'],
-                       tlpsp = instance_data['tlpsp'])    
+                       tlpsp = instance_data['tlpsp'],
+                       delta = delta)    
 
 
 print("Model generated")
