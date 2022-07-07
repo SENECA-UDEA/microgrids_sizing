@@ -176,8 +176,8 @@ for i in range(N_iterations):
 
     sol_current.results.descriptive['area'] = calculate_area(sol_current)
     
-    #print(sol_current.generators_dict_sol)
-    #print(sol_current.batteries_dict_sol)
+    print(sol_current.generators_dict_sol)
+    print(sol_current.batteries_dict_sol)
                
                 
 #df with the feasible solutions
@@ -195,4 +195,5 @@ percent_df, energy_df, renew_df, total_df, brand_df = calculate_energy(sol_best.
 '''
 TRM = 3910
 LCOE_COP = TRM * model_results.descriptive['LCOE']
+sol_best.results.df_results.to_excel("results.xlsx") 
 '''

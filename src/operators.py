@@ -188,12 +188,13 @@ class Search_operator():
             solution.batteries_dict_sol[select_ob] = dict_total[select_ob]
             #check generation in max period that covers the remove object
         else:
-            #Intial random object
-            select_ob = random.choice(available_gen)
+            list_rand_tec = []
+            select_ob = ""
             for i in available_gen:
                 dic = dict_total[i]
                 #tecnhology = random
                 if dic.tec == rand_tec:
+                    list_rand_tec.append(dic.id_gen)
                     if dic.tec == 'D':
                         gen_generator = dic.DG_max
                     else:
@@ -213,6 +214,11 @@ class Search_operator():
                             best_cost = total_lcoe
                             select_ob = dic.id_gen
                     
+            if (select_ob == ""):
+                if (list_rand_tec != []):
+                    select_ob = random.choice(list_rand_tec)
+                else:
+                    select_ob = random.choice(available_gen)
                     
             solution.generators_dict_sol[select_ob] = dict_total[select_ob] 
             #update the dictionary
