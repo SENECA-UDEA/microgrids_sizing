@@ -113,8 +113,7 @@ rows_df = []
 search_operator = Search_operator(generators_dict, 
                             batteries_dict,
                             demand_df,
-                            forecast_df,
-                            technologies_dict)
+                            forecast_df)
 
 for i in range(N_iterations):
     rows_df.append([i, sol_current.feasible, 
