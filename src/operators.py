@@ -117,12 +117,11 @@ class Sol_constructor():
 
 
 class Search_operator():
-    def __init__(self, generators_dict, batteries_dict, demand_df, forecast_df, technologies_dict):
+    def __init__(self, generators_dict, batteries_dict, demand_df, forecast_df):
         self.generators_dict = generators_dict
         self.batteries_dict = batteries_dict
         self.demand_df = demand_df
         self.forecast_df = forecast_df
-        self.technologies_dict = technologies_dict
         
     def removeobject(self, sol_actual, CRF): #remove one generator or battery
         solution = copy.deepcopy(sol_actual)
@@ -174,14 +173,26 @@ class Search_operator():
         gen_reference = dic_remove[pos_max]
         dict_total = {**self.generators_dict,**self.batteries_dict}
         best_cost = math.inf
+        #generation_total: parameter to calculate the total energy by generator
+        generation_total = 0
         #random select battery or generator
-        if available_gen == []:
-            rand_tec = "B"
-        elif available_bat == []:
-            rand_tec = "Generator"
+        if available_bat == []:
+            rand_number = random.uniform(0.25,1)  
+        elif available_gen == []:
+            rand_number = 0
         else:
-            rand_tec = random.choice(list(self.technologies_dict))
+            rand_number = random.random()
         
+        
+        if rand_number < (1/4):
+            rand_tec = "B"
+        elif rand_number <(2/4):
+            rand_tec = "D"
+        elif rand_number < (3/4):
+            rand_tec = "S"
+        else:
+            rand_tec = "W"
+ 
         if rand_tec == "B":
             #select a random battery
             select_ob = random.choice(available_bat)
@@ -205,11 +216,13 @@ class Search_operator():
                         lcoe_inf = (dic.cost_up + dic.cost_r - dic.cost_s) * CRF
                         if dic.tec == 'D':
                             #Operation cost at maximum capacity
+                            generation_total = len(dic_remove) * dic.DG_max
                             lcoe_op = dic.cost_fopm + (dic.f0 + dic.f1)*dic.DG_max*fuel_cost * len(dic_remove)
                         else:
                             #Operation cost with generation rule
-                            lcoe_op = dic.cost_fopm + dic.cost_vopm * sum(dic.gen_rule.values())
-                        total_lcoe = lcoe_inf + lcoe_op
+                            generation_total = sum(dic.gen_rule.values())
+                            lcoe_op = dic.cost_fopm + dic.cost_vopm * generation_total
+                        total_lcoe = (lcoe_inf + lcoe_op)/generation_total
                         if total_lcoe <= best_cost:
                             best_cost = total_lcoe
                             select_ob = dic.id_gen

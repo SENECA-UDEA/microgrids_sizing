@@ -118,4 +118,5 @@ if termination['Temination Condition'] == 'optimal':
 '''
 TRM = 3910
 LCOE_COP = TRM * model_results.descriptive['LCOE']
+model_results.df_results.to_excel("results.xlsx") 
 '''

@@ -19,6 +19,5 @@
     "G_stc": 1000,
     "fuel_cost": 0.556,
     "Alpha_shortlist": 0.3,
-    "N_iterations": 100,
-    "create_generators": "True"
+    "N_iterations": 100
 }
