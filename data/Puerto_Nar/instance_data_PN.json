@@ -1,8 +1,8 @@
 {   
-    "amax": 25, 
+    "amax": 50, 
     "i_f" : 0.124032, 
     "inf": 0.04,
-    "nse" : 0.25, 
+    "nse" : 0.05, 
     "maxtec" : 4, 
     "mintec" : 2,
     "years" : 20,
@@ -19,5 +19,5 @@
     "G_stc": 1000,
     "fuel_cost": 0.556,
     "Alpha_shortlist": 0.3,
-    "N_iterations": 60
+    "N_iterations": 100
 }

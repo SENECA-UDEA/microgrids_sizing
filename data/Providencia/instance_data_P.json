@@ -1,8 +1,8 @@
 {   
-    "amax": 30, 
+    "amax": 50, 
     "i_f" : 0.124032, 
     "inf": 0.04,
-    "nse" : 0.65, 
+    "nse" : 0.55, 
     "maxtec" : 4, 
     "mintec" : 2,
     "years" : 20,
