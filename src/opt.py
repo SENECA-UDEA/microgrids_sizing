@@ -280,7 +280,14 @@ def make_model(generators_dict=None,
         return pyo.Constraint.Skip
     model.lpspcons = pyo.Constraint(model.HTIME, rule=lpspcons_rule)
 
-
+    #control that s- is lower than demand if tlpsp is two or more
+    def other_rule(model, t):
+        if (model.tlpsp > 1):
+            return model.s_minus[t] <= model.d[t]
+        else:
+            return pyo.Constraint.Skip
+    model.other_rule = pyo.Constraint(model.HTIME, rule=other_rule)
+    
     # Defines objective function
     def obj2_rule(model):
       return ((model.TNPC * model.CRF + model.TNPC_OP) / sum( model.d[t] for t in model.HTIME)) +  model.w_cost * sum( model.s_plus[t] for t in model.HTIME) 
@@ -477,6 +484,15 @@ def make_model_operational(generators_dict=None,
       else:
         return pyo.Constraint.Skip
     model.lpspcons = pyo.Constraint(model.HTIME, rule=lpspcons_rule)
+    
+    #control that s- is lower than demand if tlpsp is two or more
+    def other_rule(model, t):
+        if (model.tlpsp > 1):
+            return model.s_minus[t] <= model.d[t]
+        else:
+            return pyo.Constraint.Skip
+    model.other_rule = pyo.Constraint(model.HTIME, rule=other_rule)
+
 
     # Defines Objective function
     def obj2_rule(model):
