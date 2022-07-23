@@ -99,7 +99,7 @@ def create_technologies(generators_dict, batteries_dict):
               
     return technologies_dict, renewables_dict
  
-    
+
 #calculate total cost for two stage approach
 def calculate_sizingcost(generators_dict, batteries_dict, ir, years, delta):
             expr = 0
@@ -109,8 +109,8 @@ def calculate_sizingcost(generators_dict, batteries_dict, ir, years, delta):
                     expr += gen.cost_up * delta
                 else:
                     expr += gen.cost_up
-                expr += gen.cost_r * delta
-                expr -= gen.cost_s * delta
+                expr += gen.cost_r 
+                expr -= gen.cost_s 
                 expr2 += gen.cost_fopm 
             for bat in batteries_dict.values(): 
                 expr += bat.cost_up * delta
