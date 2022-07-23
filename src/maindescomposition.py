@@ -128,11 +128,12 @@ for i in range(N_iterations):
         movement = "Remove"
     else:
         #  Create list of generators that could be added
-        list_available_bat, list_available_gen = search_operator.available(sol_current, amax)
+        list_available_bat, list_available_gen, list_tec_gen  = search_operator.available(sol_current, amax)
+        print (list_tec_gen)
         if (list_available_gen != [] or list_available_bat != []):
             # Add a generator or battery to the current solution
-            sol_try, dic_remove = search_operator.addobject(sol_current, list_available_bat, list_available_gen, dic_remove,  CRF, instance_data['fuel_cost'])
-            #sol_try = search_operator.addrandomobject(sol_current, list_available_bat, list_available_gen)
+            sol_try, dic_remove = search_operator.addobject(sol_current, list_available_bat, list_available_gen, list_tec_gen, dic_remove,  CRF, instance_data['fuel_cost'])
+            #sol_try = search_operator.addrandomobject(sol_current, list_available_bat, list_available_gen, list_tec_gen)
             movement = "Add"
         else:
             # return to the last feasible solution
@@ -175,8 +176,8 @@ for i in range(N_iterations):
 
     sol_current.results.descriptive['area'] = calculate_area(sol_current)
     
-    print(sol_current.generators_dict_sol)
-    print(sol_current.batteries_dict_sol)
+    #print(sol_current.generators_dict_sol)
+    #print(sol_current.batteries_dict_sol)
                
                 
 #df with the feasible solutions

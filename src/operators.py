@@ -161,7 +161,7 @@ class Search_operator():
         
         return solution, dic_remove
     
-    def addobject(self, sol_actual, available_bat, available_gen, dic_remove, CRF, fuel_cost): #add generator or battery
+    def addobject(self, sol_actual, available_bat, available_gen, list_tec_gen, dic_remove, CRF, fuel_cost): #add generator or battery
         solution = copy.deepcopy(sol_actual)
         #get the maximum generation of removed object
         val_max = max(dic_remove.values())
@@ -177,21 +177,12 @@ class Search_operator():
         generation_total = 0
         #random select battery or generator
         if available_bat == []:
-            rand_number = random.uniform(0.25,1)  
+            rand_tec = random.choice(list_tec_gen)
         elif available_gen == []:
-            rand_number = 0
+            rand_tec = 'B'
         else:
-            rand_number = random.random()
-        
-        
-        if rand_number < (1/4):
-            rand_tec = "B"
-        elif rand_number <(2/4):
-            rand_tec = "D"
-        elif rand_number < (3/4):
-            rand_tec = "S"
-        else:
-            rand_tec = "W"
+            rand_tec = random.choice(list_tec_gen + ['B'])
+    
  
         if rand_tec == "B":
             #select a random battery
@@ -228,10 +219,8 @@ class Search_operator():
                             select_ob = dic.id_gen
                     
             if (select_ob == ""):
-                if (list_rand_tec != []):
                     select_ob = random.choice(list_rand_tec)
-                else:
-                    select_ob = random.choice(available_gen)
+
                     
             solution.generators_dict_sol[select_ob] = dict_total[select_ob] 
             #update the dictionary
@@ -248,18 +237,38 @@ class Search_operator():
         
         return solution, dic_remove
     
-    def addrandomobject(self, sol_actual, available_bat, available_gen): #add generator or battery
+    def addrandomobject(self, sol_actual, available_bat, available_gen, list_tec_gen): #add generator or battery
         solution = copy.deepcopy(sol_actual)
         dict_total = {**self.generators_dict,**self.batteries_dict}
-        availables = available_gen + available_bat
-        select_ob = random.choice(availables)
-        if dict_total[select_ob].tec == 'B':
-            solution.batteries_dict_sol[select_ob] = dict_total[select_ob]
+        #random select battery or generator
+        if available_bat == []:
+            rand_tec = random.choice(list_tec_gen)
+        elif available_gen == []:
+            rand_tec = 'B'
         else:
+            rand_tec = random.choice(list_tec_gen + ['B'])
+    
+ 
+        if rand_tec == "B":
+            #select a random battery
+            select_ob = random.choice(available_bat)
+            solution.batteries_dict_sol[select_ob] = dict_total[select_ob]
+            #check generation in max period that covers the remove object
+        else:
+            list_rand_tec = []
+            for i in available_gen:
+                dic = dict_total[i]
+                #tecnhology = random
+                if dic.tec == rand_tec:
+                    list_rand_tec.append(dic.id_gen)
+
+            select_ob = random.choice(list_rand_tec)
             solution.generators_dict_sol[select_ob] = dict_total[select_ob] 
-        
+
         solution.technologies_dict_sol, solution.renewables_dict_sol = create_technologies (solution.generators_dict_sol
                                                                                               , solution.batteries_dict_sol)
+       
+        
         return solution
     
     def removerandomobject(self, sol_actual): #add generator or battery
@@ -281,6 +290,7 @@ class Search_operator():
         available_area = amax - sol_actual.results.descriptive['area']
         list_available_gen = []
         list_available_bat = []
+        list_tec_gen = []
         dict_total = {**self.generators_dict,**self.batteries_dict}
         list_keys_total = dict_total.keys()
         dict_actual = {**solution.generators_dict_sol,**solution.batteries_dict_sol}     
@@ -295,5 +305,7 @@ class Search_operator():
                     list_available_bat.append(g.id_bat)
                 else:
                     list_available_gen.append(g.id_gen)
+                    if not (g.tec in list_tec_gen):
+                        list_tec_gen.append(g.tec)
    
-        return list_available_bat, list_available_gen  
+        return list_available_bat, list_available_gen, list_tec_gen  
