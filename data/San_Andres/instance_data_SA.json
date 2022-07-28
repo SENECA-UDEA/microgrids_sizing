@@ -1,13 +1,14 @@
 {   
-    "amax": 25, 
+    "amax": 150, 
     "i_f" : 0.124032, 
     "inf": 0.04,
-    "nse" : 0.5, 
+    "nse" : 0.05,
+    "demand_covered": 0.03, 
     "maxtec" : 4, 
     "mintec" : 2,
     "years" : 20,
     "tlpsp" : 1,
-    "w_cost": 2.8622,
+    "w_cost": 0.28622,
     "max_brand" : {"S":2,
                    "D":3,
                    "W":3,
@@ -19,5 +20,5 @@
     "G_stc": 1000,
     "fuel_cost": 0.556,
     "Alpha_shortlist": 0.3,
-    "N_iterations": 60
+    "N_iterations": 30
 }
