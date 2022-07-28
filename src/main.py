@@ -65,6 +65,9 @@ technologies_dict, renewables_dict = create_technologies (generators_dict,
 
 
 
+#Demand to be covered
+demand_df['demand'] = instance_data['demand_covered']  * demand_df['demand'] 
+
 #Calculate interest rate
 ir = interest_rate(instance_data['i_f'],instance_data['inf'])
 

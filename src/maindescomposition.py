@@ -54,6 +54,9 @@ demand_df, forecast_df, generators, batteries, instance_data, fisc_data = read_d
                                                                                     fiscalData_filepath)
 
 
+#Demand to be covered
+demand_df['demand'] = instance_data['demand_covered']  * demand_df['demand'] 
+
 #Calculate interest rate
 ir = interest_rate(instance_data['i_f'],instance_data['inf'])
 #Calculate CRF
