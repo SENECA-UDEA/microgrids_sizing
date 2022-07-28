@@ -71,13 +71,18 @@ demand_df['demand'] = instance_data['demand_covered']  * demand_df['demand']
 #Calculate interest rate
 ir = interest_rate(instance_data['i_f'],instance_data['inf'])
 
+#Set GAP
+MIP_GAP = 0.01
+TEE_SOLVER = True
+OPT_SOLVER = 'gurobi'
+
 #Calculate fiscal incentives
-credit = fisc_data['credit']
-depreciation = fisc_data['depreciation']
-corporate_tax = fisc_data['corporate_tax']
-T1 = fisc_data['T1']
-T2 = fisc_data['T2']
-delta = fiscal_incentive(credit, depreciation, corporate_tax, ir, T1, T2)
+delta = fiscal_incentive(fisc_data['credit'], 
+                         fisc_data['depreciation'],
+                         fisc_data['corporate_tax'],
+                         ir,
+                         fisc_data['T1'],
+                         fisc_data['T2'])
 
 
 # Create model          
@@ -102,9 +107,9 @@ model = opt.make_model(generators_dict,
 print("Model generated")
 # solve model 
 results, termination = opt.solve_model(model, 
-                       optimizer = 'gurobi',
-                       mipgap = 0.01,
-                       tee = True)
+                                        optimizer = OPT_SOLVER,
+                                        mipgap = MIP_GAP,
+                                         tee = TEE_SOLVER)
 print("Model optimized")
 
 
@@ -115,8 +120,10 @@ if termination['Temination Condition'] == 'optimal':
    print(model_results.df_results)
    generation_graph = model_results.generation_graph()
    plot(generation_graph)
-   percent_df, energy_df, renew_df, total_df, brand_df = calculate_energy(batteries_dict, generators_dict, model_results, demand_df)
-
+   try:
+       percent_df, energy_df, renew_df, total_df, brand_df = calculate_energy(batteries_dict, generators_dict, model_results, demand_df)
+   except KeyError:
+       pass
 
 '''
 TRM = 3910
