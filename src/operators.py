@@ -25,7 +25,10 @@ class Sol_constructor():
                           technologies_dict, 
                           renewables_dict,
                           nse,
-                          delta): #initial Diesel solution
+                          delta,
+                          OPT_SOLVER,
+                          MIP_GAP,
+                          TEE_SOLVER): #initial Diesel solution
         
         generators_dict_sol = {}
         #create auxiliar dict for the iterations
@@ -96,9 +99,9 @@ class Sol_constructor():
 
 
         results, termination = opt.solve_model(model, 
-                                               optimizer = 'gurobi',
-                                               mipgap = 0.02,
-                                               tee = True)
+                                               optimizer = OPT_SOLVER,
+                                               mipgap = MIP_GAP,
+                                               tee = TEE_SOLVER)
         
         if termination['Temination Condition'] == 'optimal': 
             sol_results = opt.Results(model)
