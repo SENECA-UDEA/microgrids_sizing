@@ -3,6 +3,7 @@
     "i_f" : 0.124032, 
     "inf": 0.04,
     "nse" : 0.1, 
+    "demand_covered": 1,
     "maxtec" : 4, 
     "mintec" : 4,
     "years" : 20,
