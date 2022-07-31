@@ -24,7 +24,6 @@ class Sol_constructor():
                           batteries_dict, 
                           technologies_dict, 
                           renewables_dict,
-                          nse,
                           delta,
                           OPT_SOLVER,
                           MIP_GAP,
@@ -35,6 +34,7 @@ class Sol_constructor():
         auxiliar_dict_generator = {}
         #calculate the total available area
         area_available = instance_data['amax']
+        nse = instance_data['nse']
         Alpha_shortlist = instance_data['Alpha_shortlist']
         area = 0
         
