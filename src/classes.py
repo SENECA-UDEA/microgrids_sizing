@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
-
+import random as random
+import numpy as np
 
 class Generator(): #Superclass generators
 
@@ -144,3 +145,31 @@ class Solution():
         self.renewables_dict_sol = renewables_dict_sol
         self.results = results
         self.feasible = False
+
+
+class Random_create():
+    def __init__(self, seed = None):
+        self.seed = seed
+        random.seed(self.seed)
+        np.random.seed(self.seed)
+        
+    def create_rand_number(self): 
+        number_rand = random.random() 
+        return number_rand
+    
+    def create_rand_list(self, list_rand):
+        selection = 0
+        selection = random.choice(list_rand)
+        return selection
+    def create_randint(self, inf, sup):
+        selection = 0
+        selection = random.randint(inf,sup)
+        return selection
+    def create_randomsample(self,list_rand, n):
+        selection = 0
+        selection = random.sample(list_rand,n)
+        return selection
+    def create_randomnpnormal(self, means,desv,size):
+        selection = 0
+        selection = np.random.normal(loc=means, scale=desv, size=size)
+        return selection

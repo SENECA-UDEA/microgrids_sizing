@@ -8,6 +8,7 @@ Created on Wed Apr 20 11:14:21 2022
 from utilities import read_data, create_objects, calculate_sizingcost, create_technologies, calculate_area, calculate_energy, interest_rate
 from utilities import fiscal_incentive 
 import opt as opt
+from classes import Random_create
 import pandas as pd 
 from operators import Sol_constructor, Search_operator
 from plotly.offline import plot
@@ -46,6 +47,10 @@ instanceData_filepath = "../data/Providencia/instance_data_P.json"
 
 #fiscal Data
 fiscalData_filepath = "../data/fiscal_incentive.json"
+
+seed = 42
+#seed = None
+rand_ob = Random_create(seed = seed)
 
 # read data
 demand_df, forecast_df, generators, batteries, instance_data, fisc_data = read_data(demand_filepath,
@@ -104,7 +109,8 @@ sol_feasible = sol_constructor.initial_solution(instance_data,
                                                delta,
                                                OPT_SOLVER,
                                                MIP_GAP,
-                                               TEE_SOLVER)
+                                               TEE_SOLVER,
+                                               rand_ob)
 
 # set the initial solution as the best so far
 sol_best = copy.deepcopy(sol_feasible)
@@ -144,8 +150,8 @@ for i in range(N_iterations):
         print (list_tec_gen)
         if (list_available_gen != [] or list_available_bat != []):
             # Add a generator or battery to the current solution
-            sol_try, dic_remove = search_operator.addobject(sol_current, list_available_bat, list_available_gen, list_tec_gen, dic_remove,  CRF, instance_data['fuel_cost'])
-            #sol_try = search_operator.addrandomobject(sol_current, list_available_bat, list_available_gen, list_tec_gen)
+            sol_try, dic_remove = search_operator.addobject(sol_current, list_available_bat, list_available_gen, list_tec_gen, dic_remove,  CRF, instance_data['fuel_cost'], rand_ob)
+            #sol_try = search_operator.addrandomobject(sol_current, list_available_bat, list_available_gen, list_tec_gen,rand_ob)
             movement = "Add"
         else:
             # return to the last feasible solution

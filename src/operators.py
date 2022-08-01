@@ -6,7 +6,6 @@ Created on Wed May 11 10:23:49 2022
 from utilities import create_technologies, calculate_sizingcost, interest_rate
 import opt as opt
 from classes import Solution
-import random as random
 import copy
 import math
 import pandas as pd
@@ -27,20 +26,20 @@ class Sol_constructor():
                           delta,
                           OPT_SOLVER,
                           MIP_GAP,
-                          TEE_SOLVER): #initial Diesel solution
+                          TEE_SOLVER,
+                          rand_ob): #initial Diesel solution
         
         generators_dict_sol = {}
         #create auxiliar dict for the iterations
         auxiliar_dict_generator = {}
         #calculate the total available area
         area_available = instance_data['amax']
-        nse = instance_data['nse']
         Alpha_shortlist = instance_data['Alpha_shortlist']
         area = 0
         
         #Calculate the maximum demand that the Diesel have to covered
         demand_to_be_covered = max(self.demand_df['demand']) 
-        demand_to_be_covered = demand_to_be_covered * (1 - nse)
+        demand_to_be_covered = demand_to_be_covered * (1 - instance_data['nse'])
         
         for g in self.generators_dict.values(): 
             if g.tec == 'D':
@@ -56,7 +55,7 @@ class Sol_constructor():
             else:
                 #shortlist candidates
                 len_candidate = math.ceil(len(sorted_generators)*Alpha_shortlist)
-                position = random.randint(0, len_candidate-1)
+                position = rand_ob.create_randint(0, len_candidate-1)
                 f = self.generators_dict[sorted_generators[position]]
                 area_gen = f.area
                 demand_gen = f.DG_max
@@ -164,14 +163,14 @@ class Search_operator():
         
         return solution, dic_remove
     
-    def addobject(self, sol_actual, available_bat, available_gen, list_tec_gen, dic_remove, CRF, fuel_cost): #add generator or battery
+    def addobject(self, sol_actual, available_bat, available_gen, list_tec_gen, dic_remove, CRF, fuel_cost, rand_ob): #add generator or battery
         solution = copy.deepcopy(sol_actual)
         #get the maximum generation of removed object
         val_max = max(dic_remove.values())
         #get all the position with the same maximum value
         list_max = [k for k,v in dic_remove.items() if v == val_max]
         #random select: one position with the maximum value
-        pos_max = random.choice(list_max)
+        pos_max = rand_ob.create_rand_list(list_max)
         #get the generation in the period of maximum selected
         gen_reference = dic_remove[pos_max]
         dict_total = {**self.generators_dict,**self.batteries_dict}
@@ -180,16 +179,16 @@ class Search_operator():
         generation_total = 0
         #random select battery or generator
         if available_bat == []:
-            rand_tec = random.choice(list_tec_gen)
+            rand_tec = rand_ob.create_rand_list(list_tec_gen)
         elif available_gen == []:
             rand_tec = 'B'
         else:
-            rand_tec = random.choice(list_tec_gen + ['B'])
-    
+            rand_tec = rand_ob.create_rand_list(list_tec_gen + ['B'])
+
  
         if rand_tec == "B":
             #select a random battery
-            select_ob = random.choice(available_bat)
+            select_ob = rand_ob.create_rand_list(available_bat)
             solution.batteries_dict_sol[select_ob] = dict_total[select_ob]
             #check generation in max period that covers the remove object
         else:
@@ -222,8 +221,8 @@ class Search_operator():
                             select_ob = dic.id_gen
                     
             if (select_ob == ""):
-                    select_ob = random.choice(list_rand_tec)
-
+                    select_ob = rand_ob.create_rand_list(list_rand_tec)
+   
                     
             solution.generators_dict_sol[select_ob] = dict_total[select_ob] 
             #update the dictionary
@@ -240,21 +239,22 @@ class Search_operator():
         
         return solution, dic_remove
     
-    def addrandomobject(self, sol_actual, available_bat, available_gen, list_tec_gen): #add generator or battery
+    def addrandomobject(self, sol_actual, available_bat, available_gen, list_tec_gen, rand_ob): #add generator or battery
         solution = copy.deepcopy(sol_actual)
         dict_total = {**self.generators_dict,**self.batteries_dict}
         #random select battery or generator
         if available_bat == []:
-            rand_tec = random.choice(list_tec_gen)
+            rand_tec = rand_ob.create_rand_list(list_tec_gen)
+
         elif available_gen == []:
             rand_tec = 'B'
         else:
-            rand_tec = random.choice(list_tec_gen + ['B'])
+            rand_tec = rand_ob.create_rand_list(list_tec_gen + ['B'])
     
  
         if rand_tec == "B":
             #select a random battery
-            select_ob = random.choice(available_bat)
+            select_ob = rand_ob.create_rand_list(available_bat)
             solution.batteries_dict_sol[select_ob] = dict_total[select_ob]
             #check generation in max period that covers the remove object
         else:
@@ -265,7 +265,7 @@ class Search_operator():
                 if dic.tec == rand_tec:
                     list_rand_tec.append(dic.id_gen)
 
-            select_ob = random.choice(list_rand_tec)
+            select_ob = rand_ob.create_rand_list(list_rand_tec)
             solution.generators_dict_sol[select_ob] = dict_total[select_ob] 
 
         solution.technologies_dict_sol, solution.renewables_dict_sol = create_technologies (solution.generators_dict_sol
@@ -274,10 +274,10 @@ class Search_operator():
         
         return solution
     
-    def removerandomobject(self, sol_actual): #add generator or battery
+    def removerandomobject(self, sol_actual, rand_ob): #add generator or battery
         solution = copy.deepcopy(sol_actual)
         dict_actual = {**solution.generators_dict_sol,**solution.batteries_dict_sol} 
-        select_ob = random.choice(list(dict_actual.keys()))
+        select_ob = rand_ob.create_rand_list(list(dict_actual.keys()))
         if dict_actual[select_ob].tec == 'B':
             solution.batteries_dict_sol.pop(select_ob)
         else:

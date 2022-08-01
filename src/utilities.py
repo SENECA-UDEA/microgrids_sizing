@@ -13,7 +13,6 @@ import math
 import copy
 
 
-
 def read_data(demand_filepath, 
               forecast_filepath,
               units_filepath,
