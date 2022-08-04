@@ -125,7 +125,7 @@ class Search_operator():
         self.demand_df = demand_df
         self.forecast_df = forecast_df
         
-    def removeobject(self, sol_actual, CRF): #remove one generator or battery
+    def removeobject(self, sol_actual, CRF, delta): #remove one generator or battery
         solution = copy.deepcopy(sol_actual)
         dict_actual = {**solution.generators_dict_sol,**solution.batteries_dict_sol}
         min_relation = math.inf
@@ -135,13 +135,15 @@ class Search_operator():
                 #Operation cost
                 op_cost = d.cost_fopm 
                 #Investment cost
-                inv_cost = d.cost_up + d.cost_r - d.cost_s
+                inv_cost = d.cost_up * delta + d.cost_r - d.cost_s
                 sum_generation = solution.results.df_results[d.id_bat+'_b-'].sum(axis = 0, skipna = True)          
             else:
                 sum_generation = solution.results.df_results[d.id_gen].sum(axis = 0, skipna = True)
                 op_cost = d.cost_fopm + solution.results.df_results[d.id_gen+'_cost'].sum(axis = 0, skipna = True)
-                inv_cost = d.cost_up + d.cost_r - d.cost_s
-                 
+                if d.tec == 'D':
+                    inv_cost = d.cost_up + d.cost_r - d.cost_s
+                else:
+                    inv_cost = d.cost_up * delta + d.cost_r - d.cost_s
             relation = sum_generation / (inv_cost * CRF + op_cost)
             if relation <= min_relation:
                 min_relation = relation
@@ -163,7 +165,7 @@ class Search_operator():
         
         return solution, dic_remove
     
-    def addobject(self, sol_actual, available_bat, available_gen, list_tec_gen, dic_remove, CRF, fuel_cost, rand_ob): #add generator or battery
+    def addobject(self, sol_actual, available_bat, available_gen, list_tec_gen, dic_remove, CRF, fuel_cost, rand_ob, delta): #add generator or battery
         solution = copy.deepcopy(sol_actual)
         #get the maximum generation of removed object
         val_max = max(dic_remove.values())
@@ -206,15 +208,16 @@ class Search_operator():
                     
                     #check if is better than dict remove
                     if gen_generator > gen_reference:
-                        lcoe_inf = (dic.cost_up + dic.cost_r - dic.cost_s) * CRF
                         if dic.tec == 'D':
                             #Operation cost at maximum capacity
                             generation_total = len(dic_remove) * dic.DG_max
                             lcoe_op = dic.cost_fopm + (dic.f0 + dic.f1)*dic.DG_max*fuel_cost * len(dic_remove)
+                            lcoe_inf = (dic.cost_up + dic.cost_r - dic.cost_s) * CRF
                         else:
                             #Operation cost with generation rule
                             generation_total = sum(dic.gen_rule.values())
                             lcoe_op = dic.cost_fopm + dic.cost_vopm * generation_total
+                            lcoe_inf = (dic.cost_up * delta + dic.cost_r - dic.cost_s) * CRF
                         total_lcoe = (lcoe_inf + lcoe_op)/generation_total
                         if total_lcoe <= best_cost:
                             best_cost = total_lcoe
