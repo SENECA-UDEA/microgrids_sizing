@@ -53,8 +53,9 @@ def create_objects(generators, batteries, forecast_df, demand_df, instance_data)
     for k in generators:
       if k['tec'] == 'S':
         obj_aux = Solar(*k.values())
+        gt = irradiance_panel (forecast_df, instance_data)
         obj_aux.Get_INOCT(instance_data["caso"], instance_data["w"])
-        obj_aux.Solargeneration( forecast_df['t_ambt'], forecast_df['DNI'], instance_data["G_stc"])
+        obj_aux.Solargeneration( forecast_df['t_ambt'], gt, instance_data["G_stc"])
       elif k['tec'] == 'W':
         obj_aux = Eolic(*k.values())
         obj_aux.Windgeneration(forecast_df['Wt'],instance_data["h2"],instance_data["coef_hel"] )
@@ -239,7 +240,44 @@ def fiscal_incentive (credit, depreciation, corporate_tax, ir, T1, T2):
     delta = (1/(1-corporate_tax))*(1-corporate_tax*expr)
     
     return delta
-'''
+
+
+    
+def irradiance_panel (forecast_df, instance_data):
+    if (forecast_df['GHI'].sum() <= 0):
+        gt_data = forecast_df['DNI']
+    else:       
+        theta_M = instance_data["tilted_angle"]
+        a_M = 90 - theta_M
+        A_M = instance_data["module_azimuth"]
+        TZ = instance_data["time_zone"]
+        long = instance_data["longitude"]
+        latit = instance_data["latitude"]
+        alpha = instance_data["alpha_albedo"]
+        gt_data = {}
+        for t in list(forecast_df['t'].index.values):
+            LT = forecast_df['t'][t]
+            SF1 = forecast_df['SF'][t] #Shadow factor
+            DNI = forecast_df['DNI'][t] #Direct normal Irradiance
+            DHI = forecast_df['DHI'][t] #Diffuse Horizontal Irradiance
+            GHI = forecast_df['GHI'][t] #Global horizontal Irradiance
+            day = forecast_df['day'][t] #Day of the year
+            
+            Gs = Get_SolarP01(LT,TZ,day,long,latit) #Sum altitude and sum Azimuth   
+            ds = cos_AOI(a_M,A_M,Gs[0],Gs[1]) #COsine incidence angle
+            svf = Get_SVF01(theta_M) #Sky view factor
+            G_dr = SF1*DNI*ds
+            if G_dr < 0:
+                G_dr = 0 #negative Direct Irradiance on the PV module as zero
+            G_df = svf * DHI #Diffuse irradiancia
+            G_alb = alpha*(1 - svf)*GHI #Groud irradiance
+            gt_data[t] = G_dr + G_df + G_alb #Total irradiance
+    
+    gt =  pd.DataFrame(gt_data.items(), columns = ['t','gt']) 
+        
+    return  gt
+
+
 
 def min2hms(hm):
     """conversion min -> (hours, min, sec)
@@ -315,17 +353,7 @@ def cos_AOI(a_M,A_M,a_s,A_s):
     ct = c1 + c2
     return ct
 
-def Gdirect(SF,DNI,cosAOI):
-    """Gdirect: direct Irradiance on module
-        SF: shading factor
-        DNI: direct normal irradiance
-        cosAOI: cos angle of incidence
-    """
-    Gd = SF*DNI*cosAOI
-    if Gd < 0:
-        Gd = 0 #negative Direct Irradiance on the PV module as zero
-        
-    return Gd
+
 
 def Get_SVF01(t_M):
     """t_M: tilted angle of Module (grados)
@@ -334,64 +362,10 @@ def Get_SVF01(t_M):
     svf = (1 + np.cos(t_M*np.pi/180))/2
     return svf
 
-def Gdiffuse(SVF,DHI):
-    """Gdiffuse: diffuse Irradiance on module
-        SVF: sky view factor
-        DHI: diffuse horizontal irradiance
-        Isotropic sky model
-    """
-    Gd = SVF*DHI
-    return Gd
-
-def Galbedo(a_gnd,SVF,GHI):
-    """Galbedo: ground irradiance
-        a_gnd: albedo coefficient
-        SVF: Sky View Factor
-        GHI: Global Horizontal Irradiance
-    """
-    Ga = a_gnd*(1 - SVF)*GHI
-    return Ga
 
 
-def Gmodule(G_dr,G_df,G_alb):
-    """Gmodule: Total Irradiance
-        G_dr: direct
-        G_df: diffuse
-        G_alb: ground
-    """
-    Gm = G_dr + G_df + G_alb
-    return Gm  
 
-    
-def irradiance_panel (forecast_df, instance_data):
-    theta_M = instance_data["tilted_angle"]
-    a_M = 90 - theta_M
-    A_M = instance_data["module_azimuth"]
-    TZ = instance_data["time_zone"]
-    long = instance_data["longitude"]
-    latit = instance_data["latitude"]
-    alpha = instance_data["alpha_albedo"]
-    caso = instance_data["caso"] #Direct Mount, Stand off or Rack Mount
-    w = instance_data["w"] #distance to the mount
-    t_amb = forecast_df['t_ambt'] #Room temperature
-    gt_data = {}
-    for t in list(forecast_df['t'].index.values):
-        LT = forecast_df['t'][t]
-        SF1 = forecast_df['SF'][t] #Shadow factor
-        DNI = forecast_df['DNI'][t] #Direct normal Irradiance
-        DHI = forecast_df['DHI'][t] #Diffuse Horizontal Irradiance
-        GHI = forecast_df['GHI'][t] #Global horizontal Irradiance
-        day = forecast_df['day'][t] #Day of the year
-        
-        Gs = Get_SolarP01(LT,TZ,day,long,latit) #Sum altitude and sum Azimuth   
-        ds = cos_AOI(a_M,A_M,Gs[0],Gs[1]) #COsine incidence angle
-        gdr = Gdirect(SF1,DNI,ds) #Direct irradiance
-        svf = Get_SVF01(theta_M) #Sky view factor
-        gdf = Gdiffuse(svf,DHI) #Diffuse irradiance
-        galb = Galbedo(alpha,svf,GHI) #Groud irradiance
-        gt_data[t] = Gmodule(gdr, gdf, galb) #Total irradiance
-    
-    gt =  pd.DataFrame(gt_data.items(), columns = ['t','gt']) 
-        
-    return  w, caso, t_amb, gt
-'''
+
+
+
+

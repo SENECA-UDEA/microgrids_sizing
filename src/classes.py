@@ -31,7 +31,7 @@ class Solar(Generator):
             #G_stc: Standar solar radiation
             #Calculate generation over the time
             for t in list(gt.index.values):
-                Irad_panel = gt[t] #irradiance in module W/m2
+                Irad_panel = gt['gt'][t] #irradiance in module W/m2
                 if Irad_panel<=0:
                    self.gen_rule[t] = 0
                 else:
