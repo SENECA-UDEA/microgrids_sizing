@@ -20,5 +20,11 @@
     "G_stc": 1000,
     "fuel_cost": 0.556,
     "Alpha_shortlist": 0.3,
-    "N_iterations": 40
+    "N_iterations": 40,
+    "tilted_angle" : 10,
+    "module_azimuth": 20,
+    "time_zone": -5,
+    "longitude": -4.2081,
+    "latitude":  -69.9432,
+    "alpha_albedo": 0.2
 }
