@@ -30,6 +30,7 @@ class Sol_constructor():
                           rand_ob): #initial Diesel solution
         
         generators_dict_sol = {}
+        batteries_dict_sol = {}
         #create auxiliar dict for the iterations
         auxiliar_dict_generator = {}
         #calculate the total available area
@@ -41,11 +42,31 @@ class Sol_constructor():
         demand_to_be_covered = max(self.demand_df['demand']) 
         demand_to_be_covered = demand_to_be_covered * (1 - instance_data['nse'])
         
+        rev = ""
+        rev2 = ""
+        aux_control = ""
         for g in self.generators_dict.values(): 
             if g.tec == 'D':
                 auxiliar_dict_generator[g.id_gen] = g.DG_max
-        
-        
+        rev = 'D'
+        #if not diesel try with solar and one battery or wind and one battery
+        if (auxiliar_dict_generator == {}):
+            auxiliar_dict_bat = {}
+            for b in self.batteries_dict.values(): 
+                auxiliar_dict_bat[b.id_bat] = b.soc_max
+            if (auxiliar_dict_bat != {}):
+                sorted_batteries = sorted(auxiliar_dict_bat, key=auxiliar_dict_bat.get,reverse=True) 
+                rev2 = 'B'
+            for g in self.generators_dict.values(): 
+                if g.tec == 'S':
+                    auxiliar_dict_generator[g.id_gen] = g.Ppv_stc
+            rev = 'S'
+            if (auxiliar_dict_generator == {}):
+                for g in self.generators_dict.values(): 
+                    if g.tec == 'W':
+                        auxiliar_dict_generator[g.id_gen] = g.P_y
+                rev = 'W'
+        #sorted generator max to min capacity
         sorted_generators = sorted(auxiliar_dict_generator, key=auxiliar_dict_generator.get,reverse=True) 
         
         available_generators = True
@@ -58,14 +79,38 @@ class Sol_constructor():
                 position = rand_ob.create_randint(0, len_candidate-1)
                 f = self.generators_dict[sorted_generators[position]]
                 area_gen = f.area
-                demand_gen = f.DG_max
+                #check the technology set
+                if (rev == 'D'):
+                    demand_gen = f.DG_max
+                elif (rev == 'S'):
+                    demand_gen = f.Ppv_stc
+                    if (rev2 == 'B'):
+                        #put first only one battery
+                        f = self.batteries_dict[sorted_batteries[0]]
+                        demand_gen = 0
+                        area_gen = f.area
+                        rev2 = ""
+                        aux_control = 'B'
+                elif(rev == 'W'):
+                    demand_gen = f.P_y
+                    if (rev2 == 'B'):
+                        f = self.batteries_dict[sorted_batteries[0]]
+                        rev2 = ""
+                        area_gen = f.area
+                        demand_gen = 0
+                        aux_control = 'B'
                 #check if already supplies all demand
                 if (demand_to_be_covered <= 0):
                     available_generators = False
                 #add the generator to the solution
                 elif (area_gen <= area_available):
-                    generators_dict_sol[f.id_gen] = f
-                    area += g.area
+                    #put the first battery if the set is renewable
+                    if (aux_control == 'B'):
+                        batteries_dict_sol[f.id_bat] = f
+                        aux_control = ""
+                    else:
+                        generators_dict_sol[f.id_gen] = f
+                    area += f.area
                     sorted_generators.pop(position)
                     area_available = area_available - area_gen
                     demand_to_be_covered = demand_to_be_covered - demand_gen
@@ -73,8 +118,8 @@ class Sol_constructor():
                 else:
                     sorted_generators.pop(position)
 
-                   
-        batteries_dict_sol = {}
+                  
+        
         #create the initial solution solved
         technologies_dict_sol, renewables_dict_sol = create_technologies (generators_dict_sol, 
                                                                           batteries_dict_sol)
@@ -145,6 +190,7 @@ class Search_operator():
                 else:
                     inv_cost = d.cost_up * delta + d.cost_r - d.cost_s
             relation = sum_generation / (inv_cost * CRF + op_cost)
+            #Quit the worst
             if relation <= min_relation:
                 min_relation = relation
                 if d.tec == 'B':
@@ -276,20 +322,7 @@ class Search_operator():
        
         
         return solution
-    
-    def removerandomobject(self, sol_actual, rand_ob): #add generator or battery
-        solution = copy.deepcopy(sol_actual)
-        dict_actual = {**solution.generators_dict_sol,**solution.batteries_dict_sol} 
-        select_ob = rand_ob.create_rand_list(list(dict_actual.keys()))
-        if dict_actual[select_ob].tec == 'B':
-            solution.batteries_dict_sol.pop(select_ob)
-        else:
-            solution.generators_dict_sol.pop(select_ob)
 
-        solution.technologies_dict_sol, solution.renewables_dict_sol = create_technologies (solution.generators_dict_sol
-                                                                                              , solution.batteries_dict_sol)        
-                                                                                    
-        return solution
 
     def available(self, sol_actual, amax):
         solution = copy.deepcopy(sol_actual)

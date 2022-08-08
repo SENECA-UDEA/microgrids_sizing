@@ -9,7 +9,6 @@ import pandas as pd
 import requests
 import json 
 import numpy as np
-import math
 import copy
 
 
@@ -222,13 +221,17 @@ def interest_rate (i_f, inf):
     return ir
 
 def calculate_cost_data(generators, batteries, instance_data):
+    #inflation
     inf = instance_data['inf']
+    #nominal rate
     i_f= instance_data['i_f']
     years = instance_data['years']
     ir = interest_rate(i_f,inf)
+    #defaul useful life Diesel and batteries = 10
     life_cicle = 10
     ran = years/life_cicle
     
+    #Calculate tax for remplacement
     tax = 0
     for h in range(1,int(ran)+1):
         tax += 1/((1+ir)**(h*life_cicle))
@@ -240,6 +243,7 @@ def calculate_cost_data(generators, batteries, instance_data):
     generators_transformed = copy.deepcopy(generators)
     batteries_transformed = copy.deepcopy(batteries)
     total_transformed = generators_transformed + batteries_transformed
+    #Calculate costs with investment cost
     for i in total_transformed:
         if (i['tec'] == 'S'):
             cost_up = i['cost_up']
@@ -301,7 +305,8 @@ def fiscal_incentive (credit, depreciation, corporate_tax, ir, T1, T2):
 
     
 def irradiance_panel (forecast_df, instance_data):
-    if (forecast_df['GHI'].sum() <= 0):
+    if (forecast_df['GHI'].sum() <= 0 or forecast_df['DHI'].sum() <= 0):
+        #Default only DNI if it is not GHI or DHI
         gt_data = forecast_df['DNI']
     else:       
         theta_M = instance_data["tilted_angle"]

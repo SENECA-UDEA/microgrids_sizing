@@ -297,19 +297,6 @@ def make_model(generators_dict=None,
 
 
 
-    '''
-    LPSP
-    def obj1_rule(model):
-        return sum(model.s_minus[t] / model.d[t] for t in model.HTIME)
-    model.LPSP_value = pyo.Objective(sense=minimize, rule=obj1_rule)
-    #Enviromental constraint
-    def amb_rule(model, t):
-      return model.p_ren[t] / model.d[t]  >= model.renfrac 
-    model.amb_rule = pyo.Constraint(model.HTIME, rule=amb_rule)
-
-    '''
-
-
 def make_model_operational(generators_dict=None, 
                batteries_dict=None,  
                demand_df=None, 
