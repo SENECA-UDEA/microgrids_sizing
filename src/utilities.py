@@ -221,6 +221,63 @@ def interest_rate (i_f, inf):
     ir = (i_f - inf)/(1 + inf)
     return ir
 
+def calculate_cost_data(generators, batteries, instance_data):
+    inf = instance_data['inf']
+    i_f= instance_data['i_f']
+    years = instance_data['years']
+    ir = interest_rate(i_f,inf)
+    life_cicle = 10
+    ran = years/life_cicle
+    
+    tax = 0
+    for h in range(1,int(ran)+1):
+        tax += 1/((1+ir)**(h*life_cicle))
+        
+    aux_generators = []
+    generators_def = []
+    aux_batteries = []
+    batteries_def = []
+    generators_transformed = copy.deepcopy(generators)
+    batteries_transformed = copy.deepcopy(batteries)
+    total_transformed = generators_transformed + batteries_transformed
+    for i in total_transformed:
+        if (i['tec'] == 'S'):
+            cost_up = i['cost_up']
+            aux_generators = []
+            aux_generators = i
+            aux_generators['cost_r'] = 0
+            aux_generators['cost_s'] = cost_up * 0.2 * (((1 + inf)/(1 + ir))**years)
+            aux_generators['cost_fopm'] = cost_up * 0.01
+            aux_generators['cost_vopm'] =   0     
+            generators_def.append(copy.deepcopy(aux_generators))
+        elif (i['tec'] == 'W'):
+            cost_up = i['cost_up']
+            aux_generators = []
+            aux_generators = i
+            aux_generators['cost_r'] = 0
+            aux_generators['cost_s'] = cost_up * 0.1 * (((1 + inf)/(1 + ir))**years)
+            aux_generators['cost_fopm'] =  cost_up * 0.01
+            aux_generators['cost_vopm'] =  0  
+            generators_def.append(copy.deepcopy(aux_generators))
+        elif (i['tec'] == 'D'):
+            cost_up = i['cost_up']
+            aux_generators = []
+            aux_generators = i
+            aux_generators['cost_r'] = cost_up * 0.7 * tax
+            aux_generators['cost_s'] = cost_up * 0.3 * (((1 + inf)/(1 + ir))**years)
+            aux_generators['cost_fopm'] =  cost_up * 0.1
+            generators_def.append(copy.deepcopy(aux_generators)) 
+        else:
+            cost_up = i['cost_up']
+            aux_batteries = []
+            aux_batteries = i
+            aux_batteries['cost_r'] = cost_up * 0.7 * tax
+            aux_batteries['cost_s'] = cost_up * 0.3 * (((1 + inf)/(1 + ir))**years)
+            aux_batteries['cost_fopm'] =  cost_up * 0.02
+            batteries_def.append(copy.deepcopy(aux_batteries))
+
+    return generators_def, batteries_def
+
 
 def fiscal_incentive (credit, depreciation, corporate_tax, ir, T1, T2):
     #corporate_tax = effective corporate tax income rate

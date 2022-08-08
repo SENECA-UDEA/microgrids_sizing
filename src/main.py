@@ -6,7 +6,7 @@ Created on Wed Apr 20 11:14:21 2022
 """
 
 from utilities import read_data, create_objects, create_technologies, calculate_energy, interest_rate
-from utilities import fiscal_incentive 
+from utilities import fiscal_incentive, calculate_cost_data
 import opt as opt
 import pandas as pd 
 from plotly.offline import plot
@@ -51,7 +51,7 @@ demand_df, forecast_df, generators, batteries, instance_data, fisc_data = read_d
                                                                                     instanceData_filepath,
                                                                                     fiscalData_filepath)
 
-
+generators, batteries = calculate_cost_data(generators, batteries, instance_data)
 # Create objects and generation rule
 generators_dict, batteries_dict = create_objects(generators,
                                                  batteries, 
