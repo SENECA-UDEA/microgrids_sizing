@@ -6,7 +6,7 @@ Created on Wed Apr 20 11:14:21 2022
 """
 
 from utilities import read_data, create_objects, calculate_sizingcost, create_technologies, calculate_area, calculate_energy, interest_rate
-from utilities import fiscal_incentive 
+from utilities import fiscal_incentive, calculate_cost_data
 import opt as opt
 from classes import Random_create
 import pandas as pd 
@@ -59,7 +59,7 @@ demand_df, forecast_df, generators, batteries, instance_data, fisc_data = read_d
                                                                                     instanceData_filepath,
                                                                                     fiscalData_filepath)
 
-
+generators, batteries = calculate_cost_data(generators, batteries, instance_data)
 #Demand to be covered
 demand_df['demand'] = instance_data['demand_covered']  * demand_df['demand'] 
 

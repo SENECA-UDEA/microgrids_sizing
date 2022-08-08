@@ -72,6 +72,6 @@ total_def["generators"] = generators_def
 total_def["batteries"] = batteries_def
         
 #create the json
-with open('..\\data\\San_Andres\\json_example.json', 'w') as outfile:
+with open('..\\data\\json_generated.json', 'w') as outfile:
     json.dump(total_def, outfile, indent=4)
 
