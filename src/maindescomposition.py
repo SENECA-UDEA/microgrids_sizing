@@ -15,7 +15,7 @@ import copy
 pd.options.display.max_columns = None
 
 
-place = 'Test'
+place = 'Providencia'
 
 '''
 place = 'San_Andres'
