@@ -16,7 +16,8 @@ def read_data(demand_filepath,
               forecast_filepath,
               units_filepath,
               instance_filepath,
-              fiscal_filepath):
+              fiscal_filepath,
+              cost_filepath):
     
     forecast_df = pd.read_csv(forecast_filepath)
     demand_df = pd.read_csv(demand_filepath)
@@ -42,8 +43,15 @@ def read_data(demand_filepath,
     except:
         f = open(fiscal_filepath)
         fiscal_data = json.load(f) 
+
+    try:
+        cost_data =  requests.get(cost_filepath)
+        cost_data = json.loads(cost_data.text)
+    except:
+        f = open(cost_filepath)
+        cost_data = json.load(f) 
         
-    return demand_df, forecast_df, generators, batteries, instance_data, fiscal_data
+    return demand_df, forecast_df, generators, batteries, instance_data, fiscal_data, cost_data
 
 
 def create_objects(generators, batteries, forecast_df, demand_df, instance_data):
@@ -220,7 +228,8 @@ def interest_rate (i_f, inf):
     ir = (i_f - inf)/(1 + inf)
     return ir
 
-def calculate_cost_data(generators, batteries, instance_data):
+def calculate_cost_data(generators, batteries, instance_data,
+                        parameters_cost):
     #inflation
     inf = instance_data['inf']
     #nominal rate
@@ -228,7 +237,7 @@ def calculate_cost_data(generators, batteries, instance_data):
     years = instance_data['years']
     ir = interest_rate(i_f,inf)
     #defaul useful life Diesel and batteries = 10
-    life_cicle = 10
+    life_cicle = parameters_cost['life_cicle']
     ran = years/life_cicle
     
     #Calculate tax for remplacement
@@ -249,35 +258,35 @@ def calculate_cost_data(generators, batteries, instance_data):
             cost_up = i['cost_up']
             aux_generators = []
             aux_generators = i
-            aux_generators['cost_r'] = 0
-            aux_generators['cost_s'] = cost_up * 0.2 * (((1 + inf)/(1 + ir))**years)
-            aux_generators['cost_fopm'] = cost_up * 0.01
-            aux_generators['cost_vopm'] =   0     
+            aux_generators['cost_r'] = parameters_cost['param_r_solar']
+            aux_generators['cost_s'] = cost_up * parameters_cost['param_s_solar'] * (((1 + inf)/(1 + ir))**years)
+            aux_generators['cost_fopm'] = cost_up * parameters_cost['param_f_solar'] 
+            aux_generators['cost_vopm'] =  parameters_cost['param_v_solar']      
             generators_def.append(copy.deepcopy(aux_generators))
         elif (i['tec'] == 'W'):
             cost_up = i['cost_up']
             aux_generators = []
             aux_generators = i
-            aux_generators['cost_r'] = 0
-            aux_generators['cost_s'] = cost_up * 0.1 * (((1 + inf)/(1 + ir))**years)
-            aux_generators['cost_fopm'] =  cost_up * 0.01
-            aux_generators['cost_vopm'] =  0  
+            aux_generators['cost_r'] = parameters_cost['param_r_wind']  
+            aux_generators['cost_s'] = cost_up * parameters_cost['param_s_wind']   * (((1 + inf)/(1 + ir))**years)
+            aux_generators['cost_fopm'] =  cost_up * parameters_cost['param_f_wind']  
+            aux_generators['cost_vopm'] =  parameters_cost['param_v_wind']  
             generators_def.append(copy.deepcopy(aux_generators))
         elif (i['tec'] == 'D'):
             cost_up = i['cost_up']
             aux_generators = []
             aux_generators = i
-            aux_generators['cost_r'] = cost_up * 0.7 * tax
-            aux_generators['cost_s'] = cost_up * 0.3 * (((1 + inf)/(1 + ir))**years)
-            aux_generators['cost_fopm'] =  cost_up * 0.1
+            aux_generators['cost_r'] = cost_up * parameters_cost['param_r_diesel']   * tax
+            aux_generators['cost_s'] = cost_up * parameters_cost['param_s_diesel']   * (((1 + inf)/(1 + ir))**years)
+            aux_generators['cost_fopm'] =  cost_up * parameters_cost['param_f_diesel']
             generators_def.append(copy.deepcopy(aux_generators)) 
         else:
             cost_up = i['cost_up']
             aux_batteries = []
             aux_batteries = i
-            aux_batteries['cost_r'] = cost_up * 0.7 * tax
-            aux_batteries['cost_s'] = cost_up * 0.3 * (((1 + inf)/(1 + ir))**years)
-            aux_batteries['cost_fopm'] =  cost_up * 0.02
+            aux_batteries['cost_r'] = cost_up * parameters_cost['param_r_bat'] * tax
+            aux_batteries['cost_s'] = cost_up * parameters_cost['param_s_bat'] * (((1 + inf)/(1 + ir))**years)
+            aux_batteries['cost_fopm'] =  cost_up * parameters_cost['param_f_bat']
             batteries_def.append(copy.deepcopy(aux_batteries))
 
     return generators_def, batteries_def

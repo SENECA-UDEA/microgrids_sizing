@@ -38,15 +38,19 @@ instanceData_filepath = "../data/"+place+"/instance_data_"+place+".json"
 #fiscal Data
 fiscalData_filepath = "../data/fiscal_incentive.json"
 
+#cost Data
+costData_filepath = "../data/parameters_cost.json"
+
 # read data
-demand_df, forecast_df, generators, batteries, instance_data, fisc_data = read_data(demand_filepath,
-                                                                                    forecast_filepath,
-                                                                                    units_filepath,
-                                                                                    instanceData_filepath,
-                                                                                    fiscalData_filepath)
+demand_df, forecast_df, generators, batteries, instance_data, fisc_data, cost_data = read_data(demand_filepath,
+                                                                                                forecast_filepath,
+                                                                                                units_filepath,
+                                                                                                instanceData_filepath,
+                                                                                                fiscalData_filepath,
+                                                                                                costData_filepath)
 
 #Calculate salvage, operation and replacement cost with investment cost
-generators, batteries = calculate_cost_data(generators, batteries, instance_data)
+generators, batteries = calculate_cost_data(generators, batteries, instance_data, cost_data)
 # Create objects and generation rule
 generators_dict, batteries_dict = create_objects(generators,
                                                  batteries, 

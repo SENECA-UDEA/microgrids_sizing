@@ -5,7 +5,7 @@ Created on Wed May 11 10:23:49 2022
 """
 from utilities import create_technologies, calculate_sizingcost, interest_rate
 import opt as opt
-from classes import Solution
+from classes import Solution, Diesel
 import copy
 import math
 import pandas as pd
@@ -150,7 +150,52 @@ class Sol_constructor():
         if termination['Temination Condition'] == 'optimal': 
             sol_results = opt.Results(model)
         else: 
-            sol_results = None
+            #create a false Diesel auxiliar
+            k = {
+                        "id_gen": "aux_diesel",
+                        "tec": "D",
+                        "br": "DDDD",
+                        "area": 0.0001,
+                        "cost_up": 10000000000,
+                        "cost_r": 0,
+                        "cost_s": 0,
+                        "cost_fopm": 0,
+                        "DG_min": 0,
+                        "DG_max": max(self.demand_df['demand']) ,
+                        "f0": 10000000000,
+                        "f1": 1000000000
+                }
+            obj_aux = Diesel(*k.values())
+            generators_dict_sol = {}
+            batteries_dict_sol = {}
+            generators_dict_sol['aux_diesel'] = obj_aux
+            technologies_dict_sol, renewables_dict_sol = create_technologies (generators_dict_sol, 
+                                                                              batteries_dict_sol)
+            
+            tnpccrf_calc = calculate_sizingcost(generators_dict_sol, 
+                                                batteries_dict_sol, 
+                                                ir = ir,
+                                                years = instance_data['years'],
+                                                delta = delta)
+            
+            model = opt.make_model_operational(generators_dict = generators_dict_sol,
+                                               batteries_dict = batteries_dict_sol,  
+                                               demand_df=dict(zip(self.demand_df.t, self.demand_df.demand)), 
+                                               technologies_dict = technologies_dict_sol,  
+                                               renewables_dict = renewables_dict_sol,
+                                               fuel_cost =  instance_data['fuel_cost'],
+                                               nse =  instance_data['nse'], 
+                                               TNPCCRF = tnpccrf_calc,
+                                               w_cost = instance_data['w_cost'],
+                                               tlpsp = instance_data['tlpsp'])  
+
+
+            results, termination = opt.solve_model(model, 
+                                                   optimizer = OPT_SOLVER,
+                                                   mipgap = MIP_GAP,
+                                                   tee = TEE_SOLVER)
+            
+            sol_results = opt.Results(model)
         
         sol_initial = Solution(generators_dict_sol, 
                                batteries_dict_sol, 

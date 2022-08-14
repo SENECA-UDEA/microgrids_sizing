@@ -40,6 +40,9 @@ instanceData_filepath = "../data/"+place+"/instance_data_"+place+".json"
 #fiscal Data
 fiscalData_filepath = "../data/fiscal_incentive.json"
 
+#cost Data
+costData_filepath = "../data/parameters_cost.json"
+
 #Set the seed for random
 seed = 42
 '''
@@ -48,14 +51,15 @@ seed = None
 rand_ob = Random_create(seed = seed)
 
 # read data
-demand_df, forecast_df, generators, batteries, instance_data, fisc_data = read_data(demand_filepath,
-                                                                                    forecast_filepath,
-                                                                                    units_filepath,
-                                                                                    instanceData_filepath,
-                                                                                    fiscalData_filepath)
+demand_df, forecast_df, generators, batteries, instance_data, fisc_data, cost_data = read_data(demand_filepath,
+                                                                                                forecast_filepath,
+                                                                                                units_filepath,
+                                                                                                instanceData_filepath,
+                                                                                                fiscalData_filepath,
+                                                                                                costData_filepath)
 
 #Calculate salvage, operation and replacement cost with investment cost
-generators, batteries = calculate_cost_data(generators, batteries, instance_data)
+generators, batteries = calculate_cost_data(generators, batteries, instance_data, cost_data)
 #Demand to be covered
 demand_df['demand'] = instance_data['demand_covered']  * demand_df['demand'] 
 
@@ -104,6 +108,14 @@ sol_feasible = sol_constructor.initial_solution(instance_data,
                                                MIP_GAP,
                                                TEE_SOLVER,
                                                rand_ob)
+
+#if use aux_diesel asigns a big area to avoid select it again
+if ('aux_diesel' in sol_feasible.generators_dict_sol.keys()):
+    generators_dict['aux_diesel'] = sol_feasible.generators_dict_sol['aux_diesel']
+    generators_dict['aux_diesel'].area = 10000000
+
+
+
 
 # set the initial solution as the best so far
 sol_best = copy.deepcopy(sol_feasible)
@@ -189,27 +201,27 @@ if (sol_best.results != None):
             sol_current = copy.deepcopy(sol_try)
     
         sol_current.results.descriptive['area'] = calculate_area(sol_current)
-        
-
-                    
-    #df with the feasible solutions
-    df_iterations = pd.DataFrame(rows_df, columns=["i", "feasible", "area", "LCOE_actual", "LCOE_Best","Movement"])
     
-    #print results best solution
-    print(sol_best.results.descriptive)
-    print(sol_best.results.df_results)
-    generation_graph = sol_best.results.generation_graph()
-    plot(generation_graph)
-    try:
-        percent_df, energy_df, renew_df, total_df, brand_df = calculate_energy(sol_best.batteries_dict_sol, sol_best.generators_dict_sol, sol_best.results, demand_df)
-    except KeyError:
-        pass
-    #calculate current COP   
-    TRM = 3910
-    LCOE_COP = TRM * sol_best.results.descriptive['LCOE']
-    #create Excel
-    '''
-    sol_best.results.df_results.to_excel("results.xlsx") 
+    if ('aux_diesel' in sol_best.generators_dict_sol.keys()):
+        print('Not Feasible solutions')
+    else:
+        #df with the feasible solutions
+        df_iterations = pd.DataFrame(rows_df, columns=["i", "feasible", "area", "LCOE_actual", "LCOE_Best","Movement"])
+        #print results best solution
+        print(sol_best.results.descriptive)
+        print(sol_best.results.df_results)
+        generation_graph = sol_best.results.generation_graph()
+        plot(generation_graph)
+        try:
+            percent_df, energy_df, renew_df, total_df, brand_df = calculate_energy(sol_best.batteries_dict_sol, sol_best.generators_dict_sol, sol_best.results, demand_df)
+        except KeyError:
+            pass
+        #calculate current COP   
+        TRM = 3910
+        LCOE_COP = TRM * sol_best.results.descriptive['LCOE']
+        #create Excel
+        '''
+        sol_best.results.df_results.to_excel("results.xlsx") 
     '''
 else:
     print('No feasible solution, review data')
