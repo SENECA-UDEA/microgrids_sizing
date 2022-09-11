@@ -36,10 +36,10 @@ units_filepath = "../data/"+place+"/parameters_"+place+".json"
 instanceData_filepath = "../data/"+place+"/instance_data_"+place+".json"
 
 #fiscal Data
-fiscalData_filepath = "../data/fiscal_incentive.json"
+fiscalData_filepath = "../data/Cost/fiscal_incentive.json"
 
 #cost Data
-costData_filepath = "../data/parameters_cost.json"
+costData_filepath = "../data/Cost/parameters_cost.json"
 
 # read data
 demand_df, forecast_df, generators, batteries, instance_data, fisc_data, cost_data = read_data(demand_filepath,
@@ -114,7 +114,7 @@ if termination['Temination Condition'] == 'optimal':
    model_results = opt.Results(model)
    print(model_results.descriptive)
    print(model_results.df_results)
-   generation_graph = model_results.generation_graph()
+   generation_graph = model_results.generation_graph(0,len(demand_df))
    plot(generation_graph)
    try:
        percent_df, energy_df, renew_df, total_df, brand_df = calculate_energy(batteries_dict, generators_dict, model_results, demand_df)
@@ -127,5 +127,6 @@ LCOE_COP = TRM * model_results.descriptive['LCOE']
 
 #Create Excel File
 '''
+percent_df.to_excel("percentresults.xlsx")
 model_results.df_results.to_excel("results.xlsx") 
 '''

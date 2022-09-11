@@ -44,10 +44,11 @@ fiscalData_filepath = "../data/fiscal_incentive.json"
 costData_filepath = "../data/parameters_cost.json"
 
 #Set the seed for random
+'''
 seed = 42
 '''
 seed = None
-'''
+
 rand_ob = Random_create(seed = seed)
 
 # read data
@@ -210,7 +211,7 @@ if (sol_best.results != None):
         #print results best solution
         print(sol_best.results.descriptive)
         print(sol_best.results.df_results)
-        generation_graph = sol_best.results.generation_graph()
+        generation_graph = sol_best.results.generation_graph(0,len(demand_df))
         plot(generation_graph)
         try:
             percent_df, energy_df, renew_df, total_df, brand_df = calculate_energy(sol_best.batteries_dict_sol, sol_best.generators_dict_sol, sol_best.results, demand_df)
@@ -221,7 +222,9 @@ if (sol_best.results != None):
         LCOE_COP = TRM * sol_best.results.descriptive['LCOE']
         #create Excel
         '''
-        sol_best.results.df_results.to_excel("results.xlsx") 
-    '''
+        sol_best.results.df_results.to_excel("results.xlsx")         
+        percent_df.to_excel("percentresults.xlsx")
+
+        '''
 else:
     print('No feasible solution, review data')

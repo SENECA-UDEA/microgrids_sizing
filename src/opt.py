@@ -11,7 +11,7 @@ import plotly.io as pio
 pio.renderers.default='browser'
 import pandas as pd 
 import time
-
+import copy
 
 
 def make_model(generators_dict=None, 
@@ -644,34 +644,35 @@ class Results():
         
         
         
-    def generation_graph(self):
+    def generation_graph(self,ini,fin):
+        df_results = copy.deepcopy(self.df_results.iloc[int(ini):int(fin)])
         bars = []
         for key, value in self.descriptive['generators'].items():
             if value==1:
-                bars.append(go.Bar(name=key, x=self.df_results.index, y=self.df_results[key]))
+                bars.append(go.Bar(name=key, x=df_results.index, y=df_results[key]))
         for key, value in self.descriptive['batteries'].items():
             if value==1:
                 column_name = key+'_b-'
-                bars.append(go.Bar(name=key, x=self.df_results.index, y=self.df_results[column_name]))
+                bars.append(go.Bar(name=key, x=df_results.index, y=df_results[column_name]))
   
-        bars.append(go.Bar(name='Unsupplied Demand',x=self.df_results.index, y=self.df_results['S-']))
+        bars.append(go.Bar(name='Unsupplied Demand',x=df_results.index, y=df_results['S-']))
                 
         plot = go.Figure(data=bars)
         
         
-        plot.add_trace(go.Scatter(x=self.df_results.index, y=self.df_results['demand'],
+        plot.add_trace(go.Scatter(x=df_results.index, y=df_results['demand'],
                     mode='lines',
                     name='Demand',
                     line=dict(color='grey', dash='dot')))
         
-        self.df_results['b+'] = 0
+        df_results['b+'] = 0
         for key, value in self.descriptive['batteries'].items():
             if value==1:
                 column_name = key+'_b+'
-                self.df_results['b+'] += self.df_results[column_name]
+                df_results['b+'] += df_results[column_name]
         #self.df_results['Battery1_b+']+self.df_results['Battery2_b+']
-        plot.add_trace(go.Bar(x=self.df_results.index, y=self.df_results['b+'],
-                              base=-1*self.df_results['b+'],
+        plot.add_trace(go.Bar(x=df_results.index, y=df_results['b+'],
+                              base=-1*df_results['b+'],
                               marker_color='grey',
                               name='Charge'
                               ))
@@ -684,4 +685,4 @@ class Results():
         
         
         return plot
-    
+
