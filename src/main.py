@@ -5,37 +5,81 @@ Created on Wed Apr 20 11:14:21 2022
 @author: pmayaduque
 """
 
-from utilities import read_data, create_objects
+from utilities import read_data, create_objects, create_technologies, calculate_energy, interest_rate
+from utilities import fiscal_incentive, calculate_cost_data
 import opt as opt
 import pandas as pd 
-import random as random
 from plotly.offline import plot
 pd.options.display.max_columns = None
 
-# file paths github
-demand_filepath = 'https://raw.githubusercontent.com/pmayaduque/MicrogridSizing/main/data/Leticia_Annual_Demand.csv' 
-forecast_filepath = 'https://raw.githubusercontent.com/pmayaduque/MicrogridSizing/main/data/Annual_Forecast.csv' 
-units_filepath  = 'https://raw.githubusercontent.com/pmayaduque/MicrogridSizing/main/data/parameters_P.json' 
-# file paths local
-#demand_filepath = "../data/Leticia_Annual_Demand.csv"
-#forecast_filepath = '../data/Annual_Forescast.csv'
-#units_filepath = "../data/parameters_P.json"
-demand_filepath = "../data/demand_day.csv"
-forecast_filepath = '../data/forecast_day.csv'
-units_filepath = "../data/parameters_P.json"
-instanceData_filepath = "../data/instance_data.json"
 
+place = 'Providencia'
+
+'''
+place = 'San_Andres'
+place = 'Puerto_Nar'
+place = 'Leticia'
+place = 'Test'
+'''
+github_rute = 'https://raw.githubusercontent.com/SENECA-UDEA/microgrids_sizing/development/data/'
+# file paths github
+demand_filepath = github_rute + place+'/demand_'+place+'.csv' 
+forecast_filepath = github_rute + place+'/forecast_'+place+'.csv' 
+units_filepath = github_rute + place+'/parameters_'+place+'.json' 
+instanceData_filepath = github_rute + place+'/instance_data_'+place+'.json' 
+fiscalData_filepath = github_rute +'fiscal_incentive.json'
+ 
+# file paths local
+demand_filepath = "../data/"+place+"/demand_"+place+".csv"
+forecast_filepath = "../data/"+place+"/forecast_"+place+".csv"
+units_filepath = "../data/"+place+"/parameters_"+place+".json"
+instanceData_filepath = "../data/"+place+"/instance_data_"+place+".json"
+
+#fiscal Data
+fiscalData_filepath = "../data/Cost/fiscal_incentive.json"
+
+#cost Data
+costData_filepath = "../data/Cost/parameters_cost.json"
 
 # read data
-demand_df, forecast_df, generators, batteries, instance_data = read_data(demand_filepath,
-                                                          forecast_filepath,
-                                                          units_filepath,
-                                                          instanceData_filepath)
+demand_df, forecast_df, generators, batteries, instance_data, fisc_data, cost_data = read_data(demand_filepath,
+                                                                                                forecast_filepath,
+                                                                                                units_filepath,
+                                                                                                instanceData_filepath,
+                                                                                                fiscalData_filepath,
+                                                                                                costData_filepath)
 
+#Calculate salvage, operation and replacement cost with investment cost
+generators, batteries = calculate_cost_data(generators, batteries, instance_data, cost_data)
 # Create objects and generation rule
-generators_dict, batteries_dict, technologies_dict, renewables_dict = create_objects(generators,
-                                                                                   batteries, forecast_df)
+generators_dict, batteries_dict = create_objects(generators,
+                                                 batteries, 
+                                                 forecast_df,
+                                                 demand_df,
+                                                 instance_data)
 
+#Create technologies and renewables set
+technologies_dict, renewables_dict = create_technologies (generators_dict,
+                                                          batteries_dict)
+
+#Demand to be covered
+demand_df['demand'] = instance_data['demand_covered']  * demand_df['demand'] 
+
+#Calculate interest rate
+ir = interest_rate(instance_data['i_f'],instance_data['inf'])
+
+#Set GAP
+MIP_GAP = 0.01
+TEE_SOLVER = True
+OPT_SOLVER = 'gurobi'
+
+#Calculate fiscal incentives
+delta = fiscal_incentive(fisc_data['credit'], 
+                         fisc_data['depreciation'],
+                         fisc_data['corporate_tax'],
+                         ir,
+                         fisc_data['T1'],
+                         fisc_data['T2'])
 
 # Create model          
 model = opt.make_model(generators_dict, 
@@ -44,60 +88,45 @@ model = opt.make_model(generators_dict,
                        technologies_dict, 
                        renewables_dict, 
                        amax = instance_data['amax'], 
-                       ir = instance_data['ir'], 
+                       fuel_cost =  instance_data['fuel_cost'],
+                       ir = ir, 
                        nse = instance_data['nse'], 
                        maxtec = instance_data['maxtec'], 
+                       mintec = instance_data['mintec'], 
                        maxbr = instance_data['max_brand'],
                        years = instance_data['years'],
-                       tlpsp = instance_data['tlpsp'])    
+                       w_cost = instance_data['w_cost'],
+                       tlpsp = instance_data['tlpsp'],
+                       delta = delta)    
 
 
 print("Model generated")
 # solve model 
 results, termination = opt.solve_model(model, 
-                       optimizer = 'gurobi',
-                       mipgap = 0.01,
-                       tee = True)
-print("Model optimised")
+                                        optimizer = OPT_SOLVER,
+                                        mipgap = MIP_GAP,
+                                         tee = TEE_SOLVER)
+print("Model optimized")
 
-# TODO: check how are the termination conditions saved
-#TODO:  ext_time?
+
+
 if termination['Temination Condition'] == 'optimal': 
    model_results = opt.Results(model)
    print(model_results.descriptive)
    print(model_results.df_results)
-   generation_graph = model_results.generation_graph()
+   generation_graph = model_results.generation_graph(0,len(demand_df))
    plot(generation_graph)
-   
+   try:
+       percent_df, energy_df, renew_df, total_df, brand_df = calculate_energy(batteries_dict, generators_dict, model_results, demand_df)
+   except KeyError:
+       pass
+
+#Calculate LCOE in Colombia current - COP
+TRM = 3910
+LCOE_COP = TRM * model_results.descriptive['LCOE']
+
+#Create Excel File
 '''
-# Run model decomposition
- 
-n_gen = 6
-generators = random.sample(generators, n_gen)
-n_bat = 1
-batteries = random.sample(batteries, n_bat)
-# Create objects and generation rule
-generators_dict, batteries_dict, technologies_dict, renewables_dict = create_objects(generators,
-                                                                                   batteries,  forecast_df)
-
-model = opt.make_model_operational(generators_dict=generators_dict, 
-                               batteries_dict=batteries_dict,  
-                               demand_df=dict(zip(demand_df.t, demand_df.demand)), 
-                               technologies_dict = technologies_dict,  
-                               renewables_dict = renewables_dict,
-                               nse =  instance_data['nse'], 
-                               TNPC = instance_data['TNPC'],
-                               CRF = instance_data['CRF'],
-                               tlpsp = instance_data['tlpsp'])      
-# solve model 
-results, termination = opt.solve_model(model, 
-                       optimizer = 'gurobi',
-                       mipgap = 0.02,
-                       tee = True)
-if termination['Temination Condition'] == 'optimal': 
-   model_results = opt.Results(model)
-   print(model_results.descriptive)
-   print(model_results.df_results)
-   generation_graph = model_results.generation_graph()
-   plot(generation_graph)
+percent_df.to_excel("percentresults.xlsx")
+model_results.df_results.to_excel("results.xlsx") 
 '''

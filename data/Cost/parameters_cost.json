@@ -1,0 +1,17 @@
+{   
+    "life_cicle": 10,
+    "param_r_solar": 0,
+    "param_s_solar": 0.2,
+    "param_f_solar": 0.01,
+    "param_v_solar": 0,
+    "param_r_wind": 0,
+    "param_s_wind": 0.1,
+    "param_f_wind": 0.01,
+    "param_v_wind": 0,
+    "param_r_diesel": 0.7,
+    "param_s_diesel": 0.3,
+    "param_f_diesel": 0.1,
+    "param_r_bat": 0.7,
+    "param_s_bat": 0.3,
+    "param_f_bat": 0.02    
+}
