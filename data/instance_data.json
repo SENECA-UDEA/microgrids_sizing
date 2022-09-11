@@ -1,0 +1,14 @@
+{   
+    "amax": 20, 
+    "ir" : 0.2, 
+    "nse" : 0.2, 
+    "maxtec" : 4, 
+    "years" : 20,
+    "tlpsp" : 1,
+    "max_brand" : {"S":2,
+                   "D":3,
+                   "W":3,
+                   "B":2},                 
+    "TNPC" : 1,
+    "CRF" : 1
+}
