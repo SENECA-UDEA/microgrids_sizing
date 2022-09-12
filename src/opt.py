@@ -290,12 +290,14 @@ def make_model(generators_dict=None,
     
     # Defines objective function
     def obj2_rule(model):
-      return ((model.TNPC * model.CRF + model.TNPC_OP) / sum( model.d[t] for t in model.HTIME)) +  model.w_cost * sum( model.s_plus[t] for t in model.HTIME) 
+        expr3 = ((model.TNPC * model.CRF + model.TNPC_OP) / sum( model.d[t] for t in model.HTIME))
+        expr3 +=  model.w_cost * sum( model.s_plus[t] for t in model.HTIME)
+        expr3 += (model.w_cost) * sum(sum(model.x[i,j] for j in technologies_dict[i]) for i in model.TECHNOLOGIES)
+        return expr3
     model.LCOE_value = pyo.Objective(sense = pyo.minimize, rule=obj2_rule)
-    
+
+
     return model
-
-
 
 def make_model_operational(generators_dict=None, 
                batteries_dict=None,  
