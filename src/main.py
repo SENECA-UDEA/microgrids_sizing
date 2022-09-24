@@ -91,11 +91,9 @@ model = opt.make_model(generators_dict,
                        fuel_cost =  instance_data['fuel_cost'],
                        ir = ir, 
                        nse = instance_data['nse'], 
-                       maxtec = instance_data['maxtec'], 
-                       mintec = instance_data['mintec'], 
-                       maxbr = instance_data['max_brand'],
                        years = instance_data['years'],
-                       w_cost = instance_data['w_cost'],
+                       splus_cost = instance_data['splus_cost'],
+                       sminus_cost = instance_data['sminus_cost'],
                        tlpsp = instance_data['tlpsp'],
                        delta = delta)    
 

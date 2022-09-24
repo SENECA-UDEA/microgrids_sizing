@@ -137,6 +137,7 @@ search_operator = Search_operator(generators_dict,
                             demand_df,
                             forecast_df)
 add_function = 'GRASP'
+remove_function = 'RANDOM'
 if (sol_best.results != None):
     for i in range(N_iterations):
         rows_df.append([i, sol_current.feasible, 
@@ -147,7 +148,11 @@ if (sol_best.results != None):
             # save copy as the last solution feasible seen
             sol_feasible = copy.deepcopy(sol_current) 
             # Remove a generator or battery from the current solution
-            sol_try, dic_remove = search_operator.removeobject(sol_current, CRF, delta)
+            if (remove_function == 'GRASP'):
+                sol_try, remove_report = search_operator.removeobject(sol_current, CRF, delta)
+            elif (remove_function == 'RANDOM'):
+                sol_try, remove_report = search_operator.removerandomobject(sol_current, rand_ob)
+
             movement = "Remove"
         else:
             #  Create list of generators that could be added
@@ -155,7 +160,7 @@ if (sol_best.results != None):
             if (list_available_gen != [] or list_available_bat != []):
                 # Add a generator or battery to the current solution
                 if (add_function == 'GRASP'):
-                    sol_try, dic_remove = search_operator.addobject(sol_current, list_available_bat, list_available_gen, list_tec_gen, dic_remove,  CRF, instance_data['fuel_cost'], rand_ob, delta)
+                    sol_try, remove_report = search_operator.addobject(sol_current, list_available_bat, list_available_gen, list_tec_gen, remove_report,  CRF, instance_data['fuel_cost'], rand_ob, delta)
                 elif (add_function == 'RANDOM'):
                     sol_try = search_operator.addrandomobject(sol_current, list_available_bat, list_available_gen, list_tec_gen,rand_ob)
                 movement = "Add"
@@ -178,7 +183,8 @@ if (sol_best.results != None):
                                            fuel_cost =  instance_data['fuel_cost'],
                                            nse =  instance_data['nse'], 
                                            TNPCCRF = tnpccrf_calc,
-                                           w_cost = instance_data['w_cost'],
+                                           splus_cost = instance_data['splus_cost'],
+                                           sminus_cost = instance_data['sminus_cost'],
                                            tlpsp = instance_data['tlpsp']) 
         
         #Solve the model

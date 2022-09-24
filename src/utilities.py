@@ -63,9 +63,11 @@ def create_objects(generators, batteries, forecast_df, demand_df, instance_data)
         gt = irradiance_panel (forecast_df, instance_data)
         obj_aux.Get_INOCT(instance_data["caso"], instance_data["w"])
         obj_aux.Solargeneration( forecast_df['t_ambt'], gt, instance_data["G_stc"])
+        obj_aux.Solarcost()
       elif k['tec'] == 'W':
         obj_aux = Eolic(*k.values())
         obj_aux.Windgeneration(forecast_df['Wt'],instance_data["h2"],instance_data["coef_hel"] )
+        obj_aux.Windcost()
       elif k['tec'] == 'D':
         obj_aux = Diesel(*k.values())   
       generators_dict[k['id_gen']] = obj_aux
@@ -110,7 +112,6 @@ def create_technologies(generators_dict, batteries_dict):
 #calculate total cost for two stage approach
 def calculate_sizingcost(generators_dict, batteries_dict, ir, years, delta):
             expr = 0
-            expr2 = 0
             for gen in generators_dict.values(): 
                 if (gen.tec != 'D'): 
                     expr += gen.cost_up * delta
@@ -118,16 +119,16 @@ def calculate_sizingcost(generators_dict, batteries_dict, ir, years, delta):
                     expr += gen.cost_up
                 expr += gen.cost_r 
                 expr -= gen.cost_s 
-                expr2 += gen.cost_fopm 
+                expr += gen.cost_fopm 
             for bat in batteries_dict.values(): 
                 expr += bat.cost_up * delta
                 expr += bat.cost_r
                 expr -= bat.cost_s
-                expr2 += bat.cost_fopm
+                expr += bat.cost_fopm
              
             CRF = (ir * (1 + ir)**(years))/((1 + ir)**(years)-1)    
             #Operative cost doesn't take into account the crf
-            TNPCCRF = expr*CRF + expr2
+            TNPCCRF = expr*CRF 
             
             return TNPCCRF
 

@@ -24,6 +24,7 @@ class Solar(Generator):
         self.fpv = fpv #derating factor
         self.kt = kt #Temperature coefficient
         self.gen_rule = {}
+        self.cost_rule = {}
         self.INOCT = 0
         super(Solar, self).__init__(id_gen, tec, br,area, cost_up,  cost_r, cost_s, cost_fopm)
 
@@ -39,6 +40,9 @@ class Solar(Generator):
                     self.gen_rule[t] = self.Ppv_stc*(Irad_panel/G_stc)*(1 + self.kt*(TM-25))*self.fpv
             return self.gen_rule
 
+    def Solarcost(self):
+        self.cost_rule = self.cost_vopm * self.gen_rule
+        return self.cost_rule
     # Temperature model
     def Get_INOCT(self, caso = 1 , w = 1):
         """caso 1: direct mount
@@ -79,6 +83,7 @@ class Eolic(Generator):
         self.n_eq = n_eq #n to calculate the generation curve, usually 1,2 or 3
         self.h = h #height
         self.gen_rule = {}
+        self.cost_rule = {}
         super(Eolic, self).__init__(id_gen, tec, br, area, cost_up, cost_r, cost_s, cost_fopm)
     
     def Windgeneration(self, forecastWt, h2, coef_hel): #Wt = wind speed over the time
@@ -97,7 +102,9 @@ class Eolic(Generator):
               self.gen_rule[t] = 0
         return self.gen_rule
 
-
+    def Windcost(self):
+        self.cost_rule = self.cost_vopm * self.gen_rule
+        return self.cost_rule
                                
 class Diesel(Generator):
     def __init__(self, id_gen, tec, br, area, cost_up, cost_r, cost_s, cost_fopm, DG_min, DG_max, f0, f1):
