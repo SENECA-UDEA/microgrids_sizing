@@ -24,7 +24,7 @@ class Solar(Generator):
         self.fpv = fpv #derating factor
         self.kt = kt #Temperature coefficient
         self.gen_rule = {}
-        self.cost_rule = {}
+        self.cost_rule = 0
         self.INOCT = 0
         super(Solar, self).__init__(id_gen, tec, br,area, cost_up,  cost_r, cost_s, cost_fopm)
 
@@ -83,7 +83,7 @@ class Eolic(Generator):
         self.n_eq = n_eq #n to calculate the generation curve, usually 1,2 or 3
         self.h = h #height
         self.gen_rule = {}
-        self.cost_rule = {}
+        self.cost_rule = 0
         super(Eolic, self).__init__(id_gen, tec, br, area, cost_up, cost_r, cost_s, cost_fopm)
     
     def Windgeneration(self, forecastWt, h2, coef_hel): #Wt = wind speed over the time
