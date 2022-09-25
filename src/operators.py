@@ -222,6 +222,12 @@ class Search_operator():
         dict_actual = {**solution.generators_dict_sol,**solution.batteries_dict_sol}
         min_relation = math.inf
         #Check which one generates less energy at the highest cost
+        cont = 0
+        cont2 = 0
+        for d in dict_actual.values(): 
+            cont2 += 1
+            if d.tec == 'D':
+                cont += 1
         for d in dict_actual.values(): 
             if d.tec == 'B':
                 #Operation cost
@@ -233,7 +239,10 @@ class Search_operator():
                 sum_generation = solution.results.df_results[d.id_gen].sum(axis = 0, skipna = True)
                 op_cost = solution.results.df_results[d.id_gen+'_cost'].sum(axis = 0, skipna = True)
                 if d.tec == 'D':
-                    inv_cost = d.cost_up + d.cost_r - d.cost_s + d.cost_fopm 
+                    if cont == 1 and cont2 != 1:
+                        inv_cost = 0.00001
+                    else:
+                        inv_cost = d.cost_up + d.cost_r - d.cost_s + d.cost_fopm 
                 else:
                     inv_cost = d.cost_up * delta + d.cost_r - d.cost_s + d.cost_fopm 
             relation = sum_generation / (inv_cost * CRF + op_cost)
@@ -373,7 +382,19 @@ class Search_operator():
     def removerandomobject(self, sol_actual, rand_ob): #add generator or battery
         solution = copy.deepcopy(sol_actual)
         dict_actual = {**solution.generators_dict_sol,**solution.batteries_dict_sol} 
-        select_ob = rand_ob.create_rand_list(list(dict_actual.keys()))
+        cont = 0
+        cont2 = 0
+        for d in dict_actual.values(): 
+            cont2 += 1
+            if d.tec == 'D':
+                cont += 1
+                name_diesel = d.id_gen
+        if cont == 1 and cont2 != 1:
+            list_search = list(dict_actual.keys())
+            list_search.remove(name_diesel)
+            select_ob = rand_ob.create_rand_list(list_search)
+        else:
+            select_ob = rand_ob.create_rand_list(list(dict_actual.keys()))
 
         if dict_actual[select_ob].tec == 'B':
             remove_report =  pd.Series(solution.results.df_results[select_ob+'_b-'].values,index=solution.results.df_results[select_ob+'_b-'].keys()).to_dict()
