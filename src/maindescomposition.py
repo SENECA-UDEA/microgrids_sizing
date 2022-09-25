@@ -16,7 +16,6 @@ pd.options.display.max_columns = None
 
 
 place = 'Providencia'
-place = 'Test'
 
 '''
 place = 'San_Andres'
@@ -176,7 +175,7 @@ if (sol_best.results != None):
                                             years = instance_data['years'],
                                             delta = delta)
         #Make model
-        model = opt.make_model_operational(generators_dict = sol_try.generators_dict_sol,
+        model1 = opt.make_model_operational(generators_dict = sol_try.generators_dict_sol,
                                            batteries_dict = sol_try.batteries_dict_sol,  
                                            demand_df=dict(zip(demand_df.t, demand_df.demand)), 
                                            technologies_dict = sol_try.technologies_dict_sol,  
@@ -188,16 +187,18 @@ if (sol_best.results != None):
                                            sminus_cost = instance_data['sminus_cost'],
                                            tlpsp = instance_data['tlpsp']) 
         
+        model2 = copy.deepcopy(model1)
+        del model1 
         #Solve the model
-        results, termination = opt.solve_model(model, 
+        results, termination = opt.solve_model(model2, 
                                                optimizer = OPT_SOLVER,
                                                mipgap = MIP_GAP,
                                                tee = TEE_SOLVER)
         
         #Create results
         if termination['Temination Condition'] == 'optimal':
-            sol_try.results.descriptive['LCOE'] = model.LCOE_value.expr()
-            sol_try.results = opt.Results(model)
+            sol_try.results.descriptive['LCOE'] = model2.LCOE_value.expr()
+            sol_try.results = opt.Results(model2, sol_try.generators_dict_sol)
             sol_try.feasible = True
             sol_current = copy.deepcopy(sol_try)
             #Search the best solution
@@ -207,6 +208,10 @@ if (sol_best.results != None):
             sol_try.feasible = False
             sol_try.results.descriptive['LCOE'] = None
             sol_current = copy.deepcopy(sol_try)
+            
+        del results            
+        del termination
+        del model2      
     
         sol_current.results.descriptive['area'] = calculate_area(sol_current)
     
@@ -229,7 +234,7 @@ if (sol_best.results != None):
         LCOE_COP = TRM * sol_best.results.descriptive['LCOE']
         #create Excel
         '''
-        sol_best.results.df_results.to_excel("results.xlsx")         
+        sol_best.results.df_results.to_excel("results2.xlsx")         
         percent_df.to_excel("percentresults.xlsx")
 
         '''

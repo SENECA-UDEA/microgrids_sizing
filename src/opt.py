@@ -101,7 +101,7 @@ def make_model(generators_dict=None,
       if gen.tec == 'D':
           return model.p[k,t] <= gen.DG_max * model.v[k,t]
       else:
-          return model.p[k,t] == gen.gen_rule[t] 
+          return model.p[k,t] == gen.gen_rule[t]  * model.w[k]
     model.G_rule = pyo.Constraint(model.GENERATORS, model.HTIME, rule=G_rule)
     
     # Minimum Diesel  
@@ -432,7 +432,7 @@ def solve_model(model,
 
 
 class Results():
-    def __init__(self, model):
+    def __init__(self, model, generators_dict):
         
         # Hourly data frame
         demand = pd.DataFrame(model.d.values(), columns=['demand'])
@@ -449,6 +449,11 @@ class Results():
         for (k,t), f in model.operative_cost.items():
           generation_cost_data [k+'_cost'][t] = value(f)
         generation_cost = pd.DataFrame(generation_cost_data, columns=[*generation_cost_data.keys()])
+        
+        for k in model.GENERATORS:
+            if generators_dict[k].tec != 'D':
+                generation_cost_data [k+'_cost'] = generators_dict[k].gen_rule
+            
         
         # batery charge and discharge
         b_discharge_data = {l+'_b-' : [0]*len(model.HTIME) for l in model.BATTERIES}
@@ -485,7 +490,7 @@ class Results():
             splus_data[t] = value(model.s_plus[t])
             
         splus_df = pd.DataFrame(splus_data, columns = ['Wasted Energy'])
-                
+        
 
         self.df_results = pd.concat([demand, generation, b_discharge_df, b_charge_df, soc_df, sminus_df, splus_df, generation_cost], axis=1) 
         

@@ -110,7 +110,7 @@ print("Model optimized")
 
 
 if termination['Temination Condition'] == 'optimal': 
-   model_results = opt.Results(model)
+   model_results = opt.Results(model, generators_dict)
    print(model_results.descriptive)
    print(model_results.df_results)
    generation_graph = model_results.generation_graph(0,len(demand_df))

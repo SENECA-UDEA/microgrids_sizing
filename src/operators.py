@@ -149,7 +149,7 @@ class Sol_constructor():
                                                tee = TEE_SOLVER)
         
         if termination['Temination Condition'] == 'optimal': 
-            sol_results = opt.Results(model)
+            sol_results = opt.Results(model,generators_dict_sol)
         else: 
             #create a false Diesel auxiliar
             k = {
@@ -197,7 +197,7 @@ class Sol_constructor():
                                                    mipgap = MIP_GAP,
                                                    tee = TEE_SOLVER)
             
-            sol_results = opt.Results(model)
+            sol_results = opt.Results(model, generators_dict_sol)
         
         sol_initial = Solution(generators_dict_sol, 
                                batteries_dict_sol, 
@@ -236,14 +236,17 @@ class Search_operator():
                 inv_cost = d.cost_up * delta + d.cost_r - d.cost_s + d.cost_fopm
                 sum_generation = solution.results.df_results[d.id_bat+'_b-'].sum(axis = 0, skipna = True)          
             else:
-                sum_generation = solution.results.df_results[d.id_gen].sum(axis = 0, skipna = True)
-                op_cost = solution.results.df_results[d.id_gen+'_cost'].sum(axis = 0, skipna = True)
                 if d.tec == 'D':
+                    sum_generation = solution.results.df_results[d.id_gen].sum(axis = 0, skipna = True)
+                    op_cost = solution.results.df_results[d.id_gen+'_cost'].sum(axis = 0, skipna = True)
                     if cont == 1 and cont2 != 1:
                         inv_cost = 0.00001
+                        op_cost = 0.000001
                     else:
                         inv_cost = d.cost_up + d.cost_r - d.cost_s + d.cost_fopm 
                 else:
+                    sum_generation = sum(d.gen_rule.values())
+                    op_cost = d.cost_rule
                     inv_cost = d.cost_up * delta + d.cost_r - d.cost_s + d.cost_fopm 
             relation = sum_generation / (inv_cost * CRF + op_cost)
             #Quit the worst
