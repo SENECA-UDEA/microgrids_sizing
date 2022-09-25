@@ -14,6 +14,7 @@ pd.options.display.max_columns = None
 
 
 place = 'Providencia'
+place = 'Test'
 
 '''
 place = 'San_Andres'

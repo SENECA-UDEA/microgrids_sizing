@@ -41,8 +41,10 @@ class Solar(Generator):
             return self.gen_rule
 
     def Solarcost(self):
-        self.cost_rule = sum(self.cost_vopm * self.gen_rule)
+        aux = self.cost_vopm * sum(self.gen_rule.values())
+        self.cost_rule = aux
         return self.cost_rule
+                               
     # Temperature model
     def Get_INOCT(self, caso = 1 , w = 1):
         """caso 1: direct mount
@@ -103,7 +105,8 @@ class Eolic(Generator):
         return self.gen_rule
 
     def Windcost(self):
-        self.cost_rule = sum(self.cost_vopm * self.gen_rule)
+        aux = self.cost_vopm * sum(self.gen_rule.values())
+        self.cost_rule = aux
         return self.cost_rule
                                
 class Diesel(Generator):

@@ -61,6 +61,7 @@ def make_model(generators_dict=None,
     model.d = pyo.Param(model.HTIME, initialize = demand_df) #demand    
     model.ir = pyo.Param(initialize=ir) #Interest rate
     model.nse = pyo.Param(initialize=nse) #Available not supplied demand    model.t_years = pyo.Param(initialize = years) # Number of years evaluation of the project, for CRF
+    model.t_years = pyo.Param(initialize = years) # Number of years evaluation of the project, for CRF
     CRF_calc = (model.ir * (1 + model.ir)**(model.t_years))/((1 + model.ir)**(model.t_years)-1) #CRF to LCOE
     model.CRF = pyo.Param(initialize = CRF_calc) #capital recovery factor 
     model.tlpsp = pyo.Param (initialize = tlpsp) #LPSP Time for moving average
@@ -169,16 +170,6 @@ def make_model(generators_dict=None,
       return  model.bc[l, t] + model.bd[l, t] <= 1
     model.bcbd_rule = pyo.Constraint(model.BATTERIES, model.HTIME, rule=bcbd_rule)
     
-    
-     # Defines rule relation Solar - Diesel
-    def dieselsolar_rule(model,k,t):
-        gen = generators_dict[k]
-        if gen.tec == 'S':
-            return sum( model.v[k1,t] for k1 in model.GENERATORS if generators_dict[k1].tec == 'D') >= model.v[k,t]
-        else:
-            return pyo.Constraint.Skip
-    #model.dieselsolar_rule = pyo.Constraint(model.GENERATORS, model.HTIME, rule=dieselsolar_rule)
-
 
     # Defines LPSP constraint
     def lpspcons_rule(model, t):
@@ -207,7 +198,7 @@ def make_model(generators_dict=None,
             expr3 = sum(model.q[l] for l in model.BATTERIES)
             expr4 = len(model.GENERATORS)
             return  expr <= expr4 * (expr2 + expr3)
-    #model.relation_rule = pyo.Constraint(rule=relation_rule)
+    model.relation_rule = pyo.Constraint(rule=relation_rule)
 
     
     # Defines operational rule relation Renewable - Diesel
@@ -217,7 +208,7 @@ def make_model(generators_dict=None,
         expr3= sum(model.b_discharge[l,t] for l in model.BATTERIES)
         expr4 = sum(model.d[t1] for t1 in model.HTIME)
         return expr <= expr4*(expr2 + expr3) 
-    #model.oprelation_rule = pyo.Constraint(model.HTIME, rule=oprelation_rule)
+    model.oprelation_rule = pyo.Constraint(model.HTIME, rule=oprelation_rule)
 
     
     #Objective function
@@ -238,58 +229,6 @@ def make_model(generators_dict=None,
 
     
     return model
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 def make_model_operational(generators_dict=None, 
@@ -460,7 +399,7 @@ def make_model_operational(generators_dict=None,
     # Defines Objective function
     def obj2_rule(model):
         tnpc_op = sum(sum(model.operative_cost[k,t] for t in model.HTIME) for k in model.GENERATORS if generators_dict[k].tec == 'D')
-        tnpc_op += sum(generators_dict[k].cost_rule*model.w[k] for k in model.GENERATORS if generators_dict[k].tec != 'D')
+        tnpc_op += sum(generators_dict[k].cost_rule for k in model.GENERATORS if generators_dict[k].tec != 'D')
         lcoe = ((model.TNPCCRF + tnpc_op) / sum( model.d[t] for t in model.HTIME))
         lcoe +=  model.splus_cost * sum( model.s_plus[t] for t in model.HTIME)
         lcoe +=  model.sminus_cost * sum( model.s_minus[t] for t in model.HTIME)
@@ -470,43 +409,6 @@ def make_model_operational(generators_dict=None,
 
     
     return model
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 def solve_model(model,
