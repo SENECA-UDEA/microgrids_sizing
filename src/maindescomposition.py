@@ -38,10 +38,10 @@ units_filepath = "../data/"+place+"/parameters_"+place+".json"
 instanceData_filepath = "../data/"+place+"/instance_data_"+place+".json"
 
 #fiscal Data
-fiscalData_filepath = "../data/fiscal_incentive.json"
+fiscalData_filepath = "../data/Cost/fiscal_incentive.json"
 
 #cost Data
-costData_filepath = "../data/parameters_cost.json"
+costData_filepath = "../data/Cost/parameters_cost.json"
 
 #Set the seed for random
 '''
