@@ -234,21 +234,30 @@ class Search_operator():
                 op_cost = 0 
                 #Investment cost
                 inv_cost = d.cost_up * delta + d.cost_r - d.cost_s + d.cost_fopm
+                #inv_cost = (d.cost_up * delta + d.cost_r - d.cost_s)*(1+i) 
+                #inv_cost2 = d.cost_fopm * ((((inf)**t_years)-1)/inf)
                 sum_generation = solution.results.df_results[d.id_bat+'_b-'].sum(axis = 0, skipna = True)          
             else:
                 if d.tec == 'D':
                     sum_generation = solution.results.df_results[d.id_gen].sum(axis = 0, skipna = True)
                     op_cost = solution.results.df_results[d.id_gen+'_cost'].sum(axis = 0, skipna = True)
+                    #op_cost *= ((((inf + txfc)**t_years)-1)/(inf+txfc))
                     if cont == 1 and cont2 != 1:
                         inv_cost = 0.00001
                         op_cost = 0.000001
                     else:
                         inv_cost = d.cost_up + d.cost_r - d.cost_s + d.cost_fopm 
+                        #inv_cost = (d.cost_up * delta + d.cost_r - d.cost_s)*(1+i) 
+                        #inv_cost2 = d.cost_fopm * ((((inf)**t_years)-1)/inf)
                 else:
                     sum_generation = sum(d.gen_rule.values())
                     op_cost = d.cost_rule
+                    #op_cost *= ((((inf)**t_years)-1)/inf)
                     inv_cost = d.cost_up * delta + d.cost_r - d.cost_s + d.cost_fopm 
+                    #inv_cost = (d.cost_up * delta + d.cost_r - d.cost_s)*(1+i) 
+                    #inv_cost2 = d.cost_fopm * ((((inf)**t_years)-1)/inf)
             relation = sum_generation / (inv_cost * CRF + op_cost)
+            #relation = sum_generation * t_years / (inv_cost + inv_cost2 + op_cost)
             #Quit the worst
             if relation <= min_relation:
                 min_relation = relation

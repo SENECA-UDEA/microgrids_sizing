@@ -120,16 +120,18 @@ def calculate_sizingcost(generators_dict, batteries_dict, ir, years, delta):
                 expr += gen.cost_r 
                 expr -= gen.cost_s 
                 expr += gen.cost_fopm 
+                #expr2 += gen.cost_fopm  
             for bat in batteries_dict.values(): 
                 expr += bat.cost_up * delta
                 expr += bat.cost_r
                 expr -= bat.cost_s
                 expr += bat.cost_fopm
+                #expr2 += gen.cost_fopm 
              
             CRF = (ir * (1 + ir)**(years))/((1 + ir)**(years)-1)    
             #Operative cost doesn't take into account the crf
             TNPCCRF = expr*CRF 
-            
+            #TNCCCRF = expr * (1+ir) + expr2 * ((((inf)**t_years)-1)/inf)
             return TNPCCRF
 
 
