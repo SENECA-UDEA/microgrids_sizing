@@ -4,7 +4,7 @@ Created on Wed Apr 20 13:51:07 2022
 
 @author: pmayaduque
 """
-from classes import Solar, Eolic, Diesel, Battery
+from src.classes import Solar, Eolic, Diesel, Battery
 import pandas as pd
 import requests
 import json 

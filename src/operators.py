@@ -3,9 +3,9 @@
 Created on Wed May 11 10:23:49 2022
 @author: pmayaduque
 """
-from utilities import create_technologies, calculate_sizingcost, interest_rate
-import opt as opt
-from classes import Solution, Diesel
+from src.utilities import create_technologies, calculate_sizingcost, interest_rate
+import src.opt as opt
+from src.classes import Solution, Diesel
 import copy
 import math
 import pandas as pd

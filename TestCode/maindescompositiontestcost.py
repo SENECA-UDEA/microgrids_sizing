@@ -4,6 +4,7 @@ Created on Wed Apr 20 11:14:21 2022
 
 @author: pmayaduque
 """
+
 from src.utilities import read_data, create_objects, calculate_sizingcost, create_technologies, calculate_area, calculate_energy, interest_rate
 from src.utilities import fiscal_incentive, calculate_cost_data
 import src.opt as opt
@@ -15,12 +16,9 @@ import copy
 pd.options.display.max_columns = None
 import time
 
-
 rows_df_time = []
 
-for iii in range(1, 865):
-    
-    print(iii)
+for iii in range(1, 433):
     #PARAMETROS DE LA CORRIDA - POR DEFECTO
     #lugar
     #set the same seed for every iteration
@@ -41,10 +39,10 @@ for iii in range(1, 865):
     tlpsp_run = 1
     #nse, por defecto 5%
     nse_run = 0.05
-    #%sminuscost, por defecto 100%
-    sminus_cost_run = 1
     #%spluscost, por defecto 100%
     splus_cost_run = 1
+    #%sminuscost, por defecto 100%
+    sminus_cost_run = 1
     #%sube o baja fuel cost, por defecto 100% es decir el mismo valor
     fuel_cost_run = 1
     #%demanda, por defecto 100%
@@ -57,8 +55,7 @@ for iii in range(1, 865):
     gap_run = 0.01
     #método de añadir, grasp o random
     add_function_run = "GRASP"
-    #método de remover, grasp o random
-    remove_function_run = "GRASP"
+    remove_function_run = "RANDOM"
     #tamaño de los json, 1 = 100%, 50% se reduciría su tamaño a la mitad
     json_baterias_run = 1
     json_diesel_run = 1
@@ -75,6 +72,7 @@ for iii in range(1, 865):
     estado_json_b = "Igual"
     ren_cost_run = 1
     bat_cost_run = 1
+    die_cost_run = 1
     #string para poner el nombre al escenario
     add_name1 = ""
     add_name2 = ""
@@ -82,63 +80,71 @@ for iii in range(1, 865):
     add_name4 = ""
     add_name5 = ""
     add_name6 = ""
-    #instancias con iteraciones diferentes a 100
-    if (iii >= 433):
-        iteraciones_run = 50
+    add_name7 = ""
 
-
-    #instancias con diferente probabilidad de añadir una tecnología
-    if((iii >= 109 and iii <=216)  or (iii >= 541 and iii <=648)):
-        b_p_run = 0.5
-        add_name1 = '50%bat'
-    elif((iii >= 325 and iii <=432)  or (iii >= 757 and iii <=864)):
-        w_p_run = 0.5
-        add_name1 = '50%wind'
-    elif((iii >= 217 and iii <=324)  or (iii >= 649 and iii <=756)):
-        s_p_run = 0.5
-        add_name1 = '50%solar'
+    if (iii >= 217):
+        delta_run = 0
+        add_name1 = "wtdelta"
     else:
-        add_name1 = "uniform"
+        add_name1 = "delta"
 
-    #instancias tlpsp    
-    if (iii >= (37 + (108 * ((iii-1)//108))) and (iii <= (72 + (108 * ((iii-1)//108))))):
-        tlpsp_run = 24
-        add_name2 = '24tlpsp'      
+
+    if (iii >= 1 and iii <= 108) or (iii >= 217 and iii <= 324):
+        sminus_cost_run = 0.0028622
+        add_name2 = "s-cost0.002"
+    else: 
+        sminus_cost_run = 0.28622
+        add_name2 = "s-cost0.2"
+        
+
+    if (iii >= (1 + (108 * ((iii-1)//108))) and (iii <= (36 + (108 * ((iii-1)//108))))):
+        area_run = 1.045454545
+        add_name3 = 'area115'
     elif (iii >= (73 + (108 * ((iii-1)//108))) and (iii <= 108 * (((iii-1)//108)+1))):
-        tlpsp_run = 168
-        add_name2 = '168tlpsp'
+        area_run = 1.181818182
+        add_name3 = 'area130'
     else:
-        add_name2 = '1tlpsp'
+        area_run = 1.363636364
+        add_name3 = 'area150'
+        
+        
+    
+    if (iii >= (1 + (36 * ((iii-1)//36))) and (iii <= (18 + (36 * ((iii-1)//36))))):
+        fuel_cost_run = 0.5
+        add_name4 = 'fcost50%'  
+    else:
+        fuel_cost_run = 1.5
+        add_name4 = 'fcost150%'
 
-    #instancias gap
+        
+    if (iii >= (1 + (18 * ((iii-1)//18))) and (iii <= (9 + (18 * ((iii-1)//18))))):
+        nse_run = 0.12
+        add_name5 = 'nse12%'
+    else:
+        nse_run = 0.05
+        add_name5 = 'nse5%'
+     
     if (iii >= (1 + (9 * ((iii-1)//9))) and (iii <= (3 + (9 * ((iii-1)//9))))):
-        gap_run = 0.005
-        add_name3 = '0.5%GAP'
+        demanda_run = 0.8
+        add_name6 = 'demand80%'
     elif (iii >= (4 + (9 * ((iii-1)//9))) and (iii <= (6 + (9 * ((iii-1)//9))))):
-        gap_run = 0.01
-        add_name3 = '1%GAP'
+        demanda_run = 1
+        add_name6 = 'demand100%'
     else:
-        gap_run = 0.1
-        add_name3 = '10%GAP'
+        demanda_run = 1.2
+        add_name6 = 'demand120%'        
 
-    #instancias add o grasp
-    if (iii >= (19 + (36 * ((iii-1)//36))) and (iii <= 36 * (((iii-1)//36)+1))):
-        remove_function_run = "random"
-        add_name4 = 'RANDOM'
-    else:
-        add_name4 = 'Grasp'
-
-    #instancias cambio tamaño horizonte temporal
+    
     if (iii%3 == 0):
-        aumento_tiempo = "True"
-        add_name5 = '120%htime'
-        htime_run = 1.2
+        die_cost_run = 0.8
+        add_name7 = 'die80%cost'
     elif (iii%3 == 1):
-        htime_run = 0.8
-        add_name5 = '80%htime'
+        bat_cost_run = 0.8
+        add_name7 = 'bat80%cost'
     else:
-        add_name5 = '100%htime'
-   
+        ren_cost_run = 0.8
+        add_name7 = 'ren80%cost'
+
      
     # file paths local
     demand_filepath = "../data/"+place+"/demand_"+place+".csv"
@@ -151,7 +157,7 @@ for iii in range(1, 865):
    
     #cost Data
     costData_filepath = "../data/Cost/parameters_cost.json"
-           
+       
        
    
    
@@ -227,12 +233,6 @@ for iii in range(1, 865):
     forecast_df['DNI'] = forecast_s_run * forecast_df['DNI']
 
 
-    if (iii >= (1 + (18 * ((iii-1)//18))) and (iii <= (9 + (18 * ((iii-1)//18))))):
-        forecast_df['GHI'] = 0
-        forecast_df['DHI'] = 0
-        add_name6 = 'GHI0'
-    else:
-        add_name6 = '3RAD'
    
     default_batteries = copy.deepcopy(batteries_total)
     default_diesel = []
@@ -247,10 +247,34 @@ for iii in range(1, 865):
         elif (i['tec'] == 'W'):
             default_wind.append(i)
 
+    if (ren_cost_run == 0.8):
+        for i in default_solar:
+            i['cost_up'] = i['cost_up'] * ren_cost_run
+            i['cost_s'] = i['cost_s'] * ren_cost_run
+            i['cost_fopm'] = i['cost_fopm'] * ren_cost_run 
+        for i in default_wind:
+            i['cost_up'] = i['cost_up'] * ren_cost_run
+            i['cost_s'] = i['cost_s'] * ren_cost_run  
+            i['cost_fopm'] = i['cost_fopm'] * ren_cost_run 
+        
+    if (bat_cost_run == 0.8):
+        for i in default_batteries:
+            i['cost_up'] = i['cost_up'] * bat_cost_run
+            i['cost_s'] = i['cost_s'] * bat_cost_run  
+            i['cost_r'] = i['cost_r'] * bat_cost_run 
+            i['cost_fopm'] = i['cost_fopm'] * bat_cost_run  
    
+    if (die_cost_run == 0.8):
+        for i in default_diesel:
+            i['cost_up'] = i['cost_up'] * die_cost_run
+            i['cost_s'] = i['cost_s'] * die_cost_run 
+            i['cost_r'] = i['cost_r'] * die_cost_run 
+            i['cost_fopm'] = i['cost_fopm'] * die_cost_run      
+        
+    
     generators = default_diesel + default_solar + default_wind
     batteries = default_batteries
-    nse_run = instance_data['nse']
+    
    
 
 
@@ -311,10 +335,10 @@ for iii in range(1, 865):
     aux_instance_data['years'] = years_run    
    
     #create a default solution
-    sol_feasible= sol_constructor.initial_solution(aux_instance_data,
-                                                    generators_dict,
-                                                    batteries_dict,
-                                                    technologies_dict,
+    sol_feasible = sol_constructor.initial_solution(aux_instance_data,
+                                                    generators_dict, 
+                                                    batteries_dict, 
+                                                    technologies_dict, 
                                                     renewables_dict,
                                                     delta,
                                                     OPT_SOLVER,
@@ -322,17 +346,18 @@ for iii in range(1, 865):
                                                     TEE_SOLVER,
                                                     rand_ob)
    
+    
     #if use aux_diesel asigns a big area to avoid select it again
     if ('aux_diesel' in sol_feasible.generators_dict_sol.keys()):
         generators_dict['aux_diesel'] = sol_feasible.generators_dict_sol['aux_diesel']
         generators_dict['aux_diesel'].area = 10000000
-    
+   
     tnpccrf_calc_best = calculate_sizingcost(sol_feasible.generators_dict_sol, 
                                             sol_feasible.batteries_dict_sol, 
                                             ir = ir,
                                             years = aux_instance_data['years'],
                                             delta = delta)
-   
+    
     time_f_firstsol = time.time() - time_i_firstsol #final time
     # set the initial solution as the best so far
     sol_best = copy.deepcopy(sol_feasible)
@@ -366,7 +391,7 @@ for iii in range(1, 865):
     #si no es factible la solución inicial no hacer nada
     if (sol_feasible.results != None):
         for i in range(int(iteraciones_run)):
-            print(iii)
+               
             time_i_range = time.time()
             rows_df.append([i, sol_current.feasible,
                             sol_current.results.descriptive['area'],
@@ -399,7 +424,6 @@ for iii in range(1, 865):
                        list_tec_gen = list_tec_gen + ['S','S']
                     if((d_p_run == 0.5) and (list_available_gen != []) and ('D' in  list_tec_gen)):
                        list_tec_gen = list_tec_gen + ['D','D']                    
-                       
                     #escoger cuál función usar
                     if (add_function_run == 'GRASP'):
                         sol_try, remove_report = search_operator.addobject(sol_current, list_available_bat, list_available_gen, list_tec_gen, remove_report,  CRF, instance_data['fuel_cost'], rand_ob, delta)
@@ -424,7 +448,6 @@ for iii in range(1, 865):
                                                 years = years_run,
                                                 delta = delta)
             time_i_make = time.time()
-            
             model1 = opt.make_model_operational(generators_dict = sol_try.generators_dict_sol,
                                                batteries_dict = sol_try.batteries_dict_sol,  
                                                demand_df=dict(zip(demand_df.t, demand_df.demand)),
@@ -436,9 +459,11 @@ for iii in range(1, 865):
                                                splus_cost = instance_data['splus_cost'] * splus_cost_run,
                                                sminus_cost = instance_data['sminus_cost'] * sminus_cost_run,
                                                tlpsp = tlpsp_run)
-            
+           
             model2 = copy.deepcopy(model1)
             del model1 
+            
+            
             time_f_make = time.time() - time_i_make
             dict_time_make[i] = time_f_make
             time_i_solve = time.time()
@@ -448,8 +473,8 @@ for iii in range(1, 865):
                                                    tee = TEE_SOLVER)
             time_f_solve = time.time() - time_i_solve
             dict_time_solve[i] = time_f_solve
-            
-            del results
+       
+
        
             if termination['Temination Condition'] == 'optimal':
                 sol_try.results.descriptive['LCOE'] = model2.LCOE_value.expr()
@@ -471,11 +496,10 @@ for iii in range(1, 865):
             dict_time_iter[i] = time_f_range    
             #print(sol_current.generators_dict_sol)
             #print(sol_current.batteries_dict_sol)
-            
+            del results            
             del termination
-            del model2
-            
-            
+            del model2          
+        
         time_f_iterations = time.time() - time_i_iterations #final time
         #df with the feasible solutions
         df_iterations = pd.DataFrame(rows_df, columns=["i", "feasible", "area", "LCOE_actual", "LCOE_Best","Movement"])
@@ -568,26 +592,26 @@ for iii in range(1, 865):
        
         #crear fila del dataframe
         name_esc = 'esc_' + str(iii) + ' ' + str(place) + ' iter: ' + str(iteraciones_run) + ' ' + str(add_name1) + ' ' + str(add_name2) + ' ' + str(add_name3) + ' ' + str(add_name4) + ' ' + str(add_name5) + ' ' + str(add_name6)
-        rows_df_time.append([iii,name_esc, place, iteraciones_run, amax, tlpsp_run, nse_run, aux_instance_data['splus_cost'],
-                            aux_instance_data['sminus_cost'],aux_instance_data['fuel_cost'],len(demand_df),demanda_run,
+        rows_df_time.append([iii,name_esc, place, iteraciones_run, amax, tlpsp_run, nse_run,
+                            splus_cost_run, sminus_cost_run,aux_instance_data['fuel_cost'],len(demand_df),demanda_run,
                             forecast_df['GHI'].sum(),delta,ir,years_run,forecast_w_run,forecast_s_run,
                             gap_run, add_function_run, len(default_batteries), len(default_diesel),
                             len(default_solar),len(default_wind), b_p_run, d_p_run, s_p_run,
-                            w_p_run, time_f_total, time_f_create_data,time_f_firstsol, time_f_iterations,
+                            w_p_run, add_name7, time_f_total, time_f_create_data,time_f_firstsol, time_f_iterations,
                             time_iter_average, time_solve_average, time_make_average, time_remove_average,
                             time_add_average, time_f_results, lcoe_export, len_gen, len_bat,
                             len_diesel,len_solar,len_wind,mean_total_b,mean_total_d,mean_total_s, mean_total_w,
                             area_ut,cost_vopm,tnpccrf_calc_best,lpsp_mean,wasted_mean, iter_best])    
-        del generators_dict
+
 
 #dataframe completo con todas las instancias
 df_time = pd.DataFrame(rows_df_time, columns=["N", "Name", "City", "Iterations", "Area","Tlpsp",
-                                              "NSE","S+_cost","S-_cost", "fuel_cost","Len_demand","Demand percent",
+                                              "NSE", "S+_cost", "S-_cost", "fuel_cost","Len_demand","Demand percent",
                                               "GHI len","delta","ir","years","Forecast_wind",
                                               "Forecast_solar","gap","add_function","json batteries", "json diesel",
                                               "json solar", "json wind",
                                               "probability add batteries","probability add diesel",
-                                              "probability add solar","probability add wind","TOTAL TIME",
+                                              "probability add solar","probability add wind","reduced cost","TOTAL TIME",
                                               "CREATE DATA TIME", "FIRST SOLUTION TIME","ITERATIONS TIME",
                                               "ITERATIONS MEAN TIME","ITERATIONS MEAN SOLVER TIME",
                                               "ITERATIONS MEAN MAKE MODEL TIME","ITERATIONS REMOVE FUNCTION MEAN",
@@ -596,9 +620,6 @@ df_time = pd.DataFrame(rows_df_time, columns=["N", "Name", "City", "Iterations",
                                               "LEN WIND","MEAN GENERATION BATTERY","MEAN GENERATION DIESEL",
                                               "MEAN GENERATION SOLAR","MEAN GENERATION WIND","UTILIZED AREA",
                                               "COST VOPM","TNPC","LPSP MEAN","WASTED ENERGY MEAN","BEST ITER"])
-
-
-
 
 #crear Excel
 def multiple_dfs(df_list, sheets, file_name):
@@ -611,16 +632,14 @@ def multiple_dfs(df_list, sheets, file_name):
 
 # list of dataframes
 dfs = [df_time]
-#sol_best.results.df_results.to_excel("resultsprueba.xlsx")
-nameins='resultbestanova' + str(iii) 
+
 # run function
-multiple_dfs(dfs, 'ExecTime', 'time1to864.xlsx')
-#multiple_dfs(dfs, 'ExecTime', 'anovafinap848to864.xlsx')
+multiple_dfs(dfs, 'ExecTime', 'costfase2.xlsx')
 
    
 '''
 
 TRM = 3910
 LCOE_COP = TRM * model_results.descriptive['LCOE']
-sol_best.results.df_results.to_excel("resultsesc4.xlsx")
+sol_best.results.df_results.to22_excel("resultsesc4.xlsx")
 '''
