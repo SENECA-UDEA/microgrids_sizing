@@ -21,6 +21,7 @@ place = 'San_Andres'
 place = 'Puerto_Nar'
 place = 'Leticia'
 place = 'Test'
+place = 'Oswaldo'
 '''
 github_rute = 'https://raw.githubusercontent.com/SENECA-UDEA/microgrids_sizing/development/data/'
 # file paths github
