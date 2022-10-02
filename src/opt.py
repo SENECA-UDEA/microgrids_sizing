@@ -203,7 +203,7 @@ def make_model(generators_dict=None,
     def oprelation_rule(model,t):
         expr = sum( model.p[k,t] for k in model.GENERATORS if generators_dict[k].tec != 'D') 
         expr2 = sum( model.v[k,t] for k in model.GENERATORS_DIESEL) 
-        expr3= sum(model.b_discharge[l,t] for l in model.BATTERIES)
+        expr3= sum(model.soc[l,t] for l in model.BATTERIES)
         expr4 = sum(model.d[t1] for t1 in model.HTIME)
         return expr <= expr4*(expr2 + expr3) 
     model.oprelation_rule = pyo.Constraint(model.HTIME, rule=oprelation_rule)
@@ -388,7 +388,7 @@ def make_model_operational(generators_dict=None,
     def oprelation_rule(model,t):
         expr = sum( model.p[k,t] for k in model.GENERATORS if generators_dict[k].tec != 'D') 
         expr2 = sum( model.v[k,t] for k in model.GENERATORS_DIESEL) 
-        expr3= sum(model.b_discharge[l,t] for l in model.BATTERIES)
+        expr3= sum(model.soc[l,t] for l in model.BATTERIES)
         expr4 = sum(model.d[t1] for t1 in model.HTIME)
         return expr <= expr4*(expr2 + expr3) 
     #model.oprelation_rule = pyo.Constraint(model.HTIME, rule=oprelation_rule)
