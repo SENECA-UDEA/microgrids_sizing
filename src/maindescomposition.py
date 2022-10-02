@@ -16,7 +16,7 @@ pd.options.display.max_columns = None
 
 
 place = 'Providencia'
-
+place = 'Test'
 
 '''
 place = 'San_Andres'
@@ -175,7 +175,8 @@ if (sol_best.results != None):
                                             sol_try.batteries_dict_sol, 
                                             ir = ir,
                                             years = instance_data['years'],
-                                            delta = delta)
+                                            delta = delta,
+                                            greed = instance_data['inverter_greed_cost'])
         #Make model
         model1 = opt.make_model_operational(generators_dict = sol_try.generators_dict_sol,
                                            batteries_dict = sol_try.batteries_dict_sol,  

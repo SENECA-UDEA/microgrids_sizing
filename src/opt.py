@@ -27,7 +27,8 @@ def make_model(generators_dict=None,
                splus_cost = 0,
                sminus_cost = 0,
                tlpsp = 1,
-               delta = 1):
+               delta = 1,
+               greed = 0):
     #generators_dict = dictionary of generators
     #batteries_dict = dictionary of batteries
     #demand_df = demand dataframe
@@ -43,7 +44,7 @@ def make_model(generators_dict=None,
     #sminus_cost = Penalized unsupplied demand
     #tlpsp = Number of lpsp periods for moving average
     #Delta = tax incentive
-
+    #greed = cost greed forming if not diesel
     
     # Sets
     model = pyo.ConcreteModel(name="Sizing microgrids")
@@ -53,6 +54,7 @@ def make_model(generators_dict=None,
     model.TECHNOLOGIES = pyo.Set(initialize=[i for i in technologies_dict.keys()])
     model.RENEWABLES = pyo.Set(initialize=[r for r in renewables_dict.keys()])
     model.HTIME = pyo.Set(initialize=[t for t in range(len(demand_df))])
+    model.GENERATORS_REN = pyo.Set(initialize=[k for k in model.GENERATORS if generators_dict[k].tec != 'D'])
 
     # Parameters
     model.amax = pyo.Param(initialize=amax) #Maximum area
@@ -69,7 +71,7 @@ def make_model(generators_dict=None,
     model.splus_cost = pyo.Param (initialize = splus_cost)
     model.sminus_cost = pyo.Param (initialize = sminus_cost)
     model.delta = pyo.Param (initialize = delta)
-
+    model.greed = pyo.Param (initialize = greed)
     # Variables
     model.w = pyo.Var(model.GENERATORS, within=pyo.Binary) #select or not the generator
     model.q = pyo.Var(model.BATTERIES, within=pyo.Binary) #select or not the battery
@@ -83,6 +85,7 @@ def make_model(generators_dict=None,
     model.bd = pyo.Var(model.BATTERIES, model.HTIME, within=pyo.Binary) #Charge or not the battery in each period
     model.bc = pyo.Var(model.BATTERIES, model.HTIME, within=pyo.Binary) #Disharge or not the battery in each period
     model.operative_cost = pyo.Var(model.GENERATORS_DIESEL, model.HTIME, within=pyo.NonNegativeReals)
+    model.aux = pyo.Var(model.GENERATORS_REN, within=pyo.Binary) #greed forming or greed following
     # Constraints
 
     # Defines area rule
@@ -214,6 +217,7 @@ def make_model(generators_dict=None,
         tnpc += sum(generators_dict[k].cost_r*model.w[k] for k in model.GENERATORS) + sum(batteries_dict[l].cost_r * model.q[l]  for l in model.BATTERIES) 
         tnpc -= (sum(generators_dict[k].cost_s*model.w[k] for k in model.GENERATORS) + sum(batteries_dict[l].cost_s * model.q[l]  for l in model.BATTERIES))
         tnpc += sum(generators_dict[k].cost_fopm*model.w[k] for k in model.GENERATORS) + sum(batteries_dict[l].cost_fopm * model.q[l]  for l in model.BATTERIES)
+        tnpc += sum(generators_dict[k].cost_up* model.greed *(1-model.aux[k]) for k in model.GENERATORS if generators_dict[k].tec != 'D')
         tnpc_op = sum(sum(model.operative_cost[k,t] for t in model.HTIME) for k in model.GENERATORS_DIESEL)
         tnpc_op += sum(generators_dict[k].cost_rule*model.w[k] for k in model.GENERATORS if generators_dict[k].tec != 'D')
         lcoe = ((tnpc * model.CRF + tnpc_op) / sum( model.d[t] for t in model.HTIME))

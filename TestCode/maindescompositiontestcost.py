@@ -356,7 +356,8 @@ for iii in range(1, 433):
                                             sol_feasible.batteries_dict_sol, 
                                             ir = ir,
                                             years = aux_instance_data['years'],
-                                            delta = delta)
+                                            delta = delta,
+                                            greed = instance_data['inverter_greed_cost'])
     
     time_f_firstsol = time.time() - time_i_firstsol #final time
     # set the initial solution as the best so far
@@ -446,7 +447,8 @@ for iii in range(1, 433):
                                                 sol_try.batteries_dict_sol,
                                                 ir = ir,
                                                 years = years_run,
-                                                delta = delta)
+                                                delta = delta,
+                                                greed = instance_data['inverter_greed_cost'])
             time_i_make = time.time()
             model1 = opt.make_model_operational(generators_dict = sol_try.generators_dict_sol,
                                                batteries_dict = sol_try.batteries_dict_sol,  

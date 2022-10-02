@@ -110,11 +110,17 @@ def create_technologies(generators_dict, batteries_dict):
  
 
 #calculate total cost for two stage approach
-def calculate_sizingcost(generators_dict, batteries_dict, ir, years, delta):
+def calculate_sizingcost(generators_dict, batteries_dict, ir, years, delta, greed):
             expr = 0
+            ref = 0
+            for gen in generators_dict.values(): 
+                if (gen.tec == 'D'):
+                    ref = 1
             for gen in generators_dict.values(): 
                 if (gen.tec != 'D'): 
                     expr += gen.cost_up * delta
+                    if (ref == 0):
+                        expr += gen.cost_up * greed
                 else:
                     expr += gen.cost_up
                 expr += gen.cost_r 

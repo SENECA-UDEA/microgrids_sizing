@@ -21,5 +21,6 @@
     "time_zone": -5,
     "longitude": -3.76286,
     "latitude": -70.3745,
-    "alpha_albedo": 0.2
+    "alpha_albedo": 0.2,
+    "inverter_greed_cost": 0.1
 }

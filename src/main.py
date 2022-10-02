@@ -97,7 +97,8 @@ model = opt.make_model(generators_dict,
                        splus_cost = instance_data['splus_cost'],
                        sminus_cost = instance_data['sminus_cost'],
                        tlpsp = instance_data['tlpsp'],
-                       delta = delta)    
+                       delta = delta,
+                       greed = instance_data['inverter_greed_cost'])    
 
 
 print("Model generated")

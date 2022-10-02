@@ -128,7 +128,8 @@ class Sol_constructor():
                                             batteries_dict_sol, 
                                             ir = ir,
                                             years = instance_data['years'],
-                                            delta = delta)
+                                            delta = delta,
+                                            greed = instance_data['inverter_greed_cost'])
         
         model = opt.make_model_operational(generators_dict = generators_dict_sol,
                                            batteries_dict = batteries_dict_sol,  
@@ -177,7 +178,8 @@ class Sol_constructor():
                                                 batteries_dict_sol, 
                                                 ir = ir,
                                                 years = instance_data['years'],
-                                                delta = delta)
+                                                delta = delta,
+                                                greed = instance_data['inverter_greed_cost'])
             
             model = opt.make_model_operational(generators_dict = generators_dict_sol,
                                                batteries_dict = batteries_dict_sol,  

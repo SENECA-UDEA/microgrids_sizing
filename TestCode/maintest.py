@@ -220,7 +220,8 @@ for iii in range(1, 28):
                            splus_cost = instance_data['splus_cost']*splus_cost_run,
                            sminus_cost = instance_data['sminus_cost']*sminus_cost_run,
                            tlpsp = tlpsp_run,
-                           delta = delta)    
+                           delta = delta,
+                           greed = instance_data['inverter_greed_cost'])    
     
     model2 = copy.deepcopy(model1)
     generators_dict_copy = copy.deepcopy(generators_dict)
