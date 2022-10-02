@@ -14,6 +14,8 @@ import time
 import copy
 
 
+    
+    
 def make_model(generators_dict=None, 
                batteries_dict=None,  
                demand_df=None, 
@@ -33,6 +35,7 @@ def make_model(generators_dict=None,
                               "L2":[0.05,0],
                               "L3":[0.9, 0],
                               "L4":[1,0]} ):
+    
     #generators_dict = dictionary of generators
     #batteries_dict = dictionary of batteries
     #demand_df = demand dataframe
@@ -77,14 +80,14 @@ def make_model(generators_dict=None,
     model.sminus_cost = pyo.Param (initialize = sminus_cost)
     model.delta = pyo.Param (initialize = delta)
     model.greed = pyo.Param (initialize = greed)
-    #model.x1cost = pyo.Param (initialize = lcoe_cost["LCOE_COST"]["L1"][1])
-    #model.x2cost = pyo.Param (initialize = lcoe_cost["LCOE_COST"]["L1"][1])
-    #model.x3cost = pyo.Param (initialize = lcoe_cost["LCOE_COST"]["L1"][1])
-    #model.x4cost = pyo.Param (initialize = lcoe_cost["LCOE_COST"]["L1"][1])
-    #model.x1limit = pyo.Param (initialize = lcoe_cost["LCOE_COST"]["L1"][0])
-    #model.x2limit = pyo.Param (initialize = lcoe_cost["LCOE_COST"]["L1"][0])
-    #model.x3limit = pyo.Param (initialize = lcoe_cost["LCOE_COST"]["L1"][0])
-    #model.x4limit = pyo.Param (initialize = lcoe_cost["LCOE_COST"]["L1"][0])
+    model.x1cost = pyo.Param (initialize = lcoe_cost["L1"][1])
+    model.x2cost = pyo.Param (initialize = lcoe_cost["L1"][1])
+    model.x3cost = pyo.Param (initialize = lcoe_cost["L1"][1])
+    model.x4cost = pyo.Param (initialize = lcoe_cost["L1"][1])
+    model.x1limit = pyo.Param (initialize = lcoe_cost["L1"][0])
+    model.x2limit = pyo.Param (initialize = lcoe_cost["L1"][0])
+    model.x3limit = pyo.Param (initialize = lcoe_cost["L1"][0])
+    model.x4limit = pyo.Param (initialize = lcoe_cost["L1"][0])
     # Variables
     model.w = pyo.Var(model.GENERATORS, within=pyo.Binary) #select or not the generator
     model.q = pyo.Var(model.BATTERIES, within=pyo.Binary) #select or not the battery
@@ -100,14 +103,13 @@ def make_model(generators_dict=None,
     model.operative_cost = pyo.Var(model.GENERATORS_DIESEL, model.HTIME, within=pyo.NonNegativeReals)
     model.aux = pyo.Var(model.GENERATORS_REN, within=pyo.Binary) #greed forming or greed following
     
-    #model.x1 = pyo.Var(model.HTIME, within=pyo.NonNegativeReals) #calculate not supplied cost piecewise
-    #model.x2 = pyo.Var(model.HTIME, within=pyo.NonNegativeReals) #calculate not supplied cost piecewise
-    #model.x3 = pyo.Var(model.HTIME, within=pyo.NonNegativeReals) #calculate not supplied cost piecewise
-    #model.x4 = pyo.Var(model.HTIME, within=pyo.NonNegativeReals) #calculate not supplied cost piecewise
-    #model.z1 = pyo.Var(model.HTIME, within=pyo.Binary) #calculate not supplied cost piecewise
-    #model.z2 = pyo.Var(model.HTIME, within=pyo.Binary) #calculate not supplied cost piecewise
-    #model.z3 = pyo.Var(model.HTIME, within=pyo.Binary) #calculate not supplied cost piecewise
-    
+    model.x1 = pyo.Var(model.HTIME, within=pyo.NonNegativeReals) #calculate not supplied cost piecewise
+    model.x2 = pyo.Var(model.HTIME, within=pyo.NonNegativeReals) #calculate not supplied cost piecewise
+    model.x3 = pyo.Var(model.HTIME, within=pyo.NonNegativeReals) #calculate not supplied cost piecewise
+    model.x4 = pyo.Var(model.HTIME, within=pyo.NonNegativeReals) #calculate not supplied cost piecewise
+    model.z1 = pyo.Var(model.HTIME, within=pyo.Binary) #calculate not supplied cost piecewise
+    model.z2 = pyo.Var(model.HTIME, within=pyo.Binary) #calculate not supplied cost piecewise
+    model.z3 = pyo.Var(model.HTIME, within=pyo.Binary) #calculate not supplied cost piecewise
     # Constraints
 
     # Defines area rule
@@ -271,8 +273,6 @@ def make_model(generators_dict=None,
         return model.x4[t] <= (model.x4limit - model.x3limit) * model.d[t] * model.z3[t]
     model.sminusx7_rule = pyo.Constraint(model.HTIME, rule=sminusx7_rule)
  
-
-    
     
     #Objective function
     def obj2_rule(model):
@@ -287,11 +287,11 @@ def make_model(generators_dict=None,
         tnpc_op += sum(generators_dict[k].cost_rule*model.w[k] for k in model.GENERATORS if generators_dict[k].tec != 'D')
         lcoe = ((tnpc * model.CRF + tnpc_op) / sum( model.d[t] for t in model.HTIME))
         lcoe +=  model.splus_cost * sum( model.s_plus[t] for t in model.HTIME)
-        #lcoe += sum(model.x1cost * model.x1[t] for t in model.HTIME)
-        #lcoe += sum(model.x2cost * model.x1[t] for t in model.HTIME)
-        #lcoe += sum(model.x3cost * model.x1[t] for t in model.HTIME)
-        #lcoe += sum(model.x4cost * model.x1[t] for t in model.HTIME)
-        lcoe +=  model.sminus_cost * sum( model.s_minus[t] for t in model.HTIME)
+        lcoe += sum(model.x1cost * model.x1[t] for t in model.HTIME)
+        lcoe += sum(model.x2cost * model.x2[t] for t in model.HTIME)
+        lcoe += sum(model.x3cost * model.x3[t] for t in model.HTIME)
+        lcoe += sum(model.x4cost * model.x4[t] for t in model.HTIME)
+        #lcoe +=  model.sminus_cost * sum( model.s_minus[t] for t in model.HTIME)
         return lcoe
     model.LCOE_value = pyo.Objective(sense = pyo.minimize, rule=obj2_rule)
     
@@ -313,11 +313,11 @@ def make_model(generators_dict=None,
         lcoe1 = ((tnpc + tnpc_f + tnpc_op) / (model.t_years * sum( model.d[t] for t in model.HTIME)))
         lcoe2 =  model.splus_cost * sum( model.s_plus[t] for t in model.HTIME)
         lcoe2 *= (((model.inf)**model.t_years)-1)/model.inf
-        lcoe3 =  model.sminus_cost * sum( model.s_minus[t] for t in model.HTIME)
-        #lcoe3 += sum(model.x1cost * model.x1[t] for t in model.HTIME)
-        #lcoe3 += sum(model.x2cost * model.x1[t] for t in model.HTIME)
-        #lcoe3 += sum(model.x3cost * model.x1[t] for t in model.HTIME)
-        #lcoe3 += sum(model.x4cost * model.x1[t] for t in model.HTIME)
+        #lcoe3 =  model.sminus_cost * sum( model.s_minus[t] for t in model.HTIME)
+        lcoe3 = sum(model.x1cost * model.x1[t] for t in model.HTIME)
+        lcoe3 += sum(model.x2cost * model.x2[t] for t in model.HTIME)
+        lcoe3 += sum(model.x3cost * model.x3[t] for t in model.HTIME)
+        lcoe3 += sum(model.x4cost * model.x4[t] for t in model.HTIME)
         lcoe3 *= (((model.inf)**model.t_years)-1)/model.inf
         lcoe = lcoe1 + lcoe2 + lcoe3
         return lcoe
@@ -325,26 +325,6 @@ def make_model(generators_dict=None,
 
     
     return model
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -397,14 +377,14 @@ def make_model_operational(generators_dict=None,
     model.bat_area = pyo.Param(model.BATTERIES, initialize = {k:batteries_dict[k].area for k in batteries_dict.keys()})# Battery area
     model.splus_cost = pyo.Param (initialize = splus_cost)
     model.sminus_cost = pyo.Param (initialize = sminus_cost)
-    #model.x1cost = pyo.Param (initialize = lcoe_cost["LCOE_COST"]["L1"][1])
-    #model.x2cost = pyo.Param (initialize = lcoe_cost["LCOE_COST"]["L1"][1])
-    #model.x3cost = pyo.Param (initialize = lcoe_cost["LCOE_COST"]["L1"][1])
-    #model.x4cost = pyo.Param (initialize = lcoe_cost["LCOE_COST"]["L1"][1])
-    #model.x1limit = pyo.Param (initialize = lcoe_cost["LCOE_COST"]["L1"][0])
-    #model.x2limit = pyo.Param (initialize = lcoe_cost["LCOE_COST"]["L1"][0])
-    #model.x3limit = pyo.Param (initialize = lcoe_cost["LCOE_COST"]["L1"][0])
-    #model.x4limit = pyo.Param (initialize = lcoe_cost["LCOE_COST"]["L1"][0])
+    model.x1cost = pyo.Param (initialize = lcoe_cost["L1"][1])
+    model.x2cost = pyo.Param (initialize = lcoe_cost["L1"][1])
+    model.x3cost = pyo.Param (initialize = lcoe_cost["L1"][1])
+    model.x4cost = pyo.Param (initialize = lcoe_cost["L1"][1])
+    model.x1limit = pyo.Param (initialize = lcoe_cost["L1"][0])
+    model.x2limit = pyo.Param (initialize = lcoe_cost["L1"][0])
+    model.x3limit = pyo.Param (initialize = lcoe_cost["L1"][0])
+    model.x4limit = pyo.Param (initialize = lcoe_cost["L1"][0])
 
     # Variables
     model.v = pyo.Var(model.GENERATORS_DIESEL, model.HTIME, within=pyo.Binary) #select or not the generator in each period
@@ -417,15 +397,14 @@ def make_model_operational(generators_dict=None,
     model.bd = pyo.Var(model.BATTERIES, model.HTIME, within=pyo.Binary) #Charge or not the battery in each period
     model.bc = pyo.Var(model.BATTERIES, model.HTIME, within=pyo.Binary) #Disharge or not the battery in each period
     model.operative_cost = pyo.Var(model.GENERATORS_DIESEL, model.HTIME, within=pyo.NonNegativeReals)
-    
         
-    #model.x1 = pyo.Var(model.HTIME, within=pyo.NonNegativeReals) #calculate not supplied cost piecewise
-    #model.x2 = pyo.Var(model.HTIME, within=pyo.NonNegativeReals) #calculate not supplied cost piecewise
-    #model.x3 = pyo.Var(model.HTIME, within=pyo.NonNegativeReals) #calculate not supplied cost piecewise
-    #model.x4 = pyo.Var(model.HTIME, within=pyo.NonNegativeReals) #calculate not supplied cost piecewise
-    #model.z1 = pyo.Var(model.HTIME, within=pyo.Binary) #calculate not supplied cost piecewise
-    #model.z2 = pyo.Var(model.HTIME, within=pyo.Binary) #calculate not supplied cost piecewise
-    #model.z3 = pyo.Var(model.HTIME, within=pyo.Binary) #calculate not supplied cost piecewise
+    model.x1 = pyo.Var(model.HTIME, within=pyo.NonNegativeReals) #calculate not supplied cost piecewise
+    model.x2 = pyo.Var(model.HTIME, within=pyo.NonNegativeReals) #calculate not supplied cost piecewise
+    model.x3 = pyo.Var(model.HTIME, within=pyo.NonNegativeReals) #calculate not supplied cost piecewise
+    model.x4 = pyo.Var(model.HTIME, within=pyo.NonNegativeReals) #calculate not supplied cost piecewise
+    model.z1 = pyo.Var(model.HTIME, within=pyo.Binary) #calculate not supplied cost piecewise
+    model.z2 = pyo.Var(model.HTIME, within=pyo.Binary) #calculate not supplied cost piecewise
+    model.z3 = pyo.Var(model.HTIME, within=pyo.Binary) #calculate not supplied cost piecewise
     
     
     
@@ -566,6 +545,7 @@ def make_model_operational(generators_dict=None,
     def sminusx7_rule(model,t):
         return model.x4[t] <= (model.x4limit - model.x3limit) * model.d[t] * model.z3[t]
     model.sminusx7_rule = pyo.Constraint(model.HTIME, rule=sminusx7_rule)
+    
 
     # Defines Objective function
     def obj2_rule(model):
@@ -573,11 +553,11 @@ def make_model_operational(generators_dict=None,
         tnpc_op += sum(generators_dict[k].cost_rule for k in model.GENERATORS if generators_dict[k].tec != 'D')
         lcoe = ((model.TNPCCRF + tnpc_op) / sum( model.d[t] for t in model.HTIME))
         lcoe +=  model.splus_cost * sum( model.s_plus[t] for t in model.HTIME)
-        lcoe +=  model.sminus_cost * sum( model.s_minus[t] for t in model.HTIME)
-        #lcoe += sum(model.x1cost * model.x1[t] for t in model.HTIME)
-        #lcoe += sum(model.x2cost * model.x1[t] for t in model.HTIME)
-        #lcoe += sum(model.x3cost * model.x1[t] for t in model.HTIME)
-        #lcoe += sum(model.x4cost * model.x1[t] for t in model.HTIME)
+        #lcoe +=  model.sminus_cost * sum( model.s_minus[t] for t in model.HTIME)
+        lcoe += sum(model.x1cost * model.x1[t] for t in model.HTIME)
+        lcoe += sum(model.x2cost * model.x2[t] for t in model.HTIME)
+        lcoe += sum(model.x3cost * model.x3[t] for t in model.HTIME)
+        lcoe += sum(model.x4cost * model.x4[t] for t in model.HTIME)
         return lcoe
     model.LCOE_value = pyo.Objective(sense = pyo.minimize, rule=obj2_rule)
     
@@ -591,11 +571,11 @@ def make_model_operational(generators_dict=None,
         lcoe1 = ((model.TNPCCRF + tnpc_op) / (model.t_years * sum( model.d[t] for t in model.HTIME)))
         lcoe2 =  model.splus_cost * sum( model.s_plus[t] for t in model.HTIME)
         lcoe2 *= (((model.inf)**model.t_years)-1)/model.inf
-        lcoe3 =  model.sminus_cost * sum( model.s_minus[t] for t in model.HTIME)
-        #lcoe3 += sum(model.x1cost * model.x1[t] for t in model.HTIME)
-        #lcoe3 += sum(model.x2cost * model.x1[t] for t in model.HTIME)
-        #lcoe3 += sum(model.x3cost * model.x1[t] for t in model.HTIME)
-        #lcoe3 += sum(model.x4cost * model.x1[t] for t in model.HTIME)
+        #lcoe3 =  model.sminus_cost * sum( model.s_minus[t] for t in model.HTIME)
+        lcoe3 = sum(model.x1cost * model.x1[t] for t in model.HTIME)
+        lcoe3 += sum(model.x2cost * model.x2[t] for t in model.HTIME)
+        lcoe3 += sum(model.x3cost * model.x3[t] for t in model.HTIME)
+        lcoe3 += sum(model.x4cost * model.x4[t] for t in model.HTIME)
         lcoe3 *= (((model.inf)**model.t_years)-1)/model.inf
         lcoe = lcoe1 + lcoe2 + lcoe3
         return lcoe
