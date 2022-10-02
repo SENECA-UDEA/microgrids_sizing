@@ -208,6 +208,11 @@ def make_model(generators_dict=None,
         return expr <= expr4*(expr2 + expr3) 
     model.oprelation_rule = pyo.Constraint(model.HTIME, rule=oprelation_rule)
 
+    # Defines rule auxiliar greed forming
+    def greed_rule(model,k):
+        expr = sum(model.d[t1] for t1 in model.HTIME)
+        return model.aux[k] <=  expr * (1-model.w[k]) + sum( model.w[k1] for k1 in model.GENERATORS_DIESEL)
+    model.greed_rule = pyo.Constraint(model.GENERATORS_REN, rule=greed_rule)
     
     #Objective function
     def obj2_rule(model):
