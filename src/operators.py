@@ -27,7 +27,8 @@ class Sol_constructor():
                           OPT_SOLVER,
                           MIP_GAP,
                           TEE_SOLVER,
-                          rand_ob): #initial Diesel solution
+                          rand_ob,
+                          lcoe_cost): #initial Diesel solution
         
         generators_dict_sol = {}
         batteries_dict_sol = {}
@@ -141,7 +142,8 @@ class Sol_constructor():
                                            TNPCCRF = tnpccrf_calc,
                                            splus_cost = instance_data['splus_cost'],
                                            sminus_cost = instance_data['sminus_cost'],
-                                           tlpsp = instance_data['tlpsp'])  
+                                           tlpsp = instance_data['tlpsp'],
+                                           lcoe_cost = lcoe_cost)  
 
 
         results, termination = opt.solve_model(model, 
@@ -191,7 +193,8 @@ class Sol_constructor():
                                                TNPCCRF = tnpccrf_calc,
                                                splus_cost = instance_data['splus_cost'],
                                                sminus_cost = instance_data['sminus_cost'],
-                                               tlpsp = instance_data['tlpsp'])  
+                                               tlpsp = instance_data['tlpsp'],
+                                               lcoe_cost = lcoe_cost)  
 
 
             results, termination = opt.solve_model(model, 

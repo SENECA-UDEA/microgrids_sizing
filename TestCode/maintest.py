@@ -221,7 +221,8 @@ for iii in range(1, 28):
                            sminus_cost = instance_data['sminus_cost']*sminus_cost_run,
                            tlpsp = tlpsp_run,
                            delta = delta,
-                           greed = instance_data['inverter_greed_cost'])    
+                           greed = instance_data['inverter_greed_cost'],
+                           lcoe_cost = cost_data['LCOE_COST'])    
     
     model2 = copy.deepcopy(model1)
     generators_dict_copy = copy.deepcopy(generators_dict)

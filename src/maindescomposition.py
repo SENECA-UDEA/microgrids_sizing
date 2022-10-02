@@ -110,7 +110,8 @@ sol_feasible = sol_constructor.initial_solution(instance_data,
                                                OPT_SOLVER,
                                                MIP_GAP,
                                                TEE_SOLVER,
-                                               rand_ob)
+                                               rand_ob,
+                                               lcoe_cost = cost_data['LCOE_COST'])
 
 #if use aux_diesel asigns a big area to avoid select it again
 if ('aux_diesel' in sol_feasible.generators_dict_sol.keys()):
@@ -188,7 +189,8 @@ if (sol_best.results != None):
                                            TNPCCRF = tnpccrf_calc,
                                            splus_cost = instance_data['splus_cost'],
                                            sminus_cost = instance_data['sminus_cost'],
-                                           tlpsp = instance_data['tlpsp']) 
+                                           tlpsp = instance_data['tlpsp'],
+                                           lcoe_cost = cost_data['LCOE_COST']) 
         
         model2 = copy.deepcopy(model1)
         del model1 

@@ -344,7 +344,8 @@ for iii in range(1, 433):
                                                     OPT_SOLVER,
                                                     MIP_GAP,
                                                     TEE_SOLVER,
-                                                    rand_ob)
+                                                    rand_ob,
+                                                    lcoe_cost = cost_data['LCOE_COST'])
    
     
     #if use aux_diesel asigns a big area to avoid select it again
@@ -460,7 +461,8 @@ for iii in range(1, 433):
                                                TNPCCRF = tnpccrf_calc,
                                                splus_cost = instance_data['splus_cost'] * splus_cost_run,
                                                sminus_cost = instance_data['sminus_cost'] * sminus_cost_run,
-                                               tlpsp = tlpsp_run)
+                                               tlpsp = tlpsp_run,
+                                               lcoe_cost = cost_data['LCOE_COST'])
            
             model2 = copy.deepcopy(model1)
             del model1 
