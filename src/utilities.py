@@ -119,8 +119,8 @@ def calculate_sizingcost(generators_dict, batteries_dict, ir, years, delta, gree
             for gen in generators_dict.values(): 
                 if (gen.tec != 'D'): 
                     expr += gen.cost_up * delta
-                    if (ref == 0):
-                        expr += gen.cost_up * greed
+                    #if (ref == 0):
+                        #expr += gen.cost_up * greed
                 else:
                     expr += gen.cost_up
                 expr += gen.cost_r 
