@@ -311,6 +311,7 @@ class Search_operator():
             #check generation in max period that covers the remove object
         else:
             list_rand_tec = []
+            list_best_lcoe = []
             select_ob = ""
             for i in available_gen:
                 dic = dict_total[i]
@@ -337,10 +338,12 @@ class Search_operator():
                         total_lcoe = (lcoe_inf + lcoe_op)/generation_total
                         if total_lcoe <= best_cost:
                             best_cost = total_lcoe
-                            select_ob = dic.id_gen
-                    
-            if (select_ob == ""):
-                    select_ob = rand_ob.create_rand_list(list_rand_tec)
+                            list_best_lcoe.append(dic.id_gen)
+                            
+            if (list_best_lcoe != []):
+                select_ob = rand_ob.create_rand_list(list_best_lcoe)
+            else:
+                select_ob = rand_ob.create_rand_list(list_rand_tec)
    
                     
             solution.generators_dict_sol[select_ob] = dict_total[select_ob] 
