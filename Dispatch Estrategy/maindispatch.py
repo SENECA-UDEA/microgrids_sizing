@@ -6,11 +6,14 @@ Created on Wed Apr 20 11:14:21 2022
 """
 from utilities import read_data, create_objects, calculate_sizingcost, create_technologies, calculate_area, calculate_energy, interest_rate
 from utilities import fiscal_incentive, calculate_cost_data
-import opt as opt
+#import opt as opt
 from classes import Random_create
 import pandas as pd 
+import operatorsdispatch, graphic_results
+import maindispatch
 from operators import Sol_constructor, Search_operator
 from plotly.offline import plot
+from dispatchstrategy import strategy, d, ds, db, sb, wb, dw, swb, dwb, swd, dsb, swdb 
 import copy
 pd.options.display.max_columns = None
 
@@ -71,10 +74,6 @@ ir = interest_rate(instance_data['i_f'],instance_data['inf'])
 #Calculate CRF
 CRF = (ir * (1 + ir)**(instance_data['years']))/((1 + ir)**(instance_data['years'])-1)  
 
-#Set solver settings
-MIP_GAP = 0.01
-TEE_SOLVER = True
-OPT_SOLVER = 'gurobi'
 
 #Calculate fiscal incentives
 delta = fiscal_incentive(fisc_data['credit'], 
@@ -107,9 +106,6 @@ sol_feasible = sol_constructor.initial_solution(instance_data,
                                                technologies_dict, 
                                                renewables_dict,
                                                delta,
-                                               OPT_SOLVER,
-                                               MIP_GAP,
-                                               TEE_SOLVER,
                                                rand_ob,
                                                lcoe_cost = cost_data['LCOE_COST'])
 
@@ -117,8 +113,6 @@ sol_feasible = sol_constructor.initial_solution(instance_data,
 if ('aux_diesel' in sol_feasible.generators_dict_sol.keys()):
     generators_dict['aux_diesel'] = sol_feasible.generators_dict_sol['aux_diesel']
     generators_dict['aux_diesel'].area = 10000000
-
-
 
 
 # set the initial solution as the best so far
@@ -139,12 +133,10 @@ search_operator = Search_operator(generators_dict,
                             batteries_dict,
                             demand_df,
                             forecast_df)
-#select the search strategy
 add_function = 'GRASP'
 remove_function = 'RANDOM'
 if (sol_best.results != None):
     for i in range(N_iterations):
-        #create data for df
         rows_df.append([i, sol_current.feasible, 
                         sol_current.results.descriptive['area'], 
                         sol_current.results.descriptive['LCOE'], 
@@ -173,39 +165,42 @@ if (sol_best.results != None):
                 # return to the last feasible solution
                 sol_current = copy.deepcopy(sol_feasible)
                 continue # Skip running the model and go to the begining of the for loop
-        #Calculate strategic cost
-        tnpccrf_calc = calculate_sizingcost(sol_try.generators_dict_sol, 
-                                            sol_try.batteries_dict_sol, 
-                                            ir = ir,
-                                            years = instance_data['years'],
-                                            delta = delta,
-                                            greed = instance_data['inverter_greed_cost'])
+
         #Make model
-        model1 = opt.make_model_operational(generators_dict = sol_try.generators_dict_sol,
-                                           batteries_dict = sol_try.batteries_dict_sol,  
-                                           demand_df=dict(zip(demand_df.t, demand_df.demand)), 
-                                           technologies_dict = sol_try.technologies_dict_sol,  
-                                           renewables_dict = sol_try.renewables_dict_sol,
-                                           fuel_cost =  instance_data['fuel_cost'],
-                                           nse =  instance_data['nse'], 
-                                           TNPCCRF = tnpccrf_calc,
-                                           splus_cost = instance_data['splus_cost'],
-                                           sminus_cost = instance_data['sminus_cost'],
-                                           tlpsp = instance_data['tlpsp'],
-                                           lcoe_cost = cost_data['LCOE_COST']) 
         
-        model2 = copy.deepcopy(model1)
-        del model1 
-        #Solve the model
-        results, termination = opt.solve_model(model2, 
-                                               optimizer = OPT_SOLVER,
-                                               mipgap = MIP_GAP,
-                                               tee = TEE_SOLVER)
+        strategy = strategy(generators_dict = sol_try.generators_dict_sol,
+                                           batteries_dict = sol_try.batteries_dict_sol) 
+        
+        
+        if (strategy == "Diesel"):
+            lcoe_cost, df_results, area, state = d(generators_dict, batteries_dict, demand_df, instance_data, cost_data['LCOE_COST'] )
+        elif (strategy == "diesel - solar"):
+            lcoe_cost, df_results, area, state = ds(generators_dict, batteries_dict, demand_df, instance_data, cost_data['LCOE_COST'] )
+        elif (strategy == "battery - diesel"):
+            lcoe_cost, df_results, area, state = db(generators_dict, batteries_dict, demand_df, instance_data, cost_data['LCOE_COST'] )
+        elif (strategy == "battery - solar"):
+            lcoe_cost, df_results, area, state = sb(generators_dict, batteries_dict, demand_df, instance_data, cost_data['LCOE_COST'] )
+        elif (strategy == "battery - wind"):
+            lcoe_cost, df_results, area, state = wb(generators_dict, batteries_dict, demand_df, instance_data, cost_data['LCOE_COST'] )
+        elif (strategy == "diesel - wind"):
+            lcoe_cost, df_results, area, state = dw(generators_dict, batteries_dict, demand_df, instance_data, cost_data['LCOE_COST'] )
+        elif (strategy == "battery - solar - wind"):
+            lcoe_cost, df_results, area, state = swb(generators_dict, batteries_dict, demand_df, instance_data, cost_data['LCOE_COST'] )
+        elif (strategy == "battery - diesel - wind"):
+            lcoe_cost, df_results, area, state = dwb(generators_dict, batteries_dict, demand_df, instance_data, cost_data['LCOE_COST'] )
+        elif (strategy == "diesel - solar - wind"):
+            lcoe_cost, df_results, area, state = swd(generators_dict, batteries_dict, demand_df, instance_data, cost_data['LCOE_COST'] )
+        elif (strategy == "battery diesel - solar"):
+            lcoe_cost, df_results, area, state = dsb(generators_dict, batteries_dict, demand_df, instance_data, cost_data['LCOE_COST'] )
+        elif (strategy == "battery - diesel - solar - wind"):
+            lcoe_cost, df_results, area, state = swdb(generators_dict, batteries_dict, demand_df, instance_data, cost_data['LCOE_COST'] )
+        else:
+            state = 'No feasible solution'
         
         #Create results
-        if termination['Temination Condition'] == 'optimal':
-            sol_try.results.descriptive['LCOE'] = model2.LCOE_value.expr()
-            sol_try.results = opt.Results(model2, sol_try.generators_dict_sol)
+        if state == 'optimal':
+            sol_try.results.descriptive['LCOE'] = lcoe_cost
+            sol_try.results = df_results
             sol_try.feasible = True
             sol_current = copy.deepcopy(sol_try)
             #Search the best solution
@@ -215,10 +210,8 @@ if (sol_best.results != None):
             sol_try.feasible = False
             sol_try.results.descriptive['LCOE'] = None
             sol_current = copy.deepcopy(sol_try)
-        #avoid to overwrite an iteration
-        del results            
-        del termination
-        del model2      
+        
+        del df_results
     
         sol_current.results.descriptive['area'] = calculate_area(sol_current)
     
@@ -247,3 +240,4 @@ if (sol_best.results != None):
         '''
 else:
     print('No feasible solution, review data')
+

@@ -79,15 +79,17 @@ def make_model(generators_dict=None,
     model.splus_cost = pyo.Param (initialize = splus_cost)
     model.sminus_cost = pyo.Param (initialize = sminus_cost)
     model.delta = pyo.Param (initialize = delta)
+    #data from greed forming or greed following
     model.greed = pyo.Param (initialize = greed)
+    #parameters to piecewise function
     model.x1cost = pyo.Param (initialize = lcoe_cost["L1"][1])
-    model.x2cost = pyo.Param (initialize = lcoe_cost["L1"][1])
-    model.x3cost = pyo.Param (initialize = lcoe_cost["L1"][1])
-    model.x4cost = pyo.Param (initialize = lcoe_cost["L1"][1])
+    model.x2cost = pyo.Param (initialize = lcoe_cost["L2"][1])
+    model.x3cost = pyo.Param (initialize = lcoe_cost["L3"][1])
+    model.x4cost = pyo.Param (initialize = lcoe_cost["L4"][1])
     model.x1limit = pyo.Param (initialize = lcoe_cost["L1"][0])
-    model.x2limit = pyo.Param (initialize = lcoe_cost["L1"][0])
-    model.x3limit = pyo.Param (initialize = lcoe_cost["L1"][0])
-    model.x4limit = pyo.Param (initialize = lcoe_cost["L1"][0])
+    model.x2limit = pyo.Param (initialize = lcoe_cost["L2"][0])
+    model.x3limit = pyo.Param (initialize = lcoe_cost["L3"][0])
+    model.x4limit = pyo.Param (initialize = lcoe_cost["L4"][0])
     # Variables
     model.w = pyo.Var(model.GENERATORS, within=pyo.Binary) #select or not the generator
     model.q = pyo.Var(model.BATTERIES, within=pyo.Binary) #select or not the battery
@@ -239,7 +241,7 @@ def make_model(generators_dict=None,
     #model.greed_rule = pyo.Constraint(model.GENERATORS_REN, rule=greed_rule)
     
     
-    #Constraints s- cost
+    #Constraints s- cost piecewise
     def sminusx_rule(model,t):
         return model.s_minus[t] == model.x1[t] + model.x2[t] + model.x3[t] + model.x4[t]
     #model.sminusx_rule = pyo.Constraint(model.HTIME, rule=sminusx_rule)
@@ -282,11 +284,13 @@ def make_model(generators_dict=None,
         tnpc += sum(generators_dict[k].cost_r*model.w[k] for k in model.GENERATORS) + sum(batteries_dict[l].cost_r * model.q[l]  for l in model.BATTERIES) 
         tnpc -= (sum(generators_dict[k].cost_s*model.w[k] for k in model.GENERATORS) + sum(batteries_dict[l].cost_s * model.q[l]  for l in model.BATTERIES))
         tnpc += sum(generators_dict[k].cost_fopm*model.w[k] for k in model.GENERATORS) + sum(batteries_dict[l].cost_fopm * model.q[l]  for l in model.BATTERIES)
+        #sum greed forming or following
         #tnpc += sum(generators_dict[k].cost_up* model.greed *(1-model.aux[k]) for k in model.GENERATORS if generators_dict[k].tec != 'D')
         tnpc_op = sum(sum(model.operative_cost[k,t] for t in model.HTIME) for k in model.GENERATORS_DIESEL)
         tnpc_op += sum(generators_dict[k].cost_rule*model.w[k] for k in model.GENERATORS if generators_dict[k].tec != 'D')
         lcoe = ((tnpc * model.CRF + tnpc_op) / sum( model.d[t] for t in model.HTIME))
         lcoe +=  model.splus_cost * sum( model.s_plus[t] for t in model.HTIME)
+        #s- cost piecewise
         #lcoe += sum(model.x1cost * model.x1[t] for t in model.HTIME)
         #lcoe += sum(model.x2cost * model.x2[t] for t in model.HTIME)
         #lcoe += sum(model.x3cost * model.x3[t] for t in model.HTIME)
@@ -295,7 +299,7 @@ def make_model(generators_dict=None,
         return lcoe
     model.LCOE_value = pyo.Objective(sense = pyo.minimize, rule=obj2_rule)
     
-    #Objective function with multiyear formulation
+    #Objective function with multiyear formulation proposed
     def obj2_rulemulti(model):
         tnpc =  sum(batteries_dict[l].cost_up * model.delta * model.q[l] for l in model.BATTERIES) 
         tnpc += sum(generators_dict[k].cost_up*model.w[k] for k in model.GENERATORS if generators_dict[k].tec == 'D')
@@ -377,14 +381,15 @@ def make_model_operational(generators_dict=None,
     model.bat_area = pyo.Param(model.BATTERIES, initialize = {k:batteries_dict[k].area for k in batteries_dict.keys()})# Battery area
     model.splus_cost = pyo.Param (initialize = splus_cost)
     model.sminus_cost = pyo.Param (initialize = sminus_cost)
+    #Data from piecewise function
     #model.x1cost = pyo.Param (initialize = lcoe_cost["L1"][1])
-    #model.x2cost = pyo.Param (initialize = lcoe_cost["L1"][1])
-    #model.x3cost = pyo.Param (initialize = lcoe_cost["L1"][1])
-    #model.x4cost = pyo.Param (initialize = lcoe_cost["L1"][1])
+    #model.x2cost = pyo.Param (initialize = lcoe_cost["L2"][1])
+    #model.x3cost = pyo.Param (initialize = lcoe_cost["L3"][1])
+    #model.x4cost = pyo.Param (initialize = lcoe_cost["L4"][1])
     #model.x1limit = pyo.Param (initialize = lcoe_cost["L1"][0])
-    #model.x2limit = pyo.Param (initialize = lcoe_cost["L1"][0])
-    #model.x3limit = pyo.Param (initialize = lcoe_cost["L1"][0])
-    #model.x4limit = pyo.Param (initialize = lcoe_cost["L1"][0])
+    #model.x2limit = pyo.Param (initialize = lcoe_cost["L2"][0])
+    #model.x3limit = pyo.Param (initialize = lcoe_cost["L3"][0])
+    #model.x4limit = pyo.Param (initialize = lcoe_cost["L4"][0])
 
     # Variables
     model.v = pyo.Var(model.GENERATORS_DIESEL, model.HTIME, within=pyo.Binary) #select or not the generator in each period
@@ -512,7 +517,7 @@ def make_model_operational(generators_dict=None,
     model.other_rule = pyo.Constraint(model.HTIME, rule=other_rule)
 
 
-    #Constraints s- cost
+    #Constraints s- cost piecewise
     def sminusx_rule(model,t):
         return model.s_minus[t] == model.x1[t] + model.x2[t] + model.x3[t] + model.x4[t]
     #model.sminusx_rule = pyo.Constraint(model.HTIME, rule=sminusx_rule)
@@ -561,7 +566,7 @@ def make_model_operational(generators_dict=None,
         return lcoe
     model.LCOE_value = pyo.Objective(sense = pyo.minimize, rule=obj2_rule)
     
-    #Objective function
+    #Objective function with multiyear proposed
     def obj2_rulemulti(model):
         tnpc_opr = sum(sum(model.operative_cost[k,t] for t in model.HTIME) for k in model.GENERATORS_DIESEL)
         tnpc_opr *= (((model.inf)**model.t_years)-1)/model.inf

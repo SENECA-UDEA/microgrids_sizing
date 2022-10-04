@@ -39,7 +39,7 @@ class Solar(Generator):
                     TM = t_amb[t] + (self.INOCT - 20)*(Irad_panel/self.G_noct)
                     self.gen_rule[t] = self.Ppv_stc*(Irad_panel/G_stc)*(1 + self.kt*(TM-25))*self.fpv
             return self.gen_rule
-
+    #calculate operative cost
     def Solarcost(self):
         aux = self.cost_vopm * sum(self.gen_rule.values())
         self.cost_rule = aux
@@ -103,7 +103,7 @@ class Eolic(Generator):
             else:
               self.gen_rule[t] = 0
         return self.gen_rule
-
+    #calculate operative cost
     def Windcost(self):
         aux = self.cost_vopm * sum(self.gen_rule.values())
         self.cost_rule = aux

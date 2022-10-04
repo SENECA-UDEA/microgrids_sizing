@@ -5,6 +5,7 @@ import copy
 #set the origin of data
 units_filepath = "../data/San_Andres/json_cost.json"
 
+#load the data
 try:
     generators_data =  requests.get(units_filepath)
     generators_data = json.loads(generators_data.text)

@@ -4,11 +4,11 @@ Created on Wed May 11 10:23:49 2022
 @author: pmayaduque
 """
 from src.utilities import create_technologies, calculate_sizingcost, interest_rate
-import src.opt as opt
 from src.classes import Solution, Diesel
 import copy
 import math
 import pandas as pd
+ 
 
 class Sol_constructor():
     def __init__(self, generators_dict, batteries_dict, demand_df, forecast_df):
@@ -24,12 +24,11 @@ class Sol_constructor():
                           technologies_dict, 
                           renewables_dict,
                           delta,
-                          OPT_SOLVER,
-                          MIP_GAP,
-                          TEE_SOLVER,
                           rand_ob,
-                          lcoe_cost): #initial Diesel solution
-        
+                          lcoe_cost,
+                          demand_df, 
+                          cost_data): #initial Diesel solution
+        from dispatchstrategy import strategy, d, ds, db, sb, wb, dw, swb, dwb, swd, dsb, swdb
         generators_dict_sol = {}
         batteries_dict_sol = {}
         #create auxiliar dict for the iterations
@@ -80,7 +79,7 @@ class Sol_constructor():
                 position = rand_ob.create_randint(0, len_candidate-1)
                 f = self.generators_dict[sorted_generators[position]]
                 area_gen = f.area
-                #check the technology set accord to previous calculation
+                #check the technology set
                 if (rev == 'D'):
                     demand_gen = f.DG_max
                 elif (rev == 'S'):
@@ -125,36 +124,43 @@ class Sol_constructor():
         technologies_dict_sol, renewables_dict_sol = create_technologies (generators_dict_sol, 
                                                                           batteries_dict_sol)
         ir = interest_rate(instance_data['i_f'],instance_data['inf'])
-        tnpccrf_calc = calculate_sizingcost(generators_dict_sol, 
-                                            batteries_dict_sol, 
-                                            ir = ir,
-                                            years = instance_data['years'],
-                                            delta = delta,
-                                            greed = instance_data['inverter_greed_cost'])
-        
-        model = opt.make_model_operational(generators_dict = generators_dict_sol,
-                                           batteries_dict = batteries_dict_sol,  
-                                           demand_df=dict(zip(self.demand_df.t, self.demand_df.demand)), 
-                                           technologies_dict = technologies_dict_sol,  
-                                           renewables_dict = renewables_dict_sol,
-                                           fuel_cost =  instance_data['fuel_cost'],
-                                           nse =  instance_data['nse'], 
-                                           TNPCCRF = tnpccrf_calc,
-                                           splus_cost = instance_data['splus_cost'],
-                                           sminus_cost = instance_data['sminus_cost'],
-                                           tlpsp = instance_data['tlpsp'],
-                                           lcoe_cost = lcoe_cost)  
+ 
 
-
-        results, termination = opt.solve_model(model, 
-                                               optimizer = OPT_SOLVER,
-                                               mipgap = MIP_GAP,
-                                               tee = TEE_SOLVER)
         
-        if termination['Temination Condition'] == 'optimal': 
-            sol_results = opt.Results(model,generators_dict_sol)
+        strategy = strategy(generators_dict = generators_dict_sol,
+                                           batteries_dict = batteries_dict_sol) 
+        
+       
+        if (strategy == "Diesel"):
+            lcoe_cost, df_results, area, state = d(generators_dict, batteries_dict, demand_df, instance_data, cost_data['LCOE_COST'] )
+        elif (strategy == "diesel - solar"):
+            lcoe_cost, df_results, area, state = ds(generators_dict, batteries_dict, demand_df, instance_data, cost_data['LCOE_COST'] )
+        elif (strategy == "battery - diesel"):
+            lcoe_cost, df_results, area, state = db(generators_dict, batteries_dict, demand_df, instance_data, cost_data['LCOE_COST'] )
+        elif (strategy == "battery - solar"):
+            lcoe_cost, df_results, area, state = sb(generators_dict, batteries_dict, demand_df, instance_data, cost_data['LCOE_COST'] )
+        elif (strategy == "battery - wind"):
+            lcoe_cost, df_results, area, state = wb(generators_dict, batteries_dict, demand_df, instance_data, cost_data['LCOE_COST'] )
+        elif (strategy == "diesel - wind"):
+            lcoe_cost, df_results, area, state = dw(generators_dict, batteries_dict, demand_df, instance_data, cost_data['LCOE_COST'] )
+        elif (strategy == "battery - solar - wind"):
+            lcoe_cost, df_results, area, state = swb(generators_dict, batteries_dict, demand_df, instance_data, cost_data['LCOE_COST'] )
+        elif (strategy == "battery - diesel - wind"):
+            lcoe_cost, df_results, area, state = dwb(generators_dict, batteries_dict, demand_df, instance_data, cost_data['LCOE_COST'] )
+        elif (strategy == "diesel - solar - wind"):
+            lcoe_cost, df_results, area, state = swd(generators_dict, batteries_dict, demand_df, instance_data, cost_data['LCOE_COST'] )
+        elif (strategy == "battery diesel - solar"):
+            lcoe_cost, df_results, area, state = dsb(generators_dict, batteries_dict, demand_df, instance_data, cost_data['LCOE_COST'] )
+        elif (strategy == "battery - diesel - solar - wind"):
+            lcoe_cost, df_results, area, state = swdb(generators_dict, batteries_dict, demand_df, instance_data, cost_data['LCOE_COST'] )
+        else:
+            state = 'No feasible solution'
+
+        
+        if state == 'optimal': 
+            sol_results = df_results
         else: 
-            #create a false Diesel auxiliar if not optimal
+            #create a false Diesel auxiliar
             k = {
                         "id_gen": "aux_diesel",
                         "tec": "D",
@@ -176,34 +182,13 @@ class Sol_constructor():
             technologies_dict_sol, renewables_dict_sol = create_technologies (generators_dict_sol, 
                                                                               batteries_dict_sol)
             
-            tnpccrf_calc = calculate_sizingcost(generators_dict_sol, 
-                                                batteries_dict_sol, 
-                                                ir = ir,
-                                                years = instance_data['years'],
-                                                delta = delta,
-                                                greed = instance_data['inverter_greed_cost'])
-            
-            #create model with false diesel
-            model = opt.make_model_operational(generators_dict = generators_dict_sol,
-                                               batteries_dict = batteries_dict_sol,  
-                                               demand_df=dict(zip(self.demand_df.t, self.demand_df.demand)), 
-                                               technologies_dict = technologies_dict_sol,  
-                                               renewables_dict = renewables_dict_sol,
-                                               fuel_cost =  instance_data['fuel_cost'],
-                                               nse =  instance_data['nse'], 
-                                               TNPCCRF = tnpccrf_calc,
-                                               splus_cost = instance_data['splus_cost'],
-                                               sminus_cost = instance_data['sminus_cost'],
-                                               tlpsp = instance_data['tlpsp'],
-                                               lcoe_cost = lcoe_cost)  
 
-            #solve model with auxiliar diesel
-            results, termination = opt.solve_model(model, 
-                                                   optimizer = OPT_SOLVER,
-                                                   mipgap = MIP_GAP,
-                                                   tee = TEE_SOLVER)
-            
-            sol_results = opt.Results(model, generators_dict_sol)
+        lcoe_cost, df_results, area, state = d(generators_dict, batteries_dict, demand_df, instance_data, cost_data['LCOE_COST'] )
+       
+
+        
+        if state == 'optimal': 
+            sol_results = df_results
         
         sol_initial = Solution(generators_dict_sol, 
                                batteries_dict_sol, 
@@ -228,15 +213,12 @@ class Search_operator():
         dict_actual = {**solution.generators_dict_sol,**solution.batteries_dict_sol}
         min_relation = math.inf
         #Check which one generates less energy at the highest cost
-        '''
-        #if there is only one diesel the model don't choose it
         cont = 0
         cont2 = 0
         for d in dict_actual.values(): 
             cont2 += 1
             if d.tec == 'D':
                 cont += 1
-        '''
         for d in dict_actual.values(): 
             if d.tec == 'B':
                 #Operation cost
@@ -250,9 +232,7 @@ class Search_operator():
                 if d.tec == 'D':
                     sum_generation = solution.results.df_results[d.id_gen].sum(axis = 0, skipna = True)
                     op_cost = solution.results.df_results[d.id_gen+'_cost'].sum(axis = 0, skipna = True)
-                    inv_cost = d.cost_up + d.cost_r - d.cost_s + d.cost_fopm 
                     #op_cost *= ((((inf + txfc)**t_years)-1)/(inf+txfc))
-                    '''
                     if cont == 1 and cont2 != 1:
                         inv_cost = 0.00001
                         op_cost = 0.000001
@@ -260,7 +240,6 @@ class Search_operator():
                         inv_cost = d.cost_up + d.cost_r - d.cost_s + d.cost_fopm 
                         #inv_cost = (d.cost_up * delta + d.cost_r - d.cost_s)*(1+i) 
                         #inv_cost2 = d.cost_fopm * ((((inf)**t_years)-1)/inf)
-                    '''
                 else:
                     sum_generation = sum(d.gen_rule.values())
                     op_cost = d.cost_rule
@@ -409,8 +388,6 @@ class Search_operator():
     def removerandomobject(self, sol_actual, rand_ob): #add generator or battery
         solution = copy.deepcopy(sol_actual)
         dict_actual = {**solution.generators_dict_sol,**solution.batteries_dict_sol} 
-        '''
-        #if there is only one diesel the model don't choose it
         cont = 0
         cont2 = 0
         for d in dict_actual.values(): 
@@ -424,8 +401,7 @@ class Search_operator():
             select_ob = rand_ob.create_rand_list(list_search)
         else:
             select_ob = rand_ob.create_rand_list(list(dict_actual.keys()))
-        '''
-        select_ob = rand_ob.create_rand_list(list(dict_actual.keys()))
+
         if dict_actual[select_ob].tec == 'B':
             remove_report =  pd.Series(solution.results.df_results[select_ob+'_b-'].values,index=solution.results.df_results[select_ob+'_b-'].keys()).to_dict()
             solution.batteries_dict_sol.pop(select_ob)
@@ -440,7 +416,6 @@ class Search_operator():
         return solution, remove_report
 
     def available(self, sol_actual, amax):
-        #check if exist and available set to run the add function
         solution = copy.deepcopy(sol_actual)
         available_area = amax - sol_actual.results.descriptive['area']
         list_available_gen = []
@@ -464,3 +439,5 @@ class Search_operator():
                         list_tec_gen.append(g.tec)
    
         return list_available_bat, list_available_gen, list_tec_gen  
+# -*- coding: utf-8 -*-
+
