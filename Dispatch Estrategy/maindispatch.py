@@ -171,32 +171,36 @@ if (sol_best.results != None):
         strategy = strategy(generators_dict = sol_try.generators_dict_sol,
                                            batteries_dict = sol_try.batteries_dict_sol) 
         
-        
-        if (strategy == "Diesel"):
-            lcoe_cost, df_results, area, state = d(generators_dict, batteries_dict, demand_df, instance_data, cost_data['LCOE_COST'] )
-        elif (strategy == "diesel - solar"):
-            lcoe_cost, df_results, area, state = ds(generators_dict, batteries_dict, demand_df, instance_data, cost_data['LCOE_COST'] )
-        elif (strategy == "battery - diesel"):
-            lcoe_cost, df_results, area, state = db(generators_dict, batteries_dict, demand_df, instance_data, cost_data['LCOE_COST'] )
-        elif (strategy == "battery - solar"):
-            lcoe_cost, df_results, area, state = sb(generators_dict, batteries_dict, demand_df, instance_data, cost_data['LCOE_COST'] )
-        elif (strategy == "battery - wind"):
-            lcoe_cost, df_results, area, state = wb(generators_dict, batteries_dict, demand_df, instance_data, cost_data['LCOE_COST'] )
-        elif (strategy == "diesel - wind"):
-            lcoe_cost, df_results, area, state = dw(generators_dict, batteries_dict, demand_df, instance_data, cost_data['LCOE_COST'] )
-        elif (strategy == "battery - solar - wind"):
-            lcoe_cost, df_results, area, state = swb(generators_dict, batteries_dict, demand_df, instance_data, cost_data['LCOE_COST'] )
-        elif (strategy == "battery - diesel - wind"):
-            lcoe_cost, df_results, area, state = dwb(generators_dict, batteries_dict, demand_df, instance_data, cost_data['LCOE_COST'] )
-        elif (strategy == "diesel - solar - wind"):
-            lcoe_cost, df_results, area, state = swd(generators_dict, batteries_dict, demand_df, instance_data, cost_data['LCOE_COST'] )
-        elif (strategy == "battery diesel - solar"):
-            lcoe_cost, df_results, area, state = dsb(generators_dict, batteries_dict, demand_df, instance_data, cost_data['LCOE_COST'] )
-        elif (strategy == "battery - diesel - solar - wind"):
-            lcoe_cost, df_results, area, state = swdb(generators_dict, batteries_dict, demand_df, instance_data, cost_data['LCOE_COST'] )
-        else:
+        ar = calculate_area[sol_try]
+        if ar > amax:
             state = 'No feasible solution'
+        else:
+            if (strategy == "Diesel"):
+                lcoe_cost, df_results, state = d(sol_try, demand_df, instance_data, cost_data['LCOE_COST'] )
+            elif (strategy == "diesel - solar"):
+                lcoe_cost, df_results, state = ds(sol_try, demand_df, instance_data, cost_data['LCOE_COST'] )
+            elif (strategy == "battery - diesel"):
+                lcoe_cost, df_results, state = db(sol_try, demand_df, instance_data, cost_data['LCOE_COST'] )
+            elif (strategy == "battery - solar"):
+                lcoe_cost, df_results, state = sb(sol_try, demand_df, instance_data, cost_data['LCOE_COST'] )
+            elif (strategy == "battery - wind"):
+                lcoe_cost, df_results, state = wb(sol_try, demand_df, instance_data, cost_data['LCOE_COST'] )
+            elif (strategy == "diesel - wind"):
+                lcoe_cost, df_results, state = dw(sol_try, demand_df, instance_data, cost_data['LCOE_COST'] )
+            elif (strategy == "battery - solar - wind"):
+                lcoe_cost, df_results, state = swb(sol_try, demand_df, instance_data, cost_data['LCOE_COST'] )
+            elif (strategy == "battery - diesel - wind"):
+                lcoe_cost, df_results, state = dwb(sol_try, demand_df, instance_data, cost_data['LCOE_COST'] )
+            elif (strategy == "diesel - solar - wind"):
+                lcoe_cost, df_results, state = swd(sol_try, demand_df, instance_data, cost_data['LCOE_COST'] )
+            elif (strategy == "battery diesel - solar"):
+                lcoe_cost, df_results, state = dsb(sol_try, demand_df, instance_data, cost_data['LCOE_COST'] )
+            elif (strategy == "battery - diesel - solar - wind"):
+                lcoe_cost, df_results, state = swdb(sol_try, demand_df, instance_data, cost_data['LCOE_COST'] )
+            else:
+                state = 'No feasible solution'
         
+
         #Create results
         if state == 'optimal':
             sol_try.results.descriptive['LCOE'] = lcoe_cost

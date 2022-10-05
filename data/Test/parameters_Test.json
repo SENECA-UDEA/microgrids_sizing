@@ -94,7 +94,7 @@
             "cost_r": 1,
             "cost_s": 2,
             "cost_fopm": 1,
-            "DG_min": 1,
+            "DG_min": 10,
             "DG_max": 18,
             "f0": 0.246,
             "f1": 0.08145
@@ -108,7 +108,7 @@
             "cost_r": 1,
             "cost_s": 2,
             "cost_fopm": 1,
-            "DG_min": 1,
+            "DG_min": 10,
             "DG_max": 20,
             "f0": 0.246,
             "f1": 0.08145
