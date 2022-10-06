@@ -4,12 +4,12 @@ Created on Wed Apr 20 11:14:21 2022
 
 @author: pmayaduque
 """
-from utilities import read_data, create_objects, calculate_sizingcost, create_technologies, calculate_area, calculate_energy, interest_rate
-from utilities import fiscal_incentive, calculate_cost_data
-import opt as opt
-from classes import Random_create
+from src.utilities import read_data, create_objects, calculate_sizingcost, create_technologies, calculate_area, calculate_energy, interest_rate
+from src.utilities import fiscal_incentive, calculate_cost_data
+import src.opt as opt
+from src.classes import Random_create
 import pandas as pd 
-from operators import Sol_constructor, Search_operator
+from src.operators import Sol_constructor, Search_operator
 from plotly.offline import plot
 import copy
 pd.options.display.max_columns = None
