@@ -355,6 +355,121 @@ def dw (solution, demand_df, instance_data, cost_data, CRF, fuel_cost, delta):
     return lcoe, solution, time_f 
 
 
+
+def swd (solution, demand_df, instance_data, cost_data, CRF, fuel_cost, delta):
+    time_i = time.time()
+    auxiliar_dict_generator = {}
+    list_ren = []
+    demand_tobe_covered = []
+    lcoe_op = 0
+    lcoe_inf = 0
+    lcoe_inftot = 0
+    len_data =  len(demand_df['demand'])
+    
+    for g in solution.generators_dict_sol.values():
+        if (g.tec == 'D'):
+            lcoe_inf = (g.cost_up + g.cost_r - g.cost_s) * CRF + g.cost_fopm
+            lcoe_inftot += lcoe_inf          
+            lcoe_op =  (g.f0 + g.f1)*g.DG_max*fuel_cost * len_data
+            auxiliar_dict_generator[g.id_gen] = (g.DG_max * len_data) / (lcoe_inf*CRF + lcoe_op)
+        else:
+            lcoe_inf = (g.cost_up + g.cost_r - g.cost_s) * delta * CRF + g.cost_fopm
+            lcoe_inftot += lcoe_inf    
+            list_ren.append(g.id_gen)
+
+    sorted_generators = sorted(auxiliar_dict_generator, key=auxiliar_dict_generator.get,reverse=False) 
+
+    p = {k : [0]*len_data for k in solution.generators_dict_sol}
+    cost = {k : [0]*len_data for k in solution.generators_dict_sol}
+ 
+    costsplus = {'cost_s+': [0]*len_data}
+    costsminus = {'cost_s-': [0]*len_data}
+    splus = {'s+': [0]*len_data}
+    sminus = {'s-': [0]*len_data}
+    lpsp = {'lpsp': [0]*len_data}
+    ptot = 0
+    costvopm = 0
+    splustot = 0
+    sminustot = 0
+    
+    ref = solution.generators_dict_sol[sorted_generators[0]].DG_min
+    
+    for t in demand_df['t']:
+        for ren in list_ren:
+            renew = solution.generators_dict_sol[ren]
+            p[ren][t] = renew.gen_rule[t]
+            cost[ren][t] = p[ren][t] * renew.cost_vopm
+            costvopm += cost[ren][t]
+        generation_ren = sum(solution.generators_dict_sol[i].gen_rule[t] for i in list_ren)
+        ptot += generation_ren
+        if generation_ren > (demand_df['demand'][t] - ref):
+            splus['s+'][t] = (generation_ren + ref - demand_df['demand'][t])
+            costsplus['cost_s+'][t] = splus['s+'][t] * instance_data["splus_cost"]
+            demand_tobe_covered = ref
+        else:
+            demand_tobe_covered = demand_df['demand'][t] - generation_ren
+        
+        if (demand_tobe_covered <= ref):
+            n = sorted_generators[0]
+            gen = solution.generators_dict_sol[n]
+            p[n][t] = ref
+            ptot += p[n][t]
+            cost[n][t] = (gen.f0 * gen.DG_max + gen.f1 * p[n][t])*fuel_cost
+            costvopm += cost[n][t]
+            
+        else:
+            
+            for i in sorted_generators:
+                 gen = solution.generators_dict_sol[i]
+                 if (demand_tobe_covered == 0):
+                     p[i][t] = 0
+                     cost[i][t]=0
+                 elif (gen.DG_max >= demand_tobe_covered):
+                     p[i][t] = max(demand_tobe_covered,gen.DG_min)
+                     ptot += p[i][t]
+                     cost[i][t] = (gen.f0 * gen.DG_max + gen.f1 * p[i][t])*fuel_cost
+                     costvopm += cost[i][t]
+                     if (p[i][t] > demand_tobe_covered):
+                         splus['s+'][t] = (p[i][t] - demand_tobe_covered)
+                         costsplus['cost_s+'][t] = splus['s+'][t] * instance_data["splus_cost"]
+                         splustot += costsplus['cost_s+'][t]
+                     demand_tobe_covered = 0
+                 else:
+                    p[i][t] = gen.DG_max
+                    ptot += p[i][t]
+                    cost[i][t] = (gen.f0 + gen.f1)* gen.DG_max * fuel_cost
+                    costvopm += cost[i][t]
+                    demand_tobe_covered = demand_tobe_covered - gen.DG_max
+            if (demand_tobe_covered > 0):
+                sminus['s-'][t] = demand_tobe_covered
+                lpsp['lpsp'][t] = sminus['s-'][t]  / demand_df['demand'][t]
+                if (lpsp['lpsp'][t] <= cost_data['LCOE_COST']["L1"][0]):
+                    costsminus['cost_s-'][t] = cost_data['LCOE_COST']["L1"][0] * sminus['s-'][t]
+                elif (lpsp['lpsp'][t]  <= cost_data['LCOE_COST']["L2"][0]):
+                    costsminus['cost_s-'][t] = cost_data['LCOE_COST']["L2"][0] * sminus['s-'][t]
+                elif (lpsp['lpsp'][t]  <= cost_data['LCOE_COST']["L3"][0]):
+                    costsminus['cost_s-'][t] = cost_data['LCOE_COST']["L3"][0] * sminus['s-'][t]
+                elif (lpsp['lpsp'][t]  <= cost_data['LCOE_COST']["L4"][0]):
+                    costsminus['cost_s-'][t] = cost_data['LCOE_COST']["L4"][0] * sminus['s-'][t]
+                
+                sminustot += costsminus['cost_s-'][t] 
+                #costsminus['cost_s-'][t] = sminus['s-'][t] * instance_data["sminus_cost"]   
+                
+    if (np.mean(lpsp['lpsp']) >= instance_data['nse']):
+        state = 'False'
+    else:
+        state = 'optimal'
+    solution.feasible = state
+    lcoe = sminustot + splustot + (lcoe_inftot + costvopm)/ptot
+    demand = pd.DataFrame(demand_df['demand'], columns=['demand'])
+    generation = pd.DataFrame(p, columns=[*p.keys()])
+    generation_cost = pd.DataFrame(cost, columns=[*cost.keys()])
+    sminus_df = pd.DataFrame(list(zip(sminus['s-'], lpsp['lpsp'])), columns = ['S-', 'LPSP'])
+    splus_df = pd.DataFrame(splus['s+'], columns = ['Wasted Energy'])
+    solution.results = pd.concat([demand, generation, sminus_df, splus_df, generation_cost], axis=1) 
+    time_f = time.time() - time_i
+    return lcoe, solution, time_f 
+
 def bs (generators_dict, batteries_dict, demand_df, instance_data, cost_data, CRF, fuel_cost, delta):
     
     auxiliar_dict_generator = []
