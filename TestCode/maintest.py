@@ -207,7 +207,7 @@ for iii in range(1, 28):
     
     time_i_make_model = time.time()
     # Create model          
-    model1 = opt.make_model(generators_dict, 
+    model2 = opt.make_model(generators_dict, 
                            batteries_dict, 
                            dict(zip(demand_df.t, demand_df.demand)),
                            technologies_dict, 
@@ -224,9 +224,9 @@ for iii in range(1, 28):
                            greed = instance_data['inverter_greed_cost'],
                            nse_cost = cost_data['NSE_COST'])    
     
-    model2 = copy.deepcopy(model1)
+    
     generators_dict_copy = copy.deepcopy(generators_dict)
-    del model1 
+
     print("Model generated")
     
     time_f_make_model = time.time() - time_i_make_model #final time create

@@ -15,6 +15,7 @@ import copy
 pd.options.display.max_columns = None
 import time
 
+Solver_data = {"MIP_GAP":0.01,"TEE_SOLVER":True,"OPT_SOLVER":"gurobi"}
 
 rows_df_time = []
 
@@ -265,7 +266,7 @@ for iii in range(1, 865):
     CRF = (ir * (1 + ir)**(years_run))/((1 + ir)**(years_run)-1)  
    
     #Set solver settings
-    MIP_GAP = gap_run
+    Solver_data["MIP_GAP"] = gap_run
     TEE_SOLVER = True
     OPT_SOLVER = 'gurobi'
    
@@ -312,14 +313,10 @@ for iii in range(1, 865):
    
     #create a default solution
     sol_feasible= sol_constructor.initial_solution(aux_instance_data,
-                                                    generators_dict,
-                                                    batteries_dict,
                                                     technologies_dict,
                                                     renewables_dict,
                                                     delta,
-                                                    OPT_SOLVER,
-                                                    MIP_GAP,
-                                                    TEE_SOLVER,
+                                                    Solver_data,
                                                     rand_ob,
                                                     nse_cost = cost_data['NSE_COST'])
    
@@ -428,7 +425,7 @@ for iii in range(1, 865):
                                                 greed = instance_data['inverter_greed_cost'])
             time_i_make = time.time()
             
-            model1 = opt.make_model_operational(generators_dict = sol_try.generators_dict_sol,
+            model2 = opt.make_model_operational(generators_dict = sol_try.generators_dict_sol,
                                                batteries_dict = sol_try.batteries_dict_sol,  
                                                demand_df=dict(zip(demand_df.t, demand_df.demand)),
                                                technologies_dict = sol_try.technologies_dict_sol,  
@@ -441,15 +438,12 @@ for iii in range(1, 865):
                                                tlpsp = tlpsp_run,
                                                nse_cost = cost_data['NSE_COST'])
             
-            model2 = copy.deepcopy(model1)
-            del model1 
+
             time_f_make = time.time() - time_i_make
             dict_time_make[i] = time_f_make
             time_i_solve = time.time()
             results, termination = opt.solve_model(model2,
-                                                   optimizer = OPT_SOLVER,
-                                                   mipgap = MIP_GAP,
-                                                   tee = TEE_SOLVER)
+                                                   Solver_data)
             time_f_solve = time.time() - time_i_solve
             dict_time_solve[i] = time_f_solve
             

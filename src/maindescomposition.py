@@ -15,8 +15,27 @@ import copy
 pd.options.display.max_columns = None
 
 
+#Algorythm data
+
+#Set the seed for random
+'''
+seed = 42
+'''
+seed = None
+rand_ob = Random_create(seed = seed)
+
+#Set solver settings
+Solver_data = {"MIP_GAP":0.01,"TEE_SOLVER":True,"OPT_SOLVER":"gurobi"}
+#select the search strategy
+add_function = 'GRASP'
+remove_function = 'RANDOM'
+
+
+
+#Model data
 place = 'Providencia'
 place = 'Test'
+TRM = 3910
 
 '''
 place = 'San_Andres'
@@ -45,13 +64,6 @@ fiscalData_filepath = "../data/Cost/fiscal_incentive.json"
 #cost Data
 costData_filepath = "../data/Cost/parameters_cost.json"
 
-#Set the seed for random
-'''
-seed = 42
-'''
-seed = None
-
-rand_ob = Random_create(seed = seed)
 
 # read data
 demand_df, forecast_df, generators, batteries, instance_data, fisc_data, cost_data = read_data(demand_filepath,
@@ -60,6 +72,12 @@ demand_df, forecast_df, generators, batteries, instance_data, fisc_data, cost_da
                                                                                                 instanceData_filepath,
                                                                                                 fiscalData_filepath,
                                                                                                 costData_filepath)
+
+
+#nputs for the model
+amax =  instance_data['amax']
+N_iterations = instance_data['N_iterations']
+
 
 #Calculate salvage, operation and replacement cost with investment cost
 generators, batteries = calculate_cost_data(generators, batteries, instance_data, cost_data)
@@ -71,10 +89,7 @@ ir = interest_rate(instance_data['i_f'],instance_data['inf'])
 #Calculate CRF
 CRF = (ir * (1 + ir)**(instance_data['years']))/((1 + ir)**(instance_data['years'])-1)  
 
-#Set solver settings
-MIP_GAP = 0.01
-TEE_SOLVER = True
-OPT_SOLVER = 'gurobi'
+
 
 #Calculate fiscal incentives
 delta = fiscal_incentive(fisc_data['credit'], 
@@ -102,14 +117,10 @@ sol_constructor = Sol_constructor(generators_dict,
 
 #create a default solution
 sol_feasible = sol_constructor.initial_solution(instance_data,
-                                               generators_dict, 
-                                               batteries_dict, 
                                                technologies_dict, 
                                                renewables_dict,
                                                delta,
-                                               OPT_SOLVER,
-                                               MIP_GAP,
-                                               TEE_SOLVER,
+                                               Solver_data,
                                                rand_ob,
                                                nse_cost = cost_data['NSE_COST'])
 
@@ -127,10 +138,7 @@ sol_best = copy.deepcopy(sol_feasible)
 # create the actual solution with the initial soluion
 sol_current = copy.deepcopy(sol_feasible)
 
-#nputs for the model
-movement = "Initial Solution"
-amax =  instance_data['amax']
-N_iterations = instance_data['N_iterations']
+
 #df of solutions
 rows_df = []
 
@@ -139,10 +147,9 @@ search_operator = Search_operator(generators_dict,
                             batteries_dict,
                             demand_df,
                             forecast_df)
-#select the search strategy
-add_function = 'GRASP'
-remove_function = 'RANDOM'
+
 if (sol_best.results != None):
+    movement = "Initial Solution"
     for i in range(N_iterations):
         #create data for df
         rows_df.append([i, sol_current.feasible, 
@@ -181,7 +188,7 @@ if (sol_best.results != None):
                                             delta = delta,
                                             greed = instance_data['inverter_greed_cost'])
         #Make model
-        model1 = opt.make_model_operational(generators_dict = sol_try.generators_dict_sol,
+        model = opt.make_model_operational(generators_dict = sol_try.generators_dict_sol,
                                            batteries_dict = sol_try.batteries_dict_sol,  
                                            demand_df=dict(zip(demand_df.t, demand_df.demand)), 
                                            technologies_dict = sol_try.technologies_dict_sol,  
@@ -194,18 +201,15 @@ if (sol_best.results != None):
                                            tlpsp = instance_data['tlpsp'],
                                            nse_cost = cost_data['NSE_COST']) 
         
-        model2 = copy.deepcopy(model1)
-        del model1 
+
         #Solve the model
-        results, termination = opt.solve_model(model2, 
-                                               optimizer = OPT_SOLVER,
-                                               mipgap = MIP_GAP,
-                                               tee = TEE_SOLVER)
+        results, termination = opt.solve_model(model, 
+                                               Solver_data)
         
         #Create results
         if termination['Temination Condition'] == 'optimal':
-            sol_try.results.descriptive['LCOE'] = model2.LCOE_value.expr()
-            sol_try.results = opt.Results(model2, sol_try.generators_dict_sol)
+            sol_try.results.descriptive['LCOE'] = model.LCOE_value.expr()
+            sol_try.results = opt.Results(model, sol_try.generators_dict_sol)
             sol_try.feasible = True
             sol_current = copy.deepcopy(sol_try)
             #Search the best solution
@@ -218,7 +222,7 @@ if (sol_best.results != None):
         #avoid to overwrite an iteration
         del results            
         del termination
-        del model2      
+        del model 
     
         sol_current.results.descriptive['area'] = calculate_area(sol_current)
     
@@ -237,7 +241,7 @@ if (sol_best.results != None):
         except KeyError:
             pass
         #calculate current COP   
-        TRM = 3910
+       
         LCOE_COP = TRM * sol_best.results.descriptive['LCOE']
         #create Excel
         '''

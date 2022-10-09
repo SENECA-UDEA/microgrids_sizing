@@ -13,8 +13,16 @@ from plotly.offline import plot
 pd.options.display.max_columns = None
 
 
+#Algortyhm data
+#Set GAP
+Solver_data = {"MIP_GAP":0.01,"TEE_SOLVER":True,"OPT_SOLVER":"gurobi"}
+
+
+
+#Instance Data
 place = 'Providencia'
 place = 'Test'
+TRM = 3910
 
 '''
 place = 'San_Andres'
@@ -70,10 +78,7 @@ demand_df['demand'] = instance_data['demand_covered']  * demand_df['demand']
 #Calculate interest rate
 ir = interest_rate(instance_data['i_f'],instance_data['inf'])
 
-#Set GAP
-MIP_GAP = 0.01
-TEE_SOLVER = True
-OPT_SOLVER = 'gurobi'
+
 
 #Calculate fiscal incentives
 delta = fiscal_incentive(fisc_data['credit'], 
@@ -105,9 +110,7 @@ model = opt.make_model(generators_dict,
 print("Model generated")
 # solve model 
 results, termination = opt.solve_model(model, 
-                                        optimizer = OPT_SOLVER,
-                                        mipgap = MIP_GAP,
-                                         tee = TEE_SOLVER)
+                                        Solver_data)
 print("Model optimized")
 
 
@@ -124,7 +127,7 @@ if termination['Temination Condition'] == 'optimal':
        pass
 
 #Calculate LCOE in Colombia current - COP
-TRM = 3910
+
 LCOE_COP = TRM * model_results.descriptive['LCOE']
 
 #Create Excel File

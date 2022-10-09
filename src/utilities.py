@@ -262,11 +262,8 @@ def calculate_cost_data(generators, batteries, instance_data,
     generators_def = []
     aux_batteries = []
     batteries_def = []
-    generators_transformed = copy.deepcopy(generators)
-    batteries_transformed = copy.deepcopy(batteries)
-    total_transformed = generators_transformed + batteries_transformed
     #Calculate costs with investment cost
-    for i in total_transformed:
+    for i in generators:
         if (i['tec'] == 'S'):
             cost_up = i['cost_up']
             aux_generators = []
@@ -275,7 +272,6 @@ def calculate_cost_data(generators, batteries, instance_data,
             aux_generators['cost_s'] = cost_up * parameters_cost['param_s_solar'] * (((1 + inf)/(1 + ir))**years)
             aux_generators['cost_fopm'] = cost_up * parameters_cost['param_f_solar'] 
             aux_generators['cost_vopm'] =  parameters_cost['param_v_solar']      
-            generators_def.append(copy.deepcopy(aux_generators))
         elif (i['tec'] == 'W'):
             cost_up = i['cost_up']
             aux_generators = []
@@ -284,7 +280,7 @@ def calculate_cost_data(generators, batteries, instance_data,
             aux_generators['cost_s'] = cost_up * parameters_cost['param_s_wind']   * (((1 + inf)/(1 + ir))**years)
             aux_generators['cost_fopm'] =  cost_up * parameters_cost['param_f_wind']  
             aux_generators['cost_vopm'] =  parameters_cost['param_v_wind']  
-            generators_def.append(copy.deepcopy(aux_generators))
+            
         elif (i['tec'] == 'D'):
             cost_up = i['cost_up']
             aux_generators = []
@@ -292,8 +288,9 @@ def calculate_cost_data(generators, batteries, instance_data,
             aux_generators['cost_r'] = cost_up * parameters_cost['param_r_diesel']   * tax
             aux_generators['cost_s'] = cost_up * parameters_cost['param_s_diesel']   * (((1 + inf)/(1 + ir))**years)
             aux_generators['cost_fopm'] =  cost_up * parameters_cost['param_f_diesel']
-            generators_def.append(copy.deepcopy(aux_generators)) 
-        else:
+        generators_def.append(copy.deepcopy(aux_generators))  
+        
+        for i in batteries:
             cost_up = i['cost_up']
             aux_batteries = []
             aux_batteries = i

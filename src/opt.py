@@ -590,9 +590,10 @@ def make_model_operational(generators_dict=None,
 
 
 def solve_model(model,
-                optimizer='gurobi',
-                mipgap=0.02,
-                tee=True):
+                Solver_data  = {"MIP_GAP":0.01,"TEE_SOLVER":True,"OPT_SOLVER":"gurobi"}):
+    optimizer = Solver_data["OPT_SOLVER"]
+    mipgap = Solver_data["MIP_GAP"]
+    tee = Solver_data["TEE_SOLVER"]
     solver = pyo.SolverFactory(optimizer)
     solver.options['MIPGap'] = mipgap
     timea = time.time() #initial time

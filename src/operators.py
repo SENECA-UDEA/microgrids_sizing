@@ -19,14 +19,10 @@ class Sol_constructor():
 
     def initial_solution (self, 
                           instance_data,
-                          generators_dict, 
-                          batteries_dict, 
                           technologies_dict, 
                           renewables_dict,
                           delta,
-                          OPT_SOLVER,
-                          MIP_GAP,
-                          TEE_SOLVER,
+                          Solver_data,
                           rand_ob,
                           nse_cost): #initial Diesel solution
         
@@ -147,9 +143,7 @@ class Sol_constructor():
 
 
         results, termination = opt.solve_model(model, 
-                                               optimizer = OPT_SOLVER,
-                                               mipgap = MIP_GAP,
-                                               tee = TEE_SOLVER)
+                                               Solver_data)
         
         if termination['Temination Condition'] == 'optimal': 
             sol_results = opt.Results(model,generators_dict_sol)
@@ -199,9 +193,7 @@ class Sol_constructor():
 
             #solve model with auxiliar diesel
             results, termination = opt.solve_model(model, 
-                                                   optimizer = OPT_SOLVER,
-                                                   mipgap = MIP_GAP,
-                                                   tee = TEE_SOLVER)
+                                                   Solver_data)
             
             sol_results = opt.Results(model, generators_dict_sol)
         
