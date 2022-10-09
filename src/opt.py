@@ -31,7 +31,7 @@ def make_model(generators_dict=None,
                tlpsp = 1,
                delta = 1,
                greed = 0,
-               lcoe_cost = {"L1":[0.015,0],
+               nse_cost = {"L1":[0.015,0],
                               "L2":[0.05,0],
                               "L3":[0.9, 0],
                               "L4":[1,0]} ):
@@ -52,7 +52,7 @@ def make_model(generators_dict=None,
     #tlpsp = Number of lpsp periods for moving average
     #Delta = tax incentive
     #greed = cost greed forming if not diesel
-    #lcoe_cost = cost to calcalte not supplied load
+    #nse_cost = cost to calcalte not supplied load
     
     # Sets
     model = pyo.ConcreteModel(name="Sizing microgrids")
@@ -82,14 +82,14 @@ def make_model(generators_dict=None,
     #data from greed forming or greed following
     model.greed = pyo.Param (initialize = greed)
     #parameters to piecewise function
-    model.x1cost = pyo.Param (initialize = lcoe_cost["L1"][1])
-    model.x2cost = pyo.Param (initialize = lcoe_cost["L2"][1])
-    model.x3cost = pyo.Param (initialize = lcoe_cost["L3"][1])
-    model.x4cost = pyo.Param (initialize = lcoe_cost["L4"][1])
-    model.x1limit = pyo.Param (initialize = lcoe_cost["L1"][0])
-    model.x2limit = pyo.Param (initialize = lcoe_cost["L2"][0])
-    model.x3limit = pyo.Param (initialize = lcoe_cost["L3"][0])
-    model.x4limit = pyo.Param (initialize = lcoe_cost["L4"][0])
+    model.x1cost = pyo.Param (initialize = nse_cost["L1"][1])
+    model.x2cost = pyo.Param (initialize = nse_cost["L2"][1])
+    model.x3cost = pyo.Param (initialize = nse_cost["L3"][1])
+    model.x4cost = pyo.Param (initialize = nse_cost["L4"][1])
+    model.x1limit = pyo.Param (initialize = nse_cost["L1"][0])
+    model.x2limit = pyo.Param (initialize = nse_cost["L2"][0])
+    model.x3limit = pyo.Param (initialize = nse_cost["L3"][0])
+    model.x4limit = pyo.Param (initialize = nse_cost["L4"][0])
     # Variables
     model.w = pyo.Var(model.GENERATORS, within=pyo.Binary) #select or not the generator
     model.q = pyo.Var(model.BATTERIES, within=pyo.Binary) #select or not the battery
@@ -343,7 +343,7 @@ def make_model_operational(generators_dict=None,
                splus_cost = 0,
                sminus_cost = 0,
                tlpsp = 1,
-               lcoe_cost = {"L1":[0.015,0],
+               nse_cost = {"L1":[0.015,0],
                               "L2":[0.05,0],
                               "L3":[0.9, 0],
                               "L4":[1,0]}):
@@ -359,7 +359,7 @@ def make_model_operational(generators_dict=None,
     #lpsp_cost = cost of unsupplied energy
     #splus_cost = Penalized surplus energy cost
     #sminus_cost = Penalized unsupplied demand
-    #lcoe_cost = cost to calcalte not supplied load
+    #nse_cost = cost to calcalte not supplied load
         
     model = pyo.ConcreteModel(name="Sizing microgrids Operational")
     
@@ -382,14 +382,14 @@ def make_model_operational(generators_dict=None,
     model.splus_cost = pyo.Param (initialize = splus_cost)
     model.sminus_cost = pyo.Param (initialize = sminus_cost)
     #Data from piecewise function
-    #model.x1cost = pyo.Param (initialize = lcoe_cost["L1"][1])
-    #model.x2cost = pyo.Param (initialize = lcoe_cost["L2"][1])
-    #model.x3cost = pyo.Param (initialize = lcoe_cost["L3"][1])
-    #model.x4cost = pyo.Param (initialize = lcoe_cost["L4"][1])
-    #model.x1limit = pyo.Param (initialize = lcoe_cost["L1"][0])
-    #model.x2limit = pyo.Param (initialize = lcoe_cost["L2"][0])
-    #model.x3limit = pyo.Param (initialize = lcoe_cost["L3"][0])
-    #model.x4limit = pyo.Param (initialize = lcoe_cost["L4"][0])
+    #model.x1cost = pyo.Param (initialize = nse_cost["L1"][1])
+    #model.x2cost = pyo.Param (initialize = nse_cost["L2"][1])
+    #model.x3cost = pyo.Param (initialize = nse_cost["L3"][1])
+    #model.x4cost = pyo.Param (initialize = nse_cost["L4"][1])
+    #model.x1limit = pyo.Param (initialize = nse_cost["L1"][0])
+    #model.x2limit = pyo.Param (initialize = nse_cost["L2"][0])
+    #model.x3limit = pyo.Param (initialize = nse_cost["L3"][0])
+    #model.x4limit = pyo.Param (initialize = nse_cost["L4"][0])
 
     # Variables
     model.v = pyo.Var(model.GENERATORS_DIESEL, model.HTIME, within=pyo.Binary) #select or not the generator in each period
