@@ -2,6 +2,7 @@
 import numpy as np
 import time
 import pandas as pd
+import math
 
 def strategy (batteries_dict, generators_dict):
     
@@ -58,7 +59,7 @@ def d (self, solution, demand_df, instance_data, cost_data, CRF, fuel_cost):
     p = {k : [0]*len_data for k in sorted_generators}
     cost = {k : [0]*len_data for k in sorted_generators}
  
-    costsplus = {'cost_s+': [0]*len_data}
+
     costsminus = {'cost_s-': [0]*len_data}
     splus = {'s+': [0]*len_data}
     sminus = {'s-': [0]*len_data}
@@ -71,18 +72,14 @@ def d (self, solution, demand_df, instance_data, cost_data, CRF, fuel_cost):
         demand_tobe_covered = demand_df['demand'][t]
         for i in sorted_generators:
              gen = solution.generators_dict_sol[i]
-             if (demand_tobe_covered == 0):
+             if (demand_tobe_covered < gen.DG_min):
                  p[i][t] = 0
                  cost[i][t]=0
              elif (gen.DG_max >= demand_tobe_covered):
-                 p[i][t] = max(demand_tobe_covered,gen.DG_min)
+                 p[i][t] = demand_tobe_covered
                  ptot += p[i][t]
                  cost[i][t] = (gen.f0 * gen.DG_max + gen.f1 * p[i][t])*fuel_cost
                  costvopm += cost[i][t]
-                 if (p[i][t] > demand_tobe_covered):
-                     splus['s+'][t] = (p[i][t] - demand_tobe_covered)
-                     costsplus['cost_s+'][t] = splus['s+'][t] * instance_data["splus_cost"]
-                     splustot += costsplus['cost_s+'][t]
                  demand_tobe_covered = 0
              else:
                 p[i][t] = gen.DG_max
@@ -132,13 +129,15 @@ def ds (solution, demand_df, instance_data, cost_data, CRF, fuel_cost, delta):
     lcoe_inf = 0
     lcoe_inftot = 0
     len_data =  len(demand_df['demand'])
-    
+    min_ref = math.inf
     for g in solution.generators_dict_sol.values():
         if (g.tec == 'D'):
             lcoe_inf = (g.cost_up + g.cost_r - g.cost_s) * CRF + g.cost_fopm
             lcoe_inftot += lcoe_inf          
             lcoe_op =  (g.f0 + g.f1)*g.DG_max*fuel_cost * len_data
             auxiliar_dict_generator[g.id_gen] = (g.DG_max * len_data) / (lcoe_inf*CRF + lcoe_op)
+            if g.DG_min <= min_ref:
+                 min_ref = g.DG_min
         else:
             lcoe_inf = (g.cost_up + g.cost_r - g.cost_s) * delta * CRF + g.cost_fopm
             lcoe_inftot += lcoe_inf    
@@ -148,7 +147,7 @@ def ds (solution, demand_df, instance_data, cost_data, CRF, fuel_cost, delta):
 
     p = {k : [0]*len_data for k in solution.generators_dict_sol}
     cost = {k : [0]*len_data for k in solution.generators_dict_sol}
- 
+    len_data = 10
     costsplus = {'cost_s+': [0]*len_data}
     costsminus = {'cost_s-': [0]*len_data}
     splus = {'s+': [0]*len_data}
@@ -162,65 +161,63 @@ def ds (solution, demand_df, instance_data, cost_data, CRF, fuel_cost, delta):
     ref = solution.generators_dict_sol[sorted_generators[0]].DG_min
     
     for t in demand_df['t']:
-        for ren in list_ren:
-            renew = solution.generators_dict_sol[ren]
-            p[ren][t] = renew.gen_rule[t]
-            cost[ren][t] = p[ren][t] * renew.cost_vopm
-            costvopm += cost[ren][t]
-        generation_ren = sum(solution.generators_dict_sol[i].gen_rule[t] for i in list_ren)
-        ptot += generation_ren
-        if generation_ren > (demand_df['demand'][t] - ref):
-            splus['s+'][t] = (generation_ren + ref - demand_df['demand'][t])
-            costsplus['cost_s+'][t] = splus['s+'][t] * instance_data["splus_cost"]
-            demand_tobe_covered = ref
-        else:
-            demand_tobe_covered = demand_df['demand'][t] - generation_ren
-        
-        if (demand_tobe_covered <= ref):
-            n = sorted_generators[0]
-            gen = solution.generators_dict_sol[n]
-            p[n][t] = ref
-            ptot += p[n][t]
-            cost[n][t] = (gen.f0 * gen.DG_max + gen.f1 * p[n][t])*fuel_cost
-            costvopm += cost[n][t]
-            
-        else:
-            
-            for i in sorted_generators:
-                 gen = solution.generators_dict_sol[i]
-                 if (demand_tobe_covered == 0):
-                     p[i][t] = 0
-                     cost[i][t]=0
-                 elif (gen.DG_max >= demand_tobe_covered):
-                     p[i][t] = max(demand_tobe_covered,gen.DG_min)
-                     ptot += p[i][t]
-                     cost[i][t] = (gen.f0 * gen.DG_max + gen.f1 * p[i][t])*fuel_cost
-                     costvopm += cost[i][t]
-                     if (p[i][t] > demand_tobe_covered):
-                         splus['s+'][t] = (p[i][t] - demand_tobe_covered)
-                         costsplus['cost_s+'][t] = splus['s+'][t] * instance_data["splus_cost"]
-                         splustot += costsplus['cost_s+'][t]
-                     demand_tobe_covered = 0
-                 else:
-                    p[i][t] = gen.DG_max
-                    ptot += p[i][t]
-                    cost[i][t] = (gen.f0 + gen.f1)* gen.DG_max * fuel_cost
-                    costvopm += cost[i][t]
-                    demand_tobe_covered = demand_tobe_covered - gen.DG_max
-            if (demand_tobe_covered > 0):
-                sminus['s-'][t] = demand_tobe_covered
-                lpsp['lpsp'][t] = sminus['s-'][t]  / demand_df['demand'][t]
-                if (lpsp['lpsp'][t] <= cost_data['LCOE_COST']["L1"][0]):
-                    costsminus['cost_s-'][t] = cost_data['LCOE_COST']["L1"][0] * sminus['s-'][t]
-                elif (lpsp['lpsp'][t]  <= cost_data['LCOE_COST']["L2"][0]):
-                    costsminus['cost_s-'][t] = cost_data['LCOE_COST']["L2"][0] * sminus['s-'][t]
-                elif (lpsp['lpsp'][t]  <= cost_data['LCOE_COST']["L3"][0]):
-                    costsminus['cost_s-'][t] = cost_data['LCOE_COST']["L3"][0] * sminus['s-'][t]
-                elif (lpsp['lpsp'][t]  <= cost_data['LCOE_COST']["L4"][0]):
-                    costsminus['cost_s-'][t] = cost_data['LCOE_COST']["L4"][0] * sminus['s-'][t]
+        demand_tobe_covered = demand_df['demand'][t]
+        if (demand_tobe_covered >= min_ref):
+            for ren in list_ren:
+                renew = solution.generators_dict_sol[ren]
+                p[ren][t] = renew.gen_rule[t]
+                cost[ren][t] = p[ren][t] * renew.cost_vopm
+                costvopm += cost[ren][t]
+                generation_ren = sum(solution.generators_dict_sol[i].gen_rule[t] for i in list_ren)
+                ptot += generation_ren
+                if generation_ren > (demand_tobe_covered - ref):
+                    splus['s+'][t] = (generation_ren + ref - demand_tobe_covered)
+                    costsplus['cost_s+'][t] = splus['s+'][t] * instance_data["splus_cost"]
+                    demand_tobe_covered = ref
+                else:
+                    demand_tobe_covered = demand_tobe_covered - generation_ren
                 
-                sminustot += costsminus['cost_s-'][t] 
-                #costsminus['cost_s-'][t] = sminus['s-'][t] * instance_data["sminus_cost"]   
+                if (demand_tobe_covered <= ref):
+                    n = sorted_generators[0]
+                    gen = solution.generators_dict_sol[n]
+                    p[n][t] = ref
+                    ptot += p[n][t]
+                    cost[n][t] = (gen.f0 * gen.DG_max + gen.f1 * p[n][t])*fuel_cost
+                    costvopm += cost[n][t]
+                    
+                else:
+                    
+                    for i in sorted_generators:
+                         gen = solution.generators_dict_sol[i]
+                         if (demand_tobe_covered < gen.DG_min):
+                             p[i][t] = 0
+                             cost[i][t]=0
+                         elif (gen.DG_max >= demand_tobe_covered):
+                             p[i][t] = demand_tobe_covered
+                             ptot += p[i][t]
+                             cost[i][t] = (gen.f0 * gen.DG_max + gen.f1 * p[i][t])*fuel_cost
+                             costvopm += cost[i][t]
+                             demand_tobe_covered = 0
+                         else:
+                            p[i][t] = gen.DG_max
+                            ptot += p[i][t]
+                            cost[i][t] = (gen.f0 + gen.f1)* gen.DG_max * fuel_cost
+                            costvopm += cost[i][t]
+                            demand_tobe_covered = demand_tobe_covered - gen.DG_max
+        if (demand_tobe_covered > 0):
+            sminus['s-'][t] = demand_tobe_covered
+            lpsp['lpsp'][t] = sminus['s-'][t]  / demand_df['demand'][t]
+            if (lpsp['lpsp'][t] <= cost_data['LCOE_COST']["L1"][0]):
+                costsminus['cost_s-'][t] = cost_data['LCOE_COST']["L1"][0] * sminus['s-'][t]
+            elif (lpsp['lpsp'][t]  <= cost_data['LCOE_COST']["L2"][0]):
+                costsminus['cost_s-'][t] = cost_data['LCOE_COST']["L2"][0] * sminus['s-'][t]
+            elif (lpsp['lpsp'][t]  <= cost_data['LCOE_COST']["L3"][0]):
+                costsminus['cost_s-'][t] = cost_data['LCOE_COST']["L3"][0] * sminus['s-'][t]
+            elif (lpsp['lpsp'][t]  <= cost_data['LCOE_COST']["L4"][0]):
+                costsminus['cost_s-'][t] = cost_data['LCOE_COST']["L4"][0] * sminus['s-'][t]
+            
+            sminustot += costsminus['cost_s-'][t] 
+            #costsminus['cost_s-'][t] = sminus['s-'][t] * instance_data["sminus_cost"]   
                 
     if (np.mean(lpsp['lpsp']) >= instance_data['nse']):
         state = 'False'
@@ -236,8 +233,6 @@ def ds (solution, demand_df, instance_data, cost_data, CRF, fuel_cost, delta):
     solution.results = pd.concat([demand, generation, sminus_df, splus_df, generation_cost], axis=1) 
     time_f = time.time() - time_i
     return lcoe, solution, time_f 
-
-
 
 
 def dw (solution, demand_df, instance_data, cost_data, CRF, fuel_cost, delta):
@@ -249,13 +244,15 @@ def dw (solution, demand_df, instance_data, cost_data, CRF, fuel_cost, delta):
     lcoe_inf = 0
     lcoe_inftot = 0
     len_data =  len(demand_df['demand'])
-    
+    min_ref = math.inf
     for g in solution.generators_dict_sol.values():
         if (g.tec == 'D'):
             lcoe_inf = (g.cost_up + g.cost_r - g.cost_s) * CRF + g.cost_fopm
             lcoe_inftot += lcoe_inf          
             lcoe_op =  (g.f0 + g.f1)*g.DG_max*fuel_cost * len_data
             auxiliar_dict_generator[g.id_gen] = (g.DG_max * len_data) / (lcoe_inf*CRF + lcoe_op)
+            if g.DG_min <= min_ref:
+                 min_ref = g.DG_min
         else:
             lcoe_inf = (g.cost_up + g.cost_r - g.cost_s) * delta * CRF + g.cost_fopm
             lcoe_inftot += lcoe_inf    
@@ -265,7 +262,7 @@ def dw (solution, demand_df, instance_data, cost_data, CRF, fuel_cost, delta):
 
     p = {k : [0]*len_data for k in solution.generators_dict_sol}
     cost = {k : [0]*len_data for k in solution.generators_dict_sol}
- 
+    len_data = 10
     costsplus = {'cost_s+': [0]*len_data}
     costsminus = {'cost_s-': [0]*len_data}
     splus = {'s+': [0]*len_data}
@@ -279,65 +276,63 @@ def dw (solution, demand_df, instance_data, cost_data, CRF, fuel_cost, delta):
     ref = solution.generators_dict_sol[sorted_generators[0]].DG_min
     
     for t in demand_df['t']:
-        for ren in list_ren:
-            renew = solution.generators_dict_sol[ren]
-            p[ren][t] = renew.gen_rule[t]
-            cost[ren][t] = p[ren][t] * renew.cost_vopm
-            costvopm += cost[ren][t]
-        generation_ren = sum(solution.generators_dict_sol[i].gen_rule[t] for i in list_ren)
-        ptot += generation_ren
-        if generation_ren > (demand_df['demand'][t] - ref):
-            splus['s+'][t] = (generation_ren + ref - demand_df['demand'][t])
-            costsplus['cost_s+'][t] = splus['s+'][t] * instance_data["splus_cost"]
-            demand_tobe_covered = ref
-        else:
-            demand_tobe_covered = demand_df['demand'][t] - generation_ren
-        
-        if (demand_tobe_covered <= ref):
-            n = sorted_generators[0]
-            gen = solution.generators_dict_sol[n]
-            p[n][t] = ref
-            ptot += p[n][t]
-            cost[n][t] = (gen.f0 * gen.DG_max + gen.f1 * p[n][t])*fuel_cost
-            costvopm += cost[n][t]
-            
-        else:
-            
-            for i in sorted_generators:
-                 gen = solution.generators_dict_sol[i]
-                 if (demand_tobe_covered == 0):
-                     p[i][t] = 0
-                     cost[i][t]=0
-                 elif (gen.DG_max >= demand_tobe_covered):
-                     p[i][t] = max(demand_tobe_covered,gen.DG_min)
-                     ptot += p[i][t]
-                     cost[i][t] = (gen.f0 * gen.DG_max + gen.f1 * p[i][t])*fuel_cost
-                     costvopm += cost[i][t]
-                     if (p[i][t] > demand_tobe_covered):
-                         splus['s+'][t] = (p[i][t] - demand_tobe_covered)
-                         costsplus['cost_s+'][t] = splus['s+'][t] * instance_data["splus_cost"]
-                         splustot += costsplus['cost_s+'][t]
-                     demand_tobe_covered = 0
-                 else:
-                    p[i][t] = gen.DG_max
-                    ptot += p[i][t]
-                    cost[i][t] = (gen.f0 + gen.f1)* gen.DG_max * fuel_cost
-                    costvopm += cost[i][t]
-                    demand_tobe_covered = demand_tobe_covered - gen.DG_max
-            if (demand_tobe_covered > 0):
-                sminus['s-'][t] = demand_tobe_covered
-                lpsp['lpsp'][t] = sminus['s-'][t]  / demand_df['demand'][t]
-                if (lpsp['lpsp'][t] <= cost_data['LCOE_COST']["L1"][0]):
-                    costsminus['cost_s-'][t] = cost_data['LCOE_COST']["L1"][0] * sminus['s-'][t]
-                elif (lpsp['lpsp'][t]  <= cost_data['LCOE_COST']["L2"][0]):
-                    costsminus['cost_s-'][t] = cost_data['LCOE_COST']["L2"][0] * sminus['s-'][t]
-                elif (lpsp['lpsp'][t]  <= cost_data['LCOE_COST']["L3"][0]):
-                    costsminus['cost_s-'][t] = cost_data['LCOE_COST']["L3"][0] * sminus['s-'][t]
-                elif (lpsp['lpsp'][t]  <= cost_data['LCOE_COST']["L4"][0]):
-                    costsminus['cost_s-'][t] = cost_data['LCOE_COST']["L4"][0] * sminus['s-'][t]
+        demand_tobe_covered = demand_df['demand'][t]
+        if (demand_tobe_covered >= min_ref):
+            for ren in list_ren:
+                renew = solution.generators_dict_sol[ren]
+                p[ren][t] = renew.gen_rule[t]
+                cost[ren][t] = p[ren][t] * renew.cost_vopm
+                costvopm += cost[ren][t]
+                generation_ren = sum(solution.generators_dict_sol[i].gen_rule[t] for i in list_ren)
+                ptot += generation_ren
+                if generation_ren > (demand_tobe_covered - ref):
+                    splus['s+'][t] = (generation_ren + ref - demand_tobe_covered)
+                    costsplus['cost_s+'][t] = splus['s+'][t] * instance_data["splus_cost"]
+                    demand_tobe_covered = ref
+                else:
+                    demand_tobe_covered = demand_tobe_covered - generation_ren
                 
-                sminustot += costsminus['cost_s-'][t] 
-                #costsminus['cost_s-'][t] = sminus['s-'][t] * instance_data["sminus_cost"]   
+                if (demand_tobe_covered <= ref):
+                    n = sorted_generators[0]
+                    gen = solution.generators_dict_sol[n]
+                    p[n][t] = ref
+                    ptot += p[n][t]
+                    cost[n][t] = (gen.f0 * gen.DG_max + gen.f1 * p[n][t])*fuel_cost
+                    costvopm += cost[n][t]
+                    
+                else:
+                    
+                    for i in sorted_generators:
+                         gen = solution.generators_dict_sol[i]
+                         if (demand_tobe_covered < gen.DG_min):
+                             p[i][t] = 0
+                             cost[i][t]=0
+                         elif (gen.DG_max >= demand_tobe_covered):
+                             p[i][t] = demand_tobe_covered
+                             ptot += p[i][t]
+                             cost[i][t] = (gen.f0 * gen.DG_max + gen.f1 * p[i][t])*fuel_cost
+                             costvopm += cost[i][t]
+                             demand_tobe_covered = 0
+                         else:
+                            p[i][t] = gen.DG_max
+                            ptot += p[i][t]
+                            cost[i][t] = (gen.f0 + gen.f1)* gen.DG_max * fuel_cost
+                            costvopm += cost[i][t]
+                            demand_tobe_covered = demand_tobe_covered - gen.DG_max
+        if (demand_tobe_covered > 0):
+            sminus['s-'][t] = demand_tobe_covered
+            lpsp['lpsp'][t] = sminus['s-'][t]  / demand_df['demand'][t]
+            if (lpsp['lpsp'][t] <= cost_data['LCOE_COST']["L1"][0]):
+                costsminus['cost_s-'][t] = cost_data['LCOE_COST']["L1"][0] * sminus['s-'][t]
+            elif (lpsp['lpsp'][t]  <= cost_data['LCOE_COST']["L2"][0]):
+                costsminus['cost_s-'][t] = cost_data['LCOE_COST']["L2"][0] * sminus['s-'][t]
+            elif (lpsp['lpsp'][t]  <= cost_data['LCOE_COST']["L3"][0]):
+                costsminus['cost_s-'][t] = cost_data['LCOE_COST']["L3"][0] * sminus['s-'][t]
+            elif (lpsp['lpsp'][t]  <= cost_data['LCOE_COST']["L4"][0]):
+                costsminus['cost_s-'][t] = cost_data['LCOE_COST']["L4"][0] * sminus['s-'][t]
+            
+            sminustot += costsminus['cost_s-'][t] 
+            #costsminus['cost_s-'][t] = sminus['s-'][t] * instance_data["sminus_cost"]   
                 
     if (np.mean(lpsp['lpsp']) >= instance_data['nse']):
         state = 'False'
@@ -354,8 +349,6 @@ def dw (solution, demand_df, instance_data, cost_data, CRF, fuel_cost, delta):
     time_f = time.time() - time_i
     return lcoe, solution, time_f 
 
-
-
 def swd (solution, demand_df, instance_data, cost_data, CRF, fuel_cost, delta):
     time_i = time.time()
     auxiliar_dict_generator = {}
@@ -365,13 +358,15 @@ def swd (solution, demand_df, instance_data, cost_data, CRF, fuel_cost, delta):
     lcoe_inf = 0
     lcoe_inftot = 0
     len_data =  len(demand_df['demand'])
-    
+    min_ref = math.inf
     for g in solution.generators_dict_sol.values():
         if (g.tec == 'D'):
             lcoe_inf = (g.cost_up + g.cost_r - g.cost_s) * CRF + g.cost_fopm
             lcoe_inftot += lcoe_inf          
             lcoe_op =  (g.f0 + g.f1)*g.DG_max*fuel_cost * len_data
             auxiliar_dict_generator[g.id_gen] = (g.DG_max * len_data) / (lcoe_inf*CRF + lcoe_op)
+            if g.DG_min <= min_ref:
+                 min_ref = g.DG_min
         else:
             lcoe_inf = (g.cost_up + g.cost_r - g.cost_s) * delta * CRF + g.cost_fopm
             lcoe_inftot += lcoe_inf    
@@ -381,7 +376,7 @@ def swd (solution, demand_df, instance_data, cost_data, CRF, fuel_cost, delta):
 
     p = {k : [0]*len_data for k in solution.generators_dict_sol}
     cost = {k : [0]*len_data for k in solution.generators_dict_sol}
- 
+    len_data = 10
     costsplus = {'cost_s+': [0]*len_data}
     costsminus = {'cost_s-': [0]*len_data}
     splus = {'s+': [0]*len_data}
@@ -395,65 +390,63 @@ def swd (solution, demand_df, instance_data, cost_data, CRF, fuel_cost, delta):
     ref = solution.generators_dict_sol[sorted_generators[0]].DG_min
     
     for t in demand_df['t']:
-        for ren in list_ren:
-            renew = solution.generators_dict_sol[ren]
-            p[ren][t] = renew.gen_rule[t]
-            cost[ren][t] = p[ren][t] * renew.cost_vopm
-            costvopm += cost[ren][t]
-        generation_ren = sum(solution.generators_dict_sol[i].gen_rule[t] for i in list_ren)
-        ptot += generation_ren
-        if generation_ren > (demand_df['demand'][t] - ref):
-            splus['s+'][t] = (generation_ren + ref - demand_df['demand'][t])
-            costsplus['cost_s+'][t] = splus['s+'][t] * instance_data["splus_cost"]
-            demand_tobe_covered = ref
-        else:
-            demand_tobe_covered = demand_df['demand'][t] - generation_ren
-        
-        if (demand_tobe_covered <= ref):
-            n = sorted_generators[0]
-            gen = solution.generators_dict_sol[n]
-            p[n][t] = ref
-            ptot += p[n][t]
-            cost[n][t] = (gen.f0 * gen.DG_max + gen.f1 * p[n][t])*fuel_cost
-            costvopm += cost[n][t]
-            
-        else:
-            
-            for i in sorted_generators:
-                 gen = solution.generators_dict_sol[i]
-                 if (demand_tobe_covered == 0):
-                     p[i][t] = 0
-                     cost[i][t]=0
-                 elif (gen.DG_max >= demand_tobe_covered):
-                     p[i][t] = max(demand_tobe_covered,gen.DG_min)
-                     ptot += p[i][t]
-                     cost[i][t] = (gen.f0 * gen.DG_max + gen.f1 * p[i][t])*fuel_cost
-                     costvopm += cost[i][t]
-                     if (p[i][t] > demand_tobe_covered):
-                         splus['s+'][t] = (p[i][t] - demand_tobe_covered)
-                         costsplus['cost_s+'][t] = splus['s+'][t] * instance_data["splus_cost"]
-                         splustot += costsplus['cost_s+'][t]
-                     demand_tobe_covered = 0
-                 else:
-                    p[i][t] = gen.DG_max
-                    ptot += p[i][t]
-                    cost[i][t] = (gen.f0 + gen.f1)* gen.DG_max * fuel_cost
-                    costvopm += cost[i][t]
-                    demand_tobe_covered = demand_tobe_covered - gen.DG_max
-            if (demand_tobe_covered > 0):
-                sminus['s-'][t] = demand_tobe_covered
-                lpsp['lpsp'][t] = sminus['s-'][t]  / demand_df['demand'][t]
-                if (lpsp['lpsp'][t] <= cost_data['LCOE_COST']["L1"][0]):
-                    costsminus['cost_s-'][t] = cost_data['LCOE_COST']["L1"][0] * sminus['s-'][t]
-                elif (lpsp['lpsp'][t]  <= cost_data['LCOE_COST']["L2"][0]):
-                    costsminus['cost_s-'][t] = cost_data['LCOE_COST']["L2"][0] * sminus['s-'][t]
-                elif (lpsp['lpsp'][t]  <= cost_data['LCOE_COST']["L3"][0]):
-                    costsminus['cost_s-'][t] = cost_data['LCOE_COST']["L3"][0] * sminus['s-'][t]
-                elif (lpsp['lpsp'][t]  <= cost_data['LCOE_COST']["L4"][0]):
-                    costsminus['cost_s-'][t] = cost_data['LCOE_COST']["L4"][0] * sminus['s-'][t]
+        demand_tobe_covered = demand_df['demand'][t]
+        if (demand_tobe_covered >= min_ref):
+            for ren in list_ren:
+                renew = solution.generators_dict_sol[ren]
+                p[ren][t] = renew.gen_rule[t]
+                cost[ren][t] = p[ren][t] * renew.cost_vopm
+                costvopm += cost[ren][t]
+                generation_ren = sum(solution.generators_dict_sol[i].gen_rule[t] for i in list_ren)
+                ptot += generation_ren
+                if generation_ren > (demand_tobe_covered - ref):
+                    splus['s+'][t] = (generation_ren + ref - demand_tobe_covered)
+                    costsplus['cost_s+'][t] = splus['s+'][t] * instance_data["splus_cost"]
+                    demand_tobe_covered = ref
+                else:
+                    demand_tobe_covered = demand_tobe_covered - generation_ren
                 
-                sminustot += costsminus['cost_s-'][t] 
-                #costsminus['cost_s-'][t] = sminus['s-'][t] * instance_data["sminus_cost"]   
+                if (demand_tobe_covered <= ref):
+                    n = sorted_generators[0]
+                    gen = solution.generators_dict_sol[n]
+                    p[n][t] = ref
+                    ptot += p[n][t]
+                    cost[n][t] = (gen.f0 * gen.DG_max + gen.f1 * p[n][t])*fuel_cost
+                    costvopm += cost[n][t]
+                    
+                else:
+                    
+                    for i in sorted_generators:
+                         gen = solution.generators_dict_sol[i]
+                         if (demand_tobe_covered < gen.DG_min):
+                             p[i][t] = 0
+                             cost[i][t]=0
+                         elif (gen.DG_max >= demand_tobe_covered):
+                             p[i][t] = demand_tobe_covered
+                             ptot += p[i][t]
+                             cost[i][t] = (gen.f0 * gen.DG_max + gen.f1 * p[i][t])*fuel_cost
+                             costvopm += cost[i][t]
+                             demand_tobe_covered = 0
+                         else:
+                            p[i][t] = gen.DG_max
+                            ptot += p[i][t]
+                            cost[i][t] = (gen.f0 + gen.f1)* gen.DG_max * fuel_cost
+                            costvopm += cost[i][t]
+                            demand_tobe_covered = demand_tobe_covered - gen.DG_max
+        if (demand_tobe_covered > 0):
+            sminus['s-'][t] = demand_tobe_covered
+            lpsp['lpsp'][t] = sminus['s-'][t]  / demand_df['demand'][t]
+            if (lpsp['lpsp'][t] <= cost_data['LCOE_COST']["L1"][0]):
+                costsminus['cost_s-'][t] = cost_data['LCOE_COST']["L1"][0] * sminus['s-'][t]
+            elif (lpsp['lpsp'][t]  <= cost_data['LCOE_COST']["L2"][0]):
+                costsminus['cost_s-'][t] = cost_data['LCOE_COST']["L2"][0] * sminus['s-'][t]
+            elif (lpsp['lpsp'][t]  <= cost_data['LCOE_COST']["L3"][0]):
+                costsminus['cost_s-'][t] = cost_data['LCOE_COST']["L3"][0] * sminus['s-'][t]
+            elif (lpsp['lpsp'][t]  <= cost_data['LCOE_COST']["L4"][0]):
+                costsminus['cost_s-'][t] = cost_data['LCOE_COST']["L4"][0] * sminus['s-'][t]
+            
+            sminustot += costsminus['cost_s-'][t] 
+            #costsminus['cost_s-'][t] = sminus['s-'][t] * instance_data["sminus_cost"]   
                 
     if (np.mean(lpsp['lpsp']) >= instance_data['nse']):
         state = 'False'
