@@ -13,7 +13,7 @@ import operatorsdispatch, graphic_results
 import maindispatch
 from operators import Sol_constructor, Search_operator
 from plotly.offline import plot
-from dispatchstrategy import strategy, d, ds, db, sb, wb, dw, swb, dwb, swd, dsb, swdb 
+from dispatchstrategy import strategy, d, bd, bdw, bds, bdsw, D_plus_S_and_or_W, B_plus_S_and_or_W 
 import copy
 pd.options.display.max_columns = None
 
@@ -178,25 +178,25 @@ if (sol_best.results != None):
             if (strategy == "Diesel"):
                 lcoe_cost, df_results, state = d(sol_try, demand_df, instance_data, cost_data['LCOE_COST'] )
             elif (strategy == "diesel - solar"):
-                lcoe_cost, df_results, state = ds(sol_try, demand_df, instance_data, cost_data['LCOE_COST'] )
+                lcoe_cost, df_results, state = D_plus_S_and_or_W(sol_try, demand_df, instance_data, cost_data['LCOE_COST'] )
             elif (strategy == "battery - diesel"):
-                lcoe_cost, df_results, state = db(sol_try, demand_df, instance_data, cost_data['LCOE_COST'] )
+                lcoe_cost, df_results, state = bd(sol_try, demand_df, instance_data, cost_data['LCOE_COST'] )
             elif (strategy == "battery - solar"):
-                lcoe_cost, df_results, state = sb(sol_try, demand_df, instance_data, cost_data['LCOE_COST'] )
+                lcoe_cost, df_results, state = B_plus_S_and_or_W (sol_try, demand_df, instance_data, cost_data['LCOE_COST'] )
             elif (strategy == "battery - wind"):
-                lcoe_cost, df_results, state = wb(sol_try, demand_df, instance_data, cost_data['LCOE_COST'] )
+                lcoe_cost, df_results, state = B_plus_S_and_or_W (sol_try, demand_df, instance_data, cost_data['LCOE_COST'] )
             elif (strategy == "diesel - wind"):
-                lcoe_cost, df_results, state = dw(sol_try, demand_df, instance_data, cost_data['LCOE_COST'] )
+                lcoe_cost, df_results, state = D_plus_S_and_or_W (sol_try, demand_df, instance_data, cost_data['LCOE_COST'] )
             elif (strategy == "battery - solar - wind"):
-                lcoe_cost, df_results, state = swb(sol_try, demand_df, instance_data, cost_data['LCOE_COST'] )
+                lcoe_cost, df_results, state = B_plus_S_and_or_W (sol_try, demand_df, instance_data, cost_data['LCOE_COST'] )
             elif (strategy == "battery - diesel - wind"):
-                lcoe_cost, df_results, state = dwb(sol_try, demand_df, instance_data, cost_data['LCOE_COST'] )
+                lcoe_cost, df_results, state = bdw(sol_try, demand_df, instance_data, cost_data['LCOE_COST'] )
             elif (strategy == "diesel - solar - wind"):
-                lcoe_cost, df_results, state = swd(sol_try, demand_df, instance_data, cost_data['LCOE_COST'] )
+                lcoe_cost, df_results, state = D_plus_S_and_or_W (sol_try, demand_df, instance_data, cost_data['LCOE_COST'] )
             elif (strategy == "battery diesel - solar"):
-                lcoe_cost, df_results, state = dsb(sol_try, demand_df, instance_data, cost_data['LCOE_COST'] )
+                lcoe_cost, df_results, state = bds(sol_try, demand_df, instance_data, cost_data['LCOE_COST'] )
             elif (strategy == "battery - diesel - solar - wind"):
-                lcoe_cost, df_results, state = swdb(sol_try, demand_df, instance_data, cost_data['LCOE_COST'] )
+                lcoe_cost, df_results, state = bdsw(sol_try, demand_df, instance_data, cost_data['LCOE_COST'] )
             else:
                 state = 'No feasible solution'
         
