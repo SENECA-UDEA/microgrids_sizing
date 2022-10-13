@@ -14,8 +14,8 @@ from plotly.offline import plot
 import copy
 pd.options.display.max_columns = None
 import time
-
-Solver_data = {"MIP_GAP":0.01,"TEE_SOLVER":True,"OPT_SOLVER":"gurobi"}
+import numpy as np
+Solver_data = {"MIP_GAP":0.1,"TEE_SOLVER":True,"OPT_SOLVER":"gurobi"}
 
 rows_df_time = []
 
@@ -113,14 +113,14 @@ for iii in range(1, 865):
 
     #instancias gap
     if (iii >= (1 + (9 * ((iii-1)//9))) and (iii <= (3 + (9 * ((iii-1)//9))))):
-        gap_run = 0.005
-        add_name3 = '0.5%GAP'
+        gap_run = 0.5
+        add_name3 = '50%GAP'
     elif (iii >= (4 + (9 * ((iii-1)//9))) and (iii <= (6 + (9 * ((iii-1)//9))))):
-        gap_run = 0.01
-        add_name3 = '1%GAP'
-    else:
         gap_run = 0.1
         add_name3 = '10%GAP'
+    else:
+        gap_run = 0.2
+        add_name3 = '20%GAP'
 
     #instancias add o grasp
     if (iii >= (19 + (36 * ((iii-1)//36))) and (iii <= 36 * (((iii-1)//36)+1))):
@@ -171,7 +171,7 @@ for iii in range(1, 865):
    
     generators_total, batteries_total = calculate_cost_data(generators_total, batteries_total, instance_data, cost_data)
    
-
+    
  
    
     len_total_time = len(demand_df_fix)
@@ -301,6 +301,29 @@ for iii in range(1, 865):
                                 demand_df,
                                 forecast_df)
    
+    if (aumento_tiempo != "False"):
+        aux_gen = copy.deepcopy(generators_dict)
+        
+        for j in generators_dict.values():
+            count = 0
+            if (j.tec != 'D'):
+                mean_gen = np.array(list(aux_gen[j.id_gen].gen_rule.values())).mean()
+                desvest_gen = np.array(list(aux_gen[j.id_gen].gen_rule.values())).std()
+                count = len(aux_gen[j.id_gen].gen_rule)
+      
+                #empezar a llenar los datos de forecast y demanda
+                for h in range(int(len_total_time * (htime_run - 1))):
+                    insert_gen = rand_ob.create_randomnpnormal(mean_gen, desvest_gen, 1)
+                    numero_gen = int(insert_gen[0])
+                    aux_gen[j.id_gen].gen_rule[count] = numero_gen
+                    count = count + 1
+                   
+        generators_dict = copy.deepcopy (aux_gen)
+
+    
+    
+    
+    
     #auxiliar diccionario para evitar borrar datos
     aux_instance_data = copy.deepcopy(instance_data)
     aux_instance_data['amax'] = aux_instance_data['amax'] * area_run
@@ -612,7 +635,7 @@ dfs = [df_time]
 #sol_best.results.df_results.to_excel("resultsprueba.xlsx")
 nameins='resultbestanova' + str(iii) 
 # run function
-multiple_dfs(dfs, 'ExecTime', 'time1to864.xlsx')
+multiple_dfs(dfs, 'ExecTime', 'timeprueba.xlsx')
 #multiple_dfs(dfs, 'ExecTime', 'anovafinap848to864.xlsx')
 
    

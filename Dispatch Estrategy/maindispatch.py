@@ -13,7 +13,7 @@ import operatorsdispatch, graphic_results
 import maindispatch
 from operators import Sol_constructor, Search_operator
 from plotly.offline import plot
-from dispatchstrategy import strategy, d, bd, B_plus_D_plus_Ren, D_plus_S_and_or_W, B_plus_S_and_or_W 
+from dispatchstrategy import strategy, d, B_plus_D_plus_Ren, D_plus_S_and_or_W, B_plus_S_and_or_W 
 import copy
 pd.options.display.max_columns = None
 
@@ -179,8 +179,6 @@ if (sol_best.results != None):
                 lcoe_cost, df_results, state = d(sol_try, demand_df, instance_data, cost_data['LCOE_COST'] )
             elif (strategy == "diesel - solar"):
                 lcoe_cost, df_results, state = D_plus_S_and_or_W(sol_try, demand_df, instance_data, cost_data['LCOE_COST'] )
-            elif (strategy == "battery - diesel"):
-                lcoe_cost, df_results, state = bd(sol_try, demand_df, instance_data, cost_data['LCOE_COST'] )
             elif (strategy == "battery - solar"):
                 lcoe_cost, df_results, state = B_plus_S_and_or_W (sol_try, demand_df, instance_data, cost_data['LCOE_COST'] )
             elif (strategy == "battery - wind"):

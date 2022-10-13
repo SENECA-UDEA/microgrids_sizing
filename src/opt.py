@@ -231,7 +231,7 @@ def make_model(generators_dict=None,
         expr3= sum(model.soc[l,t] for l in model.BATTERIES)
         expr4 = sum(model.d[t1] for t1 in model.HTIME)
         return sum( model.p[k,t] for k in model.GENERATORS if generators_dict[k].tec != 'D') <= expr4*(expr2 + expr3) 
-    #model.oprelation_rule = pyo.Constraint(model.HTIME, rule=oprelation_rule)
+    model.oprelation_rule = pyo.Constraint(model.HTIME, rule=oprelation_rule)
 
     # Defines rule auxiliar greed forming
     def greed_rule(model,k):

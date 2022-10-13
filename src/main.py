@@ -119,7 +119,7 @@ if termination['Temination Condition'] == 'optimal':
    model_results = opt.Results(model, generators_dict)
    print(model_results.descriptive)
    print(model_results.df_results)
-   #generation_graph = model_results.generation_graph(0,len(demand_df))
+   generation_graph = model_results.generation_graph(0,len(demand_df))
    plot(generation_graph)
    try:
        percent_df, energy_df, renew_df, total_df, brand_df = calculate_energy(batteries_dict, generators_dict, model_results, demand_df)
