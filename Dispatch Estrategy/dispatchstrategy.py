@@ -3,6 +3,10 @@ import numpy as np
 import time
 import pandas as pd
 import math
+import copy
+import plotly.graph_objects as go
+import plotly.io as pio
+pio.renderers.default='browser'
 
 def strategy (batteries_dict, generators_dict):
     
@@ -110,8 +114,7 @@ def d (self, solution, demand_df, instance_data, cost_data, CRF, fuel_cost):
         state = 'False'
     else:
         state = 'optimal'
-    solution.feasible = state
-    lcoe = sminustot + splustot + (lcoe_inftot + costvopm)/ptot
+    lcoe_cost = sminustot + splustot + (lcoe_inftot + costvopm)/ptot
     demand = pd.DataFrame(demand_df['demand'], columns=['demand'])
     generation = pd.DataFrame(p, columns=[*p.keys()])
     soc_df = pd.DataFrame(soc, columns=[*soc.keys()])
@@ -120,9 +123,9 @@ def d (self, solution, demand_df, instance_data, cost_data, CRF, fuel_cost):
     generation_cost = pd.DataFrame(cost, columns=[*cost.keys()])
     sminus_df = pd.DataFrame(list(zip(sminus['s-'], lpsp['lpsp'])), columns = ['S-', 'LPSP'])
     splus_df = pd.DataFrame(splus['s+'], columns = ['Wasted Energy'])
-    solution.results = pd.concat([demand, generation, bminus_df, soc_df, bplus_df, sminus_df, splus_df, generation_cost], axis=1) 
+    df_results = pd.concat([demand, generation, bminus_df, soc_df, bplus_df, sminus_df, splus_df, generation_cost], axis=1) 
     time_f = time.time() - time_i
-    return lcoe, solution, time_f
+    return lcoe_cost, df_results, state, time_f 
     
     
 
@@ -234,19 +237,18 @@ def D_plus_S_and_or_W (solution, demand_df, instance_data, cost_data, CRF, fuel_
         state = 'False'
     else:
         state = 'optimal'
-    solution.feasible = state
-    lcoe = sminustot + splustot + (lcoe_inftot + costvopm)/ptot
+    lcoe_cost = sminustot + splustot + (lcoe_inftot + costvopm)/ptot
     demand = pd.DataFrame(demand_df['demand'], columns=['demand'])
     generation = pd.DataFrame(p, columns=[*p.keys()])
     soc_df = pd.DataFrame(soc, columns=[*soc.keys()])
     bplus_df = pd.DataFrame(bplus, columns=[*bplus.keys()])
-    bminus_df = pd.DataFrame(bminus, columns=[*bminus.keys()])  
+    bminus_df = pd.DataFrame(bminus, columns=[*bminus.keys()])    
     generation_cost = pd.DataFrame(cost, columns=[*cost.keys()])
     sminus_df = pd.DataFrame(list(zip(sminus['s-'], lpsp['lpsp'])), columns = ['S-', 'LPSP'])
     splus_df = pd.DataFrame(splus['s+'], columns = ['Wasted Energy'])
-    solution.results = pd.concat([demand, generation, bminus_df, soc_df, bplus_df, sminus_df, splus_df, generation_cost], axis=1) 
+    df_results = pd.concat([demand, generation, bminus_df, soc_df, bplus_df, sminus_df, splus_df, generation_cost], axis=1) 
     time_f = time.time() - time_i
-    return lcoe, solution, time_f
+    return lcoe_cost, df_results, state, time_f 
 
 
 
@@ -359,19 +361,18 @@ def B_plus_S_and_or_W  (solution, demand_df, instance_data, cost_data, CRF, delt
         state = 'False'
     else:
         state = 'optimal'
-    solution.feasible = state
-    lcoe = sminustot + splustot + (lcoe_inftot + costvopm)/ptot
+    lcoe_cost = sminustot + splustot + (lcoe_inftot + costvopm)/ptot
     demand = pd.DataFrame(demand_df['demand'], columns=['demand'])
     generation = pd.DataFrame(p, columns=[*p.keys()])
     soc_df = pd.DataFrame(soc, columns=[*soc.keys()])
     bplus_df = pd.DataFrame(bplus, columns=[*bplus.keys()])
-    bminus_df = pd.DataFrame(bminus, columns=[*bminus.keys()])  
+    bminus_df = pd.DataFrame(bminus, columns=[*bminus.keys()])    
     generation_cost = pd.DataFrame(cost, columns=[*cost.keys()])
     sminus_df = pd.DataFrame(list(zip(sminus['s-'], lpsp['lpsp'])), columns = ['S-', 'LPSP'])
-    splus_df = pd.DataFrame(splus['s+'], columns = ['Wasted Energy']) 
-    solution.results = pd.concat([demand, generation, bminus_df, soc_df, bplus_df, sminus_df, splus_df, generation_cost], axis=1) 
+    splus_df = pd.DataFrame(splus['s+'], columns = ['Wasted Energy'])
+    df_results = pd.concat([demand, generation, bminus_df, soc_df, bplus_df, sminus_df, splus_df, generation_cost], axis=1) 
     time_f = time.time() - time_i
-    return lcoe, solution, time_f 
+    return lcoe_cost, df_results, state, time_f 
 
 
 def B_plus_S_and_or_W2  (solution, demand_df, instance_data, cost_data, CRF, delta):
@@ -504,20 +505,18 @@ def B_plus_S_and_or_W2  (solution, demand_df, instance_data, cost_data, CRF, del
         state = 'False'
     else:
         state = 'optimal'
-    solution.feasible = state
-    
-    lcoe = sminustot + splustot + (lcoe_inftot + costvopm)/ptot
+    lcoe_cost = sminustot + splustot + (lcoe_inftot + costvopm)/ptot
     demand = pd.DataFrame(demand_df['demand'], columns=['demand'])
     generation = pd.DataFrame(p, columns=[*p.keys()])
     soc_df = pd.DataFrame(soc, columns=[*soc.keys()])
     bplus_df = pd.DataFrame(bplus, columns=[*bplus.keys()])
-    bminus_df = pd.DataFrame(bminus, columns=[*bminus.keys()])  
+    bminus_df = pd.DataFrame(bminus, columns=[*bminus.keys()])    
     generation_cost = pd.DataFrame(cost, columns=[*cost.keys()])
     sminus_df = pd.DataFrame(list(zip(sminus['s-'], lpsp['lpsp'])), columns = ['S-', 'LPSP'])
-    splus_df = pd.DataFrame(splus['s+'], columns = ['Wasted Energy']) 
-    solution.results = pd.concat([demand, generation, bminus_df, soc_df, bplus_df, sminus_df, splus_df, generation_cost], axis=1) 
+    splus_df = pd.DataFrame(splus['s+'], columns = ['Wasted Energy'])
+    df_results = pd.concat([demand, generation, bminus_df, soc_df, bplus_df, sminus_df, splus_df, generation_cost], axis=1) 
     time_f = time.time() - time_i
-    return lcoe, solution, time_f 
+    return lcoe_cost, df_results, state, time_f 
 
 
 
@@ -706,26 +705,115 @@ def B_plus_D_plus_Ren(solution, demand_df, instance_data, cost_data, CRF, fuel_c
             sminustot += costsminus['cost_s-'][t] 
             #costsminus['cost_s-'][t] = sminus['s-'][t] * instance_data["sminus_cost"]                 
                 
-                
-    '''        
+                      
     if (np.mean(lpsp['lpsp']) >= instance_data['nse']):
         state = 'False'
     else:
         state = 'optimal'
-    #solution.feasible = state
-    '''
-    lcoe = sminustot + splustot + (lcoe_inftot + costvopm)/ptot
+    solution.feasible = state
+
+    lcoe_cost = sminustot + splustot + (lcoe_inftot + costvopm)/ptot
     demand = pd.DataFrame(demand_df['demand'], columns=['demand'])
     generation = pd.DataFrame(p, columns=[*p.keys()])
     soc_df = pd.DataFrame(soc, columns=[*soc.keys()])
     bplus_df = pd.DataFrame(bplus, columns=[*bplus.keys()])
-    bminus_df = pd.DataFrame(bminus, columns=[*bminus.keys()])  
+    bminus_df = pd.DataFrame(bminus, columns=[*bminus.keys()])    
     generation_cost = pd.DataFrame(cost, columns=[*cost.keys()])
     sminus_df = pd.DataFrame(list(zip(sminus['s-'], lpsp['lpsp'])), columns = ['S-', 'LPSP'])
-    splus_df = pd.DataFrame(splus['s+'], columns = ['Wasted Energy'])  
-    solution.results = pd.concat([demand, generation, bminus_df, soc_df, bplus_df, sminus_df, splus_df, generation_cost], axis=1) 
+    splus_df = pd.DataFrame(splus['s+'], columns = ['Wasted Energy'])
+    df_results = pd.concat([demand, generation, bminus_df, soc_df, bplus_df, sminus_df, splus_df, generation_cost], axis=1) 
     time_f = time.time() - time_i
-    return lcoe, solution, time_f 
+    return lcoe_cost, df_results, state, time_f 
    
-    
+
+class Results():
+    def __init__(self, solution, df_results, lcoe):
+        
+        self.df_results = df_results 
+        
+        # general descriptives of the solution
+        self.descriptive = {}
+        
+        # generators 
+        generators = {}
+        try:
+            for k in solution.generators_dict_sol.values():
+               generators[k] = 1
+            self.descriptive['generators'] = generators
+        except:
+            for k in solution.generators_dict_sol.values():
+                if df_results[k].sum() > 0:
+                    generators[k] = 1
+            self.descriptive['generators'] = generators
+        # technologies
+        tecno_data = {}
+        try:
+            for i in solution.techonologies_dict_sol:
+               tecno_data[i] = 1
+            self.descriptive['technologies'] = tecno_data
+        except: #TODO
+              a=1 
+              
+        bat_data = {}
+        try: 
+            for l in solution.batteries_dict_sol:
+               bat_data[l] = 1
+            self.descriptive['batteries'] = bat_data
+        except:
+            for l in solution.batteries_dict_sol:
+                if df_results[l+'_b-'].sum() + df_results[l+'_b+'].sum() > 0:
+                    bat_data[l] = 1
+            self.descriptive['batteries'] = bat_data 
+                  
+
+        self.descriptive['area'] = 0
+            
+        # objective function
+        self.descriptive['LCOE'] = lcoe
+        
+        
+        
+    def generation_graph(self,ini,fin):
+        df_results = copy.deepcopy(self.df_results.iloc[int(ini):int(fin)])
+        bars = []
+        for key, value in self.descriptive['generators'].items():
+            if value==1:
+                bars.append(go.Bar(name=key, x=df_results.index, y=df_results[key]))
+        for key, value in self.descriptive['batteries'].items():
+            if value==1:
+                column_name = key+'_b-'
+                bars.append(go.Bar(name=key, x=df_results.index, y=df_results[column_name]))
+  
+        bars.append(go.Bar(name='Unsupplied Demand',x=df_results.index, y=df_results['S-']))
+                
+        plot = go.Figure(data=bars)
+        
+        
+        plot.add_trace(go.Scatter(x=df_results.index, y=df_results['demand'],
+                    mode='lines',
+                    name='Demand',
+                    line=dict(color='grey', dash='dot')))
+        
+        df_results['b+'] = 0
+        for key, value in self.descriptive['batteries'].items():
+            if value==1:
+                column_name = key+'_b+'
+                df_results['b+'] += df_results[column_name]
+        #self.df_results['Battery1_b+']+self.df_results['Battery2_b+']
+        plot.add_trace(go.Bar(x=df_results.index, y=df_results['b+'],
+                              base=-1*df_results['b+'],
+                              marker_color='grey',
+                              name='Charge'
+                              ))
+        
+        # Set values y axis
+        #plot.update_yaxes(range=[-self.df_results['b+'].max()-50, self.df_results['demand'].max()+200])
+        #plot.update_yaxes(range=[-10, 30])
+        # Change the bar mode
+        plot.update_layout(barmode='stack')
+        
+        
+        return plot
+
+
 

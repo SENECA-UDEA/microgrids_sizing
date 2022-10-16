@@ -4,16 +4,15 @@ Created on Wed Apr 20 11:14:21 2022
 
 @author: pmayaduque
 """
-from utilities import read_data, create_objects, calculate_sizingcost, create_technologies, calculate_area, calculate_energy, interest_rate
+from utilities import read_data, create_objects, create_technologies, calculate_area, calculate_energy, interest_rate
 from utilities import fiscal_incentive, calculate_cost_data
 #import opt as opt
 from classes import Random_create
 import pandas as pd 
-import operatorsdispatch, graphic_results
-import maindispatch
-from operators import Sol_constructor, Search_operator
+from operatorsdispatch import Sol_constructor, Search_operator
 from plotly.offline import plot
 from dispatchstrategy import strategy, d, B_plus_D_plus_Ren, D_plus_S_and_or_W, B_plus_S_and_or_W 
+from dispatchstrategy import Results
 import copy
 pd.options.display.max_columns = None
 
@@ -64,6 +63,9 @@ demand_df, forecast_df, generators, batteries, instance_data, fisc_data, cost_da
                                                                                                 fiscalData_filepath,
                                                                                                 costData_filepath)
 
+
+amax =  instance_data['amax']
+N_iterations = instance_data['N_iterations']
 #Calculate salvage, operation and replacement cost with investment cost
 generators, batteries = calculate_cost_data(generators, batteries, instance_data, cost_data)
 #Demand to be covered
@@ -101,11 +103,10 @@ sol_constructor = Sol_constructor(generators_dict,
 
 #create a default solution
 sol_feasible = sol_constructor.initial_solution(instance_data,
-                                               generators_dict, 
-                                               batteries_dict, 
                                                technologies_dict, 
                                                renewables_dict,
                                                delta,
+                                               CRF,
                                                rand_ob,
                                                lcoe_cost = cost_data['LCOE_COST'])
 
@@ -123,8 +124,7 @@ sol_current = copy.deepcopy(sol_feasible)
 
 #nputs for the model
 movement = "Initial Solution"
-amax =  instance_data['amax']
-N_iterations = instance_data['N_iterations']
+
 #df of solutions
 rows_df = []
 
@@ -169,40 +169,25 @@ if (sol_best.results != None):
         #Make model
         
         strategy = strategy(generators_dict = sol_try.generators_dict_sol,
-                                           batteries_dict = sol_try.batteries_dict_sol) 
-        
-        ar = calculate_area[sol_try]
-        if ar > amax:
-            state = 'No feasible solution'
-        else:
-            if (strategy == "Diesel"):
-                lcoe_cost, df_results, state = d(sol_try, demand_df, instance_data, cost_data['LCOE_COST'] )
-            elif (strategy == "diesel - solar"):
-                lcoe_cost, df_results, state = D_plus_S_and_or_W(sol_try, demand_df, instance_data, cost_data['LCOE_COST'] )
-            elif (strategy == "battery - solar"):
-                lcoe_cost, df_results, state = B_plus_S_and_or_W (sol_try, demand_df, instance_data, cost_data['LCOE_COST'] )
-            elif (strategy == "battery - wind"):
-                lcoe_cost, df_results, state = B_plus_S_and_or_W (sol_try, demand_df, instance_data, cost_data['LCOE_COST'] )
-            elif (strategy == "diesel - wind"):
-                lcoe_cost, df_results, state = D_plus_S_and_or_W (sol_try, demand_df, instance_data, cost_data['LCOE_COST'] )
-            elif (strategy == "battery - solar - wind"):
-                lcoe_cost, df_results, state = B_plus_S_and_or_W (sol_try, demand_df, instance_data, cost_data['LCOE_COST'] )
-            elif (strategy == "battery - diesel - wind"):
-                lcoe_cost, df_results, state = B_plus_D_plus_Ren(sol_try, demand_df, instance_data, cost_data['LCOE_COST'] )
-            elif (strategy == "diesel - solar - wind"):
-                lcoe_cost, df_results, state = D_plus_S_and_or_W (sol_try, demand_df, instance_data, cost_data['LCOE_COST'] )
-            elif (strategy == "battery diesel - solar"):
-                lcoe_cost, df_results, state = B_plus_D_plus_Ren(sol_try, demand_df, instance_data, cost_data['LCOE_COST'] )
-            elif (strategy == "battery - diesel - solar - wind"):
-                lcoe_cost, df_results, state = B_plus_D_plus_Ren(sol_try, demand_df, instance_data, cost_data['LCOE_COST'] )
-            else:
-                state = 'No feasible solution'
+                            batteries_dict = sol_try.batteries_dict_sol) 
         
 
+        if (strategy == "diesel"):
+            lcoe_cost, df_results, state, time_f = d(sol_try, demand_df, instance_data, cost_data['LCOE_COST'], CRF, instance_data['fuel_cost'])
+        elif (strategy == "diesel - solar") or (strategy == "diesel - wind") or (strategy == "diesel - solar - wind"):
+            lcoe_cost, df_results, state, time_f  = D_plus_S_and_or_W(sol_try, demand_df, instance_data, cost_data['LCOE_COST'],CRF, instance_data['fuel_cost'],delta )
+        elif (strategy == "battery - solar") or (strategy == "battery - wind") or (strategy == "battery - solar - wind"):
+            lcoe_cost, df_results, state, time_f  = B_plus_S_and_or_W (sol_try, demand_df, instance_data, cost_data['LCOE_COST'], CRF, instance_data['fuel_cost'], delta)
+        elif (strategy == "battery - diesel - wind") or (strategy == "battery diesel - solar") or (strategy == "battery - diesel - solar - wind"):
+            lcoe_cost, df_results, state, time_f  = B_plus_D_plus_Ren(sol_try, demand_df, instance_data, cost_data['LCOE_COST'], CRF, instance_data['fuel_cost'], delta)
+        else:
+            state = 'No feasible solution'
+        
+
+   
         #Create results
         if state == 'optimal':
-            sol_try.results.descriptive['LCOE'] = lcoe_cost
-            sol_try.results = df_results
+            sol_try.results = Results(sol_try, df_results, lcoe_cost)
             sol_try.feasible = True
             sol_current = copy.deepcopy(sol_try)
             #Search the best solution
@@ -210,7 +195,7 @@ if (sol_best.results != None):
                 sol_best = copy.deepcopy(sol_try)
         else:
             sol_try.feasible = False
-            sol_try.results.descriptive['LCOE'] = None
+            sol_try.results = None
             sol_current = copy.deepcopy(sol_try)
         
         del df_results

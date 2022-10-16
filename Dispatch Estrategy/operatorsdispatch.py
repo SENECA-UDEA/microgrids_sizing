@@ -3,7 +3,7 @@
 Created on Wed May 11 10:23:49 2022
 @author: pmayaduque
 """
-from src.utilities import create_technologies, calculate_sizingcost, interest_rate
+from src.utilities import create_technologies
 from src.classes import Solution, Diesel
 import copy
 import math
@@ -18,17 +18,18 @@ class Sol_constructor():
         self.forecast_df = forecast_df
 
     def initial_solution (self, 
-                          instance_data,
-                          generators_dict, 
-                          batteries_dict, 
+                          instance_data, 
                           technologies_dict, 
                           renewables_dict,
                           delta,
+                          CRF,
                           rand_ob,
                           lcoe_cost,
                           demand_df, 
                           cost_data): #initial Diesel solution
-        from dispatchstrategy import strategy, d, ds, db, sb, wb, dw, swb, dwb, swd, dsb, swdb
+        from dispatchstrategy import strategy, d, B_plus_D_plus_Ren, D_plus_S_and_or_W, B_plus_S_and_or_W 
+        from dispatchstrategy import Results
+    
         generators_dict_sol = {}
         batteries_dict_sol = {}
         #create auxiliar dict for the iterations
@@ -123,42 +124,36 @@ class Sol_constructor():
         #create the initial solution solved
         technologies_dict_sol, renewables_dict_sol = create_technologies (generators_dict_sol, 
                                                                           batteries_dict_sol)
-        ir = interest_rate(instance_data['i_f'],instance_data['inf'])
  
 
         
         strategy = strategy(generators_dict = generators_dict_sol,
-                                           batteries_dict = batteries_dict_sol) 
+                            batteries_dict = batteries_dict_sol) 
         
-       
-        if (strategy == "Diesel"):
-            lcoe_cost, df_results, area, state = d(generators_dict, batteries_dict, demand_df, instance_data, cost_data['LCOE_COST'] )
-        elif (strategy == "diesel - solar"):
-            lcoe_cost, df_results, area, state = ds(generators_dict, batteries_dict, demand_df, instance_data, cost_data['LCOE_COST'] )
-        elif (strategy == "battery - diesel"):
-            lcoe_cost, df_results, area, state = db(generators_dict, batteries_dict, demand_df, instance_data, cost_data['LCOE_COST'] )
-        elif (strategy == "battery - solar"):
-            lcoe_cost, df_results, area, state = sb(generators_dict, batteries_dict, demand_df, instance_data, cost_data['LCOE_COST'] )
-        elif (strategy == "battery - wind"):
-            lcoe_cost, df_results, area, state = wb(generators_dict, batteries_dict, demand_df, instance_data, cost_data['LCOE_COST'] )
-        elif (strategy == "diesel - wind"):
-            lcoe_cost, df_results, area, state = dw(generators_dict, batteries_dict, demand_df, instance_data, cost_data['LCOE_COST'] )
-        elif (strategy == "battery - solar - wind"):
-            lcoe_cost, df_results, area, state = swb(generators_dict, batteries_dict, demand_df, instance_data, cost_data['LCOE_COST'] )
-        elif (strategy == "battery - diesel - wind"):
-            lcoe_cost, df_results, area, state = dwb(generators_dict, batteries_dict, demand_df, instance_data, cost_data['LCOE_COST'] )
-        elif (strategy == "diesel - solar - wind"):
-            lcoe_cost, df_results, area, state = swd(generators_dict, batteries_dict, demand_df, instance_data, cost_data['LCOE_COST'] )
-        elif (strategy == "battery diesel - solar"):
-            lcoe_cost, df_results, area, state = dsb(generators_dict, batteries_dict, demand_df, instance_data, cost_data['LCOE_COST'] )
-        elif (strategy == "battery - diesel - solar - wind"):
-            lcoe_cost, df_results, area, state = swdb(generators_dict, batteries_dict, demand_df, instance_data, cost_data['LCOE_COST'] )
+        technologies_dict_sol, renewables_dict_sol = create_technologies (generators_dict_sol, 
+                                                                          batteries_dict_sol)
+        
+        sol_results = None
+        sol_try = Solution(generators_dict_sol, 
+                           batteries_dict_sol, 
+                           technologies_dict_sol, 
+                           renewables_dict_sol,
+                           sol_results) 
+        
+        if (strategy == "diesel"):
+            lcoe_cost, df_results, state, time_f = d(sol_try, demand_df, instance_data, cost_data['LCOE_COST'], CRF, instance_data['fuel_cost'])
+        elif (strategy == "diesel - solar") or (strategy == "diesel - wind") or (strategy == "diesel - solar - wind"):
+            lcoe_cost, df_results, state, time_f  = D_plus_S_and_or_W(sol_try, demand_df, instance_data, cost_data['LCOE_COST'],CRF, instance_data['fuel_cost'],delta )
+        elif (strategy == "battery - solar") or (strategy == "battery - wind") or (strategy == "battery - solar - wind"):
+            lcoe_cost, df_results, state, time_f  = B_plus_S_and_or_W (sol_try, demand_df, instance_data, cost_data['LCOE_COST'], CRF, instance_data['fuel_cost'], delta)
+        elif (strategy == "battery - diesel - wind") or (strategy == "battery diesel - solar") or (strategy == "battery - diesel - solar - wind"):
+            lcoe_cost, df_results, state, time_f  = B_plus_D_plus_Ren(sol_try, demand_df, instance_data, cost_data['LCOE_COST'], CRF, instance_data['fuel_cost'], delta)
         else:
             state = 'No feasible solution'
-
         
         if state == 'optimal': 
-            sol_results = df_results
+            sol_try.results = Results(sol_try, df_results, lcoe_cost)
+            sol_try.feasible = True
         else: 
             #create a false Diesel auxiliar
             k = {
@@ -182,20 +177,27 @@ class Sol_constructor():
             technologies_dict_sol, renewables_dict_sol = create_technologies (generators_dict_sol, 
                                                                               batteries_dict_sol)
             
+            if (strategy == "diesel"):
+                lcoe_cost, df_results, state, time_f = d(sol_try, demand_df, instance_data, cost_data['LCOE_COST'], CRF, instance_data['fuel_cost'])
+            elif (strategy == "diesel - solar") or (strategy == "diesel - wind") or (strategy == "diesel - solar - wind"):
+                lcoe_cost, df_results, state, time_f  = D_plus_S_and_or_W(sol_try, demand_df, instance_data, cost_data['LCOE_COST'],CRF, instance_data['fuel_cost'],delta )
+            elif (strategy == "battery - solar") or (strategy == "battery - wind") or (strategy == "battery - solar - wind"):
+                lcoe_cost, df_results, state, time_f  = B_plus_S_and_or_W (sol_try, demand_df, instance_data, cost_data['LCOE_COST'], CRF, instance_data['fuel_cost'], delta)
+            elif (strategy == "battery - diesel - wind") or (strategy == "battery diesel - solar") or (strategy == "battery - diesel - solar - wind"):
+                lcoe_cost, df_results, state, time_f  = B_plus_D_plus_Ren(sol_try, demand_df, instance_data, cost_data['LCOE_COST'], CRF, instance_data['fuel_cost'], delta)
+            else:
+                state = 'No feasible solution'
 
-        lcoe_cost, df_results, area, state = d(generators_dict, batteries_dict, demand_df, instance_data, cost_data['LCOE_COST'] )
-       
-
-        
-        if state == 'optimal': 
-            sol_results = df_results
-        
         sol_initial = Solution(generators_dict_sol, 
                                batteries_dict_sol, 
                                technologies_dict_sol, 
                                renewables_dict_sol,
                                sol_results) 
+        
+        if state == 'optimal': 
+            sol_initial.results = Results(sol_initial, df_results, lcoe_cost)
         sol_initial.feasible = True
+        
         
         
         return sol_initial
