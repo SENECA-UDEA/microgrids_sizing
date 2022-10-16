@@ -2,7 +2,7 @@
     "amax": 20, 
     "i_f" : 0.124032, 
     "inf": 0.04,
-    "nse" : 0.1, 
+    "nse" : 0.15, 
     "demand_covered": 1,
     "years" : 20,
     "tlpsp" : 1,

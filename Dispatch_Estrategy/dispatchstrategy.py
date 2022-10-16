@@ -8,13 +8,13 @@ import plotly.graph_objects as go
 import plotly.io as pio
 pio.renderers.default='browser'
 
-def strategy (batteries_dict, generators_dict):
+def def_strategy (batteries_dict, generators_dict):
     
     d=0
     s=0
     b=0
     w=0    
-    
+    dispatch = ""
     for gen in generators_dict.values(): 
         if (gen.tec == 'D'):
             d = 1
@@ -44,7 +44,7 @@ def strategy (batteries_dict, generators_dict):
     
     return dispatch
 
-def d (self, solution, demand_df, instance_data, cost_data, CRF, fuel_cost):
+def d (solution, demand_df, instance_data, cost_data, CRF):
     time_i = time.time()
     auxiliar_dict_generator = {}
     lcoe_op = 0
@@ -64,7 +64,7 @@ def d (self, solution, demand_df, instance_data, cost_data, CRF, fuel_cost):
     soc = {l+'_soc' : [0]*len_data for l in solution.batteries_dict_sol}
     bplus = {l+'_b+' : [0]*len_data for l in solution.batteries_dict_sol}
     bminus = {l+'_b-' : [0]*len_data for l in solution.batteries_dict_sol}
-    
+    fuel_cost = instance_data['fuel_cost']
     
     for g in solution.generators_dict_sol.values():  
         lcoe_inf = (g.cost_up + g.cost_r - g.cost_s) * CRF + g.cost_fopm
@@ -125,11 +125,11 @@ def d (self, solution, demand_df, instance_data, cost_data, CRF, fuel_cost):
     splus_df = pd.DataFrame(splus['s+'], columns = ['Wasted Energy'])
     df_results = pd.concat([demand, generation, bminus_df, soc_df, bplus_df, sminus_df, splus_df, generation_cost], axis=1) 
     time_f = time.time() - time_i
-    return lcoe_cost, df_results, state, time_f 
+    return lcoe_cost, df_results, state, time_f
     
     
 
-def D_plus_S_and_or_W (solution, demand_df, instance_data, cost_data, CRF, fuel_cost, delta):
+def D_plus_S_and_or_W (solution, demand_df, instance_data, cost_data, CRF, delta):
     time_i = time.time()
     auxiliar_dict_generator = {}
     list_ren = []
@@ -141,7 +141,7 @@ def D_plus_S_and_or_W (solution, demand_df, instance_data, cost_data, CRF, fuel_
     min_ref = math.inf
     p = {k : [0]*len_data for k in solution.generators_dict_sol}
     cost = {k+'cost'  : [0]*len_data for k in solution.generators_dict_sol}
-
+    fuel_cost = instance_data['fuel_cost']
     costsplus = {'cost_s+': [0]*len_data}
     costsminus = {'cost_s-': [0]*len_data}
     splus = {'s+': [0]*len_data}
@@ -276,14 +276,13 @@ def B_plus_S_and_or_W  (solution, demand_df, instance_data, cost_data, CRF, delt
     costvopm = 0
     splustot = 0
     sminustot = 0
-    extra_generation = 0
-
-    for g in solution.generators_dict_sol():
+    extra_generation = 0 
+    for g in solution.generators_dict_sol.values():
         lcoe_inf = (g.cost_up + g.cost_r - g.cost_s) * delta * CRF + g.cost_fopm
         lcoe_inftot += lcoe_inf 
         list_ren.append(g.id_gen)
 
-    for b in solution.batteries_dict_sol():
+    for b in solution.batteries_dict_sol.values():
         lcoe_inf = (b.cost_up + b.cost_r - b.cost_s) * delta * CRF + b.cost_fopm
         lcoe_inftot += lcoe_inf    
         auxiliar_dict_batteries[b.id_bat] = (b.soc_max * len_data) / (lcoe_inf*CRF)        
@@ -520,8 +519,9 @@ def B_plus_S_and_or_W2  (solution, demand_df, instance_data, cost_data, CRF, del
 
 
 
-def B_plus_D_plus_Ren(solution, demand_df, instance_data, cost_data, CRF, fuel_cost, delta):
+def B_plus_D_plus_Ren(solution, demand_df, instance_data, cost_data, CRF, delta):
     
+    fuel_cost = instance_data['fuel_cost']
     time_i = time.time()
     auxiliar_dict_batteries = {}
     auxiliar_dict_generator = {}
@@ -738,12 +738,12 @@ class Results():
         generators = {}
         try:
             for k in solution.generators_dict_sol.values():
-               generators[k] = 1
+               generators[k.id_gen] = 1
             self.descriptive['generators'] = generators
         except:
             for k in solution.generators_dict_sol.values():
-                if df_results[k].sum() > 0:
-                    generators[k] = 1
+                if df_results[k.id_gen].sum() > 0:
+                    generators[k.id_gen] = 1
             self.descriptive['generators'] = generators
         # technologies
         tecno_data = {}
@@ -756,13 +756,13 @@ class Results():
               
         bat_data = {}
         try: 
-            for l in solution.batteries_dict_sol:
-               bat_data[l] = 1
+            for l in solution.batteries_dict_sol.values():
+               bat_data[l.id_bat] = 1
             self.descriptive['batteries'] = bat_data
         except:
-            for l in solution.batteries_dict_sol:
-                if df_results[l+'_b-'].sum() + df_results[l+'_b+'].sum() > 0:
-                    bat_data[l] = 1
+            for l in solution.batteries_dict_sol.values():
+                if df_results[l.id_bat+'_b-'].sum() + df_results[l.id_bat+'_b+'].sum() > 0:
+                    bat_data[l.id_bat] = 1
             self.descriptive['batteries'] = bat_data 
                   
 
