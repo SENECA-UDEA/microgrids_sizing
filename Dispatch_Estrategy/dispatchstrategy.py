@@ -56,7 +56,7 @@ def d (solution, demand_df, instance_data, cost_data, CRF):
     sminus = {'s-': [0]*len_data}
     lpsp = {'lpsp': [0]*len_data}
     p = {k : [0]*len_data for k in solution.generators_dict_sol}
-    cost = {k+'cost'  : [0]*len_data for k in solution.generators_dict_sol}
+    cost = {k+'_cost'  : [0]*len_data for k in solution.generators_dict_sol}
     ptot = 0
     costvopm = 0
     splustot = 0
@@ -81,18 +81,18 @@ def d (solution, demand_df, instance_data, cost_data, CRF):
              gen = solution.generators_dict_sol[i]
              if (demand_tobe_covered < gen.DG_min):
                  p[i][t] = 0
-                 cost[i+'cost'][t]=0
+                 cost[i+'_cost'][t]=0
              elif (gen.DG_max >= demand_tobe_covered):
                  p[i][t] = demand_tobe_covered
                  ptot += p[i][t]
-                 cost[i+'cost'][t] = (gen.f0 * gen.DG_max + gen.f1 * p[i][t])*fuel_cost
-                 costvopm += cost[i+'cost'][t]
+                 cost[i+'_cost'][t] = (gen.f0 * gen.DG_max + gen.f1 * p[i][t])*fuel_cost
+                 costvopm += cost[i+'_cost'][t]
                  demand_tobe_covered = 0
              else:
                 p[i][t] = gen.DG_max
                 ptot += p[i][t]
-                cost[i+'cost'][t] = (gen.f0 + gen.f1)* gen.DG_max * fuel_cost
-                costvopm += cost[i+'cost'][t]
+                cost[i+'_cost'][t] = (gen.f0 + gen.f1)* gen.DG_max * fuel_cost
+                costvopm += cost[i+'_cost'][t]
                 demand_tobe_covered = demand_tobe_covered - gen.DG_max
         if (demand_tobe_covered > 0):
             sminus['s-'][t] = demand_tobe_covered
@@ -140,7 +140,7 @@ def D_plus_S_and_or_W (solution, demand_df, instance_data, cost_data, CRF, delta
     len_data =  len(demand_df['demand'])
     min_ref = math.inf
     p = {k : [0]*len_data for k in solution.generators_dict_sol}
-    cost = {k+'cost'  : [0]*len_data for k in solution.generators_dict_sol}
+    cost = {k+'_cost'  : [0]*len_data for k in solution.generators_dict_sol}
     fuel_cost = instance_data['fuel_cost']
     costsplus = {'cost_s+': [0]*len_data}
     costsminus = {'cost_s-': [0]*len_data}
@@ -179,8 +179,8 @@ def D_plus_S_and_or_W (solution, demand_df, instance_data, cost_data, CRF, delta
             for ren in list_ren:
                 renew = solution.generators_dict_sol[ren]
                 p[ren][t] = renew.gen_rule[t]
-                cost[ren+'cost'][t] = p[ren][t] * renew.cost_vopm
-                costvopm += cost[ren+'cost'][t]
+                cost[ren+'_cost'][t] = p[ren][t] * renew.cost_vopm
+                costvopm += cost[ren+'_cost'][t]
             generation_ren = sum(solution.generators_dict_sol[i].gen_rule[t] for i in list_ren)
             ptot += generation_ren
             if generation_ren > (demand_tobe_covered - ref):
@@ -196,8 +196,8 @@ def D_plus_S_and_or_W (solution, demand_df, instance_data, cost_data, CRF, delta
                 gen = solution.generators_dict_sol[n]
                 p[n][t] = ref
                 ptot += p[n][t]
-                cost[n+'cost'][t] = (gen.f0 * gen.DG_max + gen.f1 * p[n][t])*fuel_cost
-                costvopm += cost[n+'cost'][t]
+                cost[n+'_cost'][t] = (gen.f0 * gen.DG_max + gen.f1 * p[n][t])*fuel_cost
+                costvopm += cost[n+'_cost'][t]
                 
             else:
                 
@@ -205,18 +205,18 @@ def D_plus_S_and_or_W (solution, demand_df, instance_data, cost_data, CRF, delta
                      gen = solution.generators_dict_sol[i]
                      if (demand_tobe_covered < gen.DG_min):
                          p[i][t] = 0
-                         cost[i+'cost'][t]=0
+                         cost[i+'_cost'][t]=0
                      elif (gen.DG_max >= demand_tobe_covered):
                          p[i][t] = demand_tobe_covered
                          ptot += p[i][t]
-                         cost[i+'cost'][t] = (gen.f0 * gen.DG_max + gen.f1 * p[i][t])*fuel_cost
-                         costvopm += cost[i+'cost'][t]
+                         cost[i+'_cost'][t] = (gen.f0 * gen.DG_max + gen.f1 * p[i][t])*fuel_cost
+                         costvopm += cost[i+'_cost'][t]
                          demand_tobe_covered = 0
                      else:
                         p[i][t] = gen.DG_max
                         ptot += p[i][t]
-                        cost[i+'cost'][t] = (gen.f0 + gen.f1)* gen.DG_max * fuel_cost
-                        costvopm += cost[i+'cost'][t]
+                        cost[i+'_cost'][t] = (gen.f0 + gen.f1)* gen.DG_max * fuel_cost
+                        costvopm += cost[i+'_cost'][t]
                         demand_tobe_covered = demand_tobe_covered - gen.DG_max
         if (demand_tobe_covered > 0):
             sminus['s-'][t] = demand_tobe_covered
@@ -266,7 +266,7 @@ def B_plus_S_and_or_W  (solution, demand_df, instance_data, cost_data, CRF, delt
     soc = {l+'_soc' : [0]*len_data for l in solution.batteries_dict_sol}
     bplus = {l+'_b+' : [0]*len_data for l in solution.batteries_dict_sol}
     bminus = {l+'_b-' : [0]*len_data for l in solution.batteries_dict_sol}
-    cost = {k+'cost' : [0]*len_data for k in dict_total}
+    cost = {k+'_cost' : [0]*len_data for k in dict_total}
     costsplus = {'cost_s+': [0]*len_data}
     costsminus = {'cost_s-': [0]*len_data}
     splus = {'s+': [0]*len_data}
@@ -304,8 +304,8 @@ def B_plus_S_and_or_W  (solution, demand_df, instance_data, cost_data, CRF, delt
         for ren in list_ren:
             renew = solution.generators_dict_sol[ren]
             p[ren][t] = renew.gen_rule[t]
-            cost[ren+'cost'][t] = p[ren][t] * renew.cost_vopm
-            costvopm += cost[ren+'cost'][t]
+            cost[ren+'_cost'][t] = p[ren][t] * renew.cost_vopm
+            costvopm += cost[ren+'_cost'][t]
         generation_ren = sum(solution.generators_dict_sol[i].gen_rule[t] for i in list_ren)
         ptot += generation_ren
         if generation_ren > demand_tobe_covered:
@@ -387,7 +387,7 @@ def B_plus_S_and_or_W2  (solution, demand_df, instance_data, cost_data, CRF, del
     soc = {l+'_soc' : [0]*len_data for l in solution.batteries_dict_sol}
     bplus = {l+'_b+' : [0]*len_data for l in solution.batteries_dict_sol}
     bminus = {l+'_b-' : [0]*len_data for l in solution.batteries_dict_sol}
-    cost = {k+'cost' : [0]*len_data for k in dict_total}
+    cost = {k+'_cost' : [0]*len_data for k in dict_total}
     costsplus = {'cost_s+': [0]*len_data}
     costsminus = {'cost_s-': [0]*len_data}
     splus = {'s+': [0]*len_data}
@@ -434,8 +434,8 @@ def B_plus_S_and_or_W2  (solution, demand_df, instance_data, cost_data, CRF, del
         for ren in list_ren:
             renew = solution.generators_dict_sol[ren]
             p[ren][t] = renew.gen_rule[t]
-            cost[ren+'cost'][t] = p[ren][t] * renew.cost_vopm
-            costvopm += cost[ren+'cost'][t]
+            cost[ren+'_cost'][t] = p[ren][t] * renew.cost_vopm
+            costvopm += cost[ren+'_cost'][t]
         generation_ren = sum(solution.generators_dict_sol[i].gen_rule[t] for i in list_ren)
         ptot += generation_ren
         if generation_ren >= (demand_tobe_covered + total_demand_batteries):
@@ -535,7 +535,7 @@ def B_plus_D_plus_Ren(solution, demand_df, instance_data, cost_data, CRF, delta)
     soc = {l+'_soc' : [0]*len_data for l in solution.batteries_dict_sol}
     bplus = {l+'_b+' : [0]*len_data for l in solution.batteries_dict_sol}
     bminus = {l+'_b-' : [0]*len_data for l in solution.batteries_dict_sol}
-    cost = {k+'cost' : [0]*len_data for k in dict_total}
+    cost = {k+'_cost' : [0]*len_data for k in dict_total}
     costsplus = {'cost_s+': [0]*len_data}
     costsminus = {'cost_s-': [0]*len_data}
     splus = {'s+': [0]*len_data}
@@ -586,8 +586,8 @@ def B_plus_D_plus_Ren(solution, demand_df, instance_data, cost_data, CRF, delta)
         for ren in list_ren:
             renew = solution.generators_dict_sol[ren]
             p[ren][t] = renew.gen_rule[t]
-            cost[ren+'cost'][t] = p[ren][t] * renew.cost_vopm
-            costvopm += cost[ren+'cost'][t]
+            cost[ren+'_cost'][t] = p[ren][t] * renew.cost_vopm
+            costvopm += cost[ren+'_cost'][t]
         generation_ren = sum(solution.generators_dict_sol[i].gen_rule[t] for i in list_ren)
         ptot += generation_ren
         if generation_ren > demand_tobe_covered:
@@ -630,18 +630,18 @@ def B_plus_D_plus_Ren(solution, demand_df, instance_data, cost_data, CRF, delta)
                      gen = solution.generators_dict_sol[j]
                      if (demand_tobe_covered < gen.DG_min):
                          p[j][t] = 0
-                         cost[j+'cost'][t]=0
+                         cost[j+'_cost'][t]=0
                      elif (gen.DG_max >= demand_tobe_covered):
                          p[j][t] = demand_tobe_covered
                          ptot += p[j][t]
-                         cost[j+'cost'][t] = (gen.f0 * gen.DG_max + gen.f1 * p[j][t])*fuel_cost
-                         costvopm += cost[j+'cost'][t]
+                         cost[j+'_cost'][t] = (gen.f0 * gen.DG_max + gen.f1 * p[j][t])*fuel_cost
+                         costvopm += cost[j+'_cost'][t]
                          demand_tobe_covered = 0
                      else:
                         p[j][t] = gen.DG_max
                         ptot += p[j][t]
-                        cost[j+'cost'][t] = (gen.f0 + gen.f1)* gen.DG_max * fuel_cost
-                        costvopm += cost[j+'cost'][t]
+                        cost[j+'_cost'][t] = (gen.f0 + gen.f1)* gen.DG_max * fuel_cost
+                        costvopm += cost[j+'_cost'][t]
                         demand_tobe_covered = demand_tobe_covered - gen.DG_max
         
         else:
@@ -675,18 +675,18 @@ def B_plus_D_plus_Ren(solution, demand_df, instance_data, cost_data, CRF, delta)
                      gen = solution.generators_dict_sol[j]
                      if (demand_tobe_covered < gen.DG_min):
                          p[j][t] = 0
-                         cost[j+'cost'][t]=0
+                         cost[j+'_cost'][t]=0
                      elif (gen.DG_max >= demand_tobe_covered):
                          p[j][t] = demand_tobe_covered
                          ptot += p[j][t]
-                         cost[j+'cost'][t] = (gen.f0 * gen.DG_max + gen.f1 * p[j][t])*fuel_cost
-                         costvopm += cost[j+'cost'][t]
+                         cost[j+'_cost'][t] = (gen.f0 * gen.DG_max + gen.f1 * p[j][t])*fuel_cost
+                         costvopm += cost[j+'_cost'][t]
                          demand_tobe_covered = 0
                      else:
                         p[j][t] = gen.DG_max
                         ptot += p[j][t]
-                        cost[j+'cost'][t] = (gen.f0 + gen.f1)* gen.DG_max * fuel_cost
-                        costvopm += cost[j+'cost'][t]
+                        cost[j+'_cost'][t] = (gen.f0 + gen.f1)* gen.DG_max * fuel_cost
+                        costvopm += cost[j+'_cost'][t]
                         demand_tobe_covered = demand_tobe_covered - gen.DG_max
 
         

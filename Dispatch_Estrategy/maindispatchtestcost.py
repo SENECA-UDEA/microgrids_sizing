@@ -7,17 +7,17 @@ Created on Wed Apr 20 11:14:21 2022
 
 from src.utilities import read_data, create_objects, calculate_sizingcost, create_technologies, calculate_area, calculate_energy, interest_rate
 from src.utilities import fiscal_incentive, calculate_cost_data
-import src.opt as opt
 from src.classes import Random_create
 import pandas as pd 
-from src.operators import Sol_constructor, Search_operator
+from Dispatch_Estrategy.dispatchstrategy import def_strategy, d, B_plus_D_plus_Ren, D_plus_S_and_or_W, B_plus_S_and_or_W 
+from Dispatch_Estrategy.dispatchstrategy import Results
+from Dispatch_Estrategy.operatorsdispatch import Sol_constructor, Search_operator
 from plotly.offline import plot
 import copy
 pd.options.display.max_columns = None
 import time
 
 rows_df_time = []
-Solver_data = {"MIP_GAP":0.01,"TEE_SOLVER":True,"OPT_SOLVER":"gurobi"}
 for iii in range(1, 433):
     #PARAMETROS DE LA CORRIDA - POR DEFECTO
     #lugar
@@ -25,7 +25,7 @@ for iii in range(1, 433):
     #seed = None
     seed = 42
     rand_ob = Random_create(seed = seed)
-    place  = "Providencia"
+    place  = "Test"
     #iteraciones
     iteraciones_run = 30
     #area, por defecto 100%
@@ -52,7 +52,6 @@ for iii in range(1, 433):
     #%forecast solar, por defecto 100%
     forecast_s_run = 1
     #gap, por defecto 1%
-    gap_run = 0.01
     #método de añadir, grasp o random
     add_function_run = "GRASP"
     remove_function_run = "RANDOM"
@@ -289,9 +288,6 @@ for iii in range(1, 433):
     CRF = (ir * (1 + ir)**(years_run))/((1 + ir)**(years_run)-1)  
    
     #Set solver settings
-    Solver_data["MIP_GAP"] = gap_run
-    TEE_SOLVER = True
-    OPT_SOLVER = 'gurobi'
    
     #Calculate fiscal incentives
     delta = fiscal_incentive(fisc_data['credit'],
@@ -335,13 +331,13 @@ for iii in range(1, 433):
     aux_instance_data['years'] = years_run    
    
     #create a default solution
-    sol_feasible = sol_constructor.initial_solution(aux_instance_data,
-                                                    technologies_dict, 
+    sol_feasible= sol_constructor.initial_solution(aux_instance_data,
+                                                    technologies_dict,
                                                     renewables_dict,
                                                     delta,
-                                                    Solver_data,
+                                                    CRF,
                                                     rand_ob,
-                                                    cost_data['NSE_COST'])
+                                                    cost_data)
    
     
     #if use aux_diesel asigns a big area to avoid select it again
@@ -362,7 +358,7 @@ for iii in range(1, 433):
    
     # create the actual solution with the initial soluion
     sol_current = copy.deepcopy(sol_feasible)
-   
+    sol_current.results.descriptive['area'] = calculate_area(sol_current)   
     #check the available area
    
     #nputs for the model
@@ -447,56 +443,60 @@ for iii in range(1, 433):
                                                 delta = delta,
                                                 greed = instance_data['inverter_greed_cost'])
             time_i_make = time.time()
-            model2 = opt.make_model_operational(generators_dict = sol_try.generators_dict_sol,
-                                               batteries_dict = sol_try.batteries_dict_sol,  
-                                               demand_df=dict(zip(demand_df.t, demand_df.demand)),
-                                               technologies_dict = sol_try.technologies_dict_sol,  
-                                               renewables_dict = sol_try.renewables_dict_sol,
-                                               fuel_cost =  instance_data['fuel_cost'] * fuel_cost_run,
-                                               nse =  nse_run,
-                                               TNPCCRF = tnpccrf_calc,
-                                               splus_cost = instance_data['splus_cost'] * splus_cost_run,
-                                               sminus_cost = instance_data['sminus_cost'] * sminus_cost_run,
-                                               tlpsp = tlpsp_run,
-                                               nse_cost = cost_data['NSE_COST'])
-           
+            strategy_def = def_strategy(generators_dict = sol_try.generators_dict_sol,
+                            batteries_dict = sol_try.batteries_dict_sol) 
 
+            if (strategy_def == "diesel"):
+                lcoe_cost, df_results, state, time_f = d(sol_try, demand_df, instance_data, cost_data, CRF)
+            elif (strategy_def == "diesel - solar") or (strategy_def == "diesel - wind") or (strategy_def == "diesel - solar - wind"):
+                lcoe_cost, df_results, state, time_f  = D_plus_S_and_or_W(sol_try, demand_df, instance_data, cost_data,CRF, delta )
+            elif (strategy_def == "battery - solar") or (strategy_def == "battery - wind") or (strategy_def == "battery - solar - wind"):
+                lcoe_cost, df_results, state, time_f  = B_plus_S_and_or_W (sol_try, demand_df, instance_data, cost_data, CRF, delta)
+            elif (strategy_def == "battery - diesel - wind") or (strategy_def == "battery diesel - solar") or (strategy_def == "battery - diesel - solar - wind"):
+                lcoe_cost, df_results, state, time_f  = B_plus_D_plus_Ren(sol_try, demand_df, instance_data, cost_data, CRF, delta)
+            else:
+                state = 'No feasible solution'
+                df_results = []
+            
             
             
             time_f_make = time.time() - time_i_make
             dict_time_make[i] = time_f_make
             time_i_solve = time.time()
-            results, termination = opt.solve_model(model2,
-                                                   Solver_data)
             time_f_solve = time.time() - time_i_solve
             dict_time_solve[i] = time_f_solve
        
 
        
-            if termination['Temination Condition'] == 'optimal':
-                sol_try.results.descriptive['LCOE'] = model2.LCOE_value.expr()
-                sol_try.results = opt.Results(model2,sol_try.generators_dict_sol)
+            if state == 'optimal':
+                sol_try.results = Results(sol_try, df_results, lcoe_cost)
                 sol_try.feasible = True
                 sol_current = copy.deepcopy(sol_try)
-                if sol_try.results.descriptive['LCOE'] < sol_best.results.descriptive['LCOE']:
-                    sol_best = copy.deepcopy(sol_try)
+                
+                
+                #Search the best solution
+                if sol_try.results.descriptive['LCOE'] <= sol_best.results.descriptive['LCOE']:
+                    sol_try.results.descriptive['area'] = calculate_area(sol_try)
+                    sol_best = copy.deepcopy(sol_try)   
                     tnpccrf_calc_best = tnpccrf_calc
                     iter_best = i
             else:
                 sol_try.feasible = False
-                sol_try.results.descriptive['LCOE'] = None
+                df_results = []
+                lcoe_cost = None
+                sol_try.results = Results(sol_try, df_results, lcoe_cost)
                 sol_current = copy.deepcopy(sol_try)
-       
+            
+        
             sol_current.results.descriptive['area'] = calculate_area(sol_current)
            
             time_f_range = time.time() - time_i_range
             dict_time_iter[i] = time_f_range    
             #print(sol_current.generators_dict_sol)
             #print(sol_current.batteries_dict_sol)
-            del results            
-            del termination
-            del model2          
-        
+            del df_results
+            del sol_try
+            
         time_f_iterations = time.time() - time_i_iterations #final time
         #df with the feasible solutions
         df_iterations = pd.DataFrame(rows_df, columns=["i", "feasible", "area", "LCOE_actual", "LCOE_Best","Movement"])
@@ -592,7 +592,7 @@ for iii in range(1, 433):
         rows_df_time.append([iii,name_esc, place, iteraciones_run, amax, tlpsp_run, nse_run,
                             splus_cost_run, sminus_cost_run,aux_instance_data['fuel_cost'],len(demand_df),demanda_run,
                             forecast_df['GHI'].sum(),delta,ir,years_run,forecast_w_run,forecast_s_run,
-                            gap_run, add_function_run, len(default_batteries), len(default_diesel),
+                            add_function_run, len(default_batteries), len(default_diesel),
                             len(default_solar),len(default_wind), b_p_run, d_p_run, s_p_run,
                             w_p_run, add_name7, time_f_total, time_f_create_data,time_f_firstsol, time_f_iterations,
                             time_iter_average, time_solve_average, time_make_average, time_remove_average,
@@ -605,7 +605,7 @@ for iii in range(1, 433):
 df_time = pd.DataFrame(rows_df_time, columns=["N", "Name", "City", "Iterations", "Area","Tlpsp",
                                               "NSE", "S+_cost", "S-_cost", "fuel_cost","Len_demand","Demand percent",
                                               "GHI len","delta","ir","years","Forecast_wind",
-                                              "Forecast_solar","gap","add_function","json batteries", "json diesel",
+                                              "Forecast_solar","add_function","json batteries", "json diesel",
                                               "json solar", "json wind",
                                               "probability add batteries","probability add diesel",
                                               "probability add solar","probability add wind","reduced cost","TOTAL TIME",
@@ -631,7 +631,7 @@ def multiple_dfs(df_list, sheets, file_name):
 dfs = [df_time]
 
 # run function
-multiple_dfs(dfs, 'ExecTime', 'costfase2.xlsx')
+#multiple_dfs(dfs, 'ExecTime', 'costfase2.xlsx')
 
    
 '''
@@ -640,3 +640,5 @@ TRM = 3910
 LCOE_COP = TRM * model_results.descriptive['LCOE']
 sol_best.results.df_results.to22_excel("resultsesc4.xlsx")
 '''
+# -*- coding: utf-8 -*-
+

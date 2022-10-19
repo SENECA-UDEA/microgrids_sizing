@@ -192,8 +192,8 @@ class Sol_constructor():
                                renewables_dict_sol,
                                sol_results) 
         
-        if state == 'optimal': 
-            sol_initial.results = Results(sol_initial, df_results, lcoe_cost)
+        #if state == 'optimal': 
+        sol_initial.results = Results(sol_initial, df_results, lcoe_cost)
         sol_initial.feasible = True
         
         

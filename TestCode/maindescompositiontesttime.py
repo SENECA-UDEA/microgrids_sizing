@@ -341,7 +341,7 @@ for iii in range(1, 865):
                                                     delta,
                                                     Solver_data,
                                                     rand_ob,
-                                                    nse_cost = cost_data['NSE_COST'])
+                                                    cost_data['NSE_COST'])
    
     #if use aux_diesel asigns a big area to avoid select it again
     if ('aux_diesel' in sol_feasible.generators_dict_sol.keys()):
