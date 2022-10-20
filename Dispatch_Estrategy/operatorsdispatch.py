@@ -149,11 +149,9 @@ class Sol_constructor():
         else:
             state = 'No feasible solution'
         
-        if state == 'optimal': 
-            sol_try.results = Results(sol_try, df_results, lcoe_cost)
-            sol_try.feasible = True
-        else: 
-            #create a false Diesel auxiliar
+        if state != 'optimal': 
+
+        #create a false Diesel auxiliar
             k = {
                         "id_gen": "aux_diesel",
                         "tec": "D",
@@ -175,16 +173,21 @@ class Sol_constructor():
             technologies_dict_sol, renewables_dict_sol = create_technologies (generators_dict_sol, 
                                                                               batteries_dict_sol)
             
-        if (strategy_def == "diesel"):
-            lcoe_cost, df_results, state, time_f = d(sol_try, self.demand_df, instance_data, cost_data, CRF)
-        elif (strategy_def == "diesel - solar") or (strategy_def == "diesel - wind") or (strategy_def == "diesel - solar - wind"):
-            lcoe_cost, df_results, state, time_f  = D_plus_S_and_or_W(sol_try, self.demand_df, instance_data, cost_data,CRF,delta )
-        elif (strategy_def == "battery - solar") or (strategy_def == "battery - wind") or (strategy_def == "battery - solar - wind"):
-            lcoe_cost, df_results, state, time_f  = B_plus_S_and_or_W (sol_try, self.demand_df, instance_data, cost_data, CRF, delta)
-        elif (strategy_def == "battery - diesel - wind") or (strategy_def == "battery diesel - solar") or (strategy_def == "battery - diesel - solar - wind"):
-            lcoe_cost, df_results, state, time_f  = B_plus_D_plus_Ren(sol_try, self.demand_df, instance_data, cost_data, CRF, delta)
-        else:
-            state = 'No feasible solution'
+            sol_try = Solution(generators_dict_sol, 
+                   batteries_dict_sol, 
+                   technologies_dict_sol, 
+                   renewables_dict_sol,
+                   sol_results) 
+            if (strategy_def == "diesel"):
+                lcoe_cost, df_results, state, time_f = d(sol_try, self.demand_df, instance_data, cost_data, CRF)
+            elif (strategy_def == "diesel - solar") or (strategy_def == "diesel - wind") or (strategy_def == "diesel - solar - wind"):
+                lcoe_cost, df_results, state, time_f  = D_plus_S_and_or_W(sol_try, self.demand_df, instance_data, cost_data,CRF,delta )
+            elif (strategy_def == "battery - solar") or (strategy_def == "battery - wind") or (strategy_def == "battery - solar - wind"):
+                lcoe_cost, df_results, state, time_f  = B_plus_S_and_or_W (sol_try, self.demand_df, instance_data, cost_data, CRF, delta)
+            elif (strategy_def == "battery - diesel - wind") or (strategy_def == "battery diesel - solar") or (strategy_def == "battery - diesel - solar - wind"):
+                lcoe_cost, df_results, state, time_f  = B_plus_D_plus_Ren(sol_try, self.demand_df, instance_data, cost_data, CRF, delta)
+            else:
+                state = 'No feasible solution'
 
         sol_initial = Solution(generators_dict_sol, 
                                batteries_dict_sol, 
