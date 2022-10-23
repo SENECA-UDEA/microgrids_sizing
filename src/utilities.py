@@ -27,9 +27,15 @@ def read_data(demand_filepath,
     except:
         f = open(units_filepath)
         generators_data = json.load(f)    
-    generators = generators_data['generators']
-    batteries = generators_data['batteries']
-    
+    try:
+        generators = generators_data['generators']
+    except:
+        generators = {}
+    try:
+        batteries = generators_data['batteries']
+    except: 
+        batteries = {}
+        
     try:
         instance_data =  requests.get(instance_filepath)
         instance_data = json.loads(instance_data.text)
