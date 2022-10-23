@@ -227,10 +227,15 @@ def make_model(generators_dict=None,
     
     # Defines operational rule relation Renewable - Diesel
     def oprelation_rule(model,t):
-        expr2 = sum( model.v[k,t] for k in model.GENERATORS_DIESEL) 
-        expr3= sum(model.soc[l,t] for l in model.BATTERIES)
-        expr4 = sum(model.d[t1] for t1 in model.HTIME)
-        return sum( model.p[k,t] for k in model.GENERATORS if generators_dict[k].tec != 'D') <= expr4*(expr2 + expr3) 
+        rev = 0
+        for i in generators_dict.values():
+            if (i.tec == 'S' or i.tec == 'W'):
+                rev = 1
+        if (rev == 1):
+            expr4 = sum(model.d[t1] for t1 in model.HTIME)
+            return sum( model.p[k,t] for k in model.GENERATORS if generators_dict[k].tec != 'D') <= expr4*(sum( model.v[k2,t] for k2 in model.GENERATORS_DIESEL)  + sum(model.soc[l,t] for l in model.BATTERIES)) 
+        else:
+            return pyo.Constraint.Skip
     model.oprelation_rule = pyo.Constraint(model.HTIME, rule=oprelation_rule)
 
     # Defines rule auxiliar greed forming
@@ -488,11 +493,16 @@ def make_model_operational(generators_dict=None,
     
     # Defines operational rule relation Renewable - Diesel
     def oprelation_rule(model,t):
-        expr2 = sum( model.v[k,t] for k in model.GENERATORS_DIESEL) 
-        expr3= sum(model.soc[l,t] for l in model.BATTERIES)
-        expr4 = sum(model.d[t1] for t1 in model.HTIME)
-        return sum( model.p[k,t] for k in model.GENERATORS if generators_dict[k].tec != 'D')  <= expr4*(expr2 + expr3) 
-    #model.oprelation_rule = pyo.Constraint(model.HTIME, rule=oprelation_rule)
+        rev = 0
+        for i in generators_dict.values():
+            if (i.tec == 'S' or i.tec == 'W'):
+                rev = 1
+        if (rev == 1):
+            expr4 = sum(model.d[t1] for t1 in model.HTIME)
+            return sum( model.p[k,t] for k in model.GENERATORS if generators_dict[k].tec != 'D') <= expr4*(sum( model.v[k2,t] for k2 in model.GENERATORS_DIESEL)  + sum(model.soc[l,t] for l in model.BATTERIES)) 
+        else:
+            return pyo.Constraint.Skip
+    model.oprelation_rule = pyo.Constraint(model.HTIME, rule=oprelation_rule)
 
     # Defines LPSP constraint
     def lpspcons_rule(model, t):
