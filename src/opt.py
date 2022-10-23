@@ -218,7 +218,7 @@ def make_model(generators_dict=None,
     # Defines strategic rule relation Renewable - Diesel
     def relation_rule(model):
             expr = sum( model.w[k] for k in model.GENERATORS if generators_dict[k].tec != 'D') 
-            expr2 = sum( model.w[k] for k in model.GENERATORS if generators_dict[k].tec != 'D')
+            expr2 = sum( model.w[k] for k in model.GENERATORS_DIESEL)
             expr3 = sum(model.q[l] for l in model.BATTERIES)
             expr4 = len(model.GENERATORS)
             return  expr <= expr4 * (expr2 + expr3)
