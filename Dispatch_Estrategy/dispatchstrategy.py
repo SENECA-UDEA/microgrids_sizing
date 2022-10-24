@@ -198,6 +198,7 @@ def D_plus_S_and_or_W (solution, demand_df, instance_data, cost_data, CRF, delta
                 ptot += p[n][t]
                 cost[n+'_cost'][t] = (gen.f0 * gen.DG_max + gen.f1 * p[n][t])*fuel_cost
                 costvopm += cost[n+'_cost'][t]
+                demand_tobe_covered = demand_tobe_covered - ref
                 
             else:
                 
@@ -650,6 +651,7 @@ def B_plus_D_plus_Ren(solution, demand_df, instance_data, cost_data, CRF, delta)
                 aux_demand += (soc[i+'_soc'][t] - bat.soc_min)*bat.efd
             
             if (aux_demand >= demand_tobe_covered):
+                demand_tobe_covered = demand_tobe_covered - generation_ren
                 for i in sorted_batteries:
                      bat = solution.batteries_dict_sol[i]
                      if ((soc[i+'_soc'][t] - bat.soc_min)*bat.efd >= demand_tobe_covered/bat.efd):

@@ -173,6 +173,9 @@ class Sol_constructor():
             technologies_dict_sol, renewables_dict_sol = create_technologies (generators_dict_sol, 
                                                                               batteries_dict_sol)
             
+            
+            strategy_def = def_strategy(generators_dict = generators_dict_sol,
+                    batteries_dict = batteries_dict_sol) 
             sol_try = Solution(generators_dict_sol, 
                    batteries_dict_sol, 
                    technologies_dict_sol, 
