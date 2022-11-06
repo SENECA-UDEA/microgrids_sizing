@@ -98,7 +98,7 @@ def d (solution, demand_df, instance_data, cost_data, CRF):
                 demand_tobe_covered = demand_tobe_covered - gen.DG_max
         if (demand_tobe_covered > 0):
             sminus['s-'][t] = demand_tobe_covered
-            lpsp['lpsp'][t] = sminus['s-'][t]  / demand_df['demand'][t]
+            lpsp['lpsp'][t] = sminus['s-'][t] / demand_df['demand'][t]
             if (lpsp['lpsp'][t] <= cost_data['NSE_COST']["L1"][0]):
                 costsminus['cost_s-'][t] = cost_data['NSE_COST']["L1"][0] * sminus['s-'][t]
             elif (lpsp['lpsp'][t]  <= cost_data['NSE_COST']["L2"][0]):
@@ -110,14 +110,18 @@ def d (solution, demand_df, instance_data, cost_data, CRF):
             
             sminustot += costsminus['cost_s-'][t] 
             #costsminus['cost_s-'][t] = sminus['s-'][t] * instance_data["sminus_cost"]           
-             
-
-    if (np.mean(lpsp['lpsp']) >= instance_data['nse']):
+    
+    
+    lpsp_df = pd.DataFrame(lpsp['lpsp'], columns = ['lpsp'])
+    lpsp_check = lpsp_df.rolling(instance_data['tlpsp'], min_periods=None, center=False, win_type=None, on=None, axis=0).mean()
+    mean_av = lpsp_check[lpsp_check['lpsp'] >= instance_data['nse']].count()
+    
+    if (mean_av['lpsp'] > 0):
         state = 'False'
     else:
         state = 'optimal'
-    lcoe_cost = sminustot + splustot + (lcoe_inftot + costvopm)/ptot
     demand = pd.DataFrame(demand_df['demand'], columns=['demand'])
+    lcoe_cost = sminustot + splustot + (lcoe_inftot + costvopm)/ptot
     generation = pd.DataFrame(p, columns=[*p.keys()])
     soc_df = pd.DataFrame(soc, columns=[*soc.keys()])
     bplus_df = pd.DataFrame(bplus, columns=[*bplus.keys()])
@@ -238,7 +242,11 @@ def D_plus_S_and_or_W (solution, demand_df, instance_data, cost_data, CRF, delta
             sminustot += costsminus['cost_s-'][t] 
             #costsminus['cost_s-'][t] = sminus['s-'][t] * instance_data["sminus_cost"]   
                 
-    if (np.mean(lpsp['lpsp']) >= instance_data['nse']):
+    lpsp_df = pd.DataFrame(lpsp['lpsp'], columns = ['lpsp'])
+    lpsp_check = lpsp_df.rolling(instance_data['tlpsp'], min_periods=None, center=False, win_type=None, on=None, axis=0).mean()
+    mean_av = lpsp_check[lpsp_check['lpsp'] >= instance_data['nse']].count()
+    
+    if (mean_av['lpsp'] > 0):
         state = 'False'
     else:
         state = 'optimal'
@@ -363,7 +371,11 @@ def B_plus_S_and_or_W  (solution, demand_df, instance_data, cost_data, CRF, delt
                 
                 
             
-    if (np.mean(lpsp['lpsp']) >= instance_data['nse']):
+    lpsp_df = pd.DataFrame(lpsp['lpsp'], columns = ['lpsp'])
+    lpsp_check = lpsp_df.rolling(instance_data['tlpsp'], min_periods=None, center=False, win_type=None, on=None, axis=0).mean()
+    mean_av = lpsp_check[lpsp_check['lpsp'] >= instance_data['nse']].count()
+    
+    if (mean_av['lpsp'] > 0):
         state = 'False'
     else:
         state = 'optimal'
@@ -507,7 +519,11 @@ def B_plus_S_and_or_W2  (solution, demand_df, instance_data, cost_data, CRF, del
                 
                 
         
-    if (np.mean(lpsp['lpsp']) >= instance_data['nse']):
+    lpsp_df = pd.DataFrame(lpsp['lpsp'], columns = ['lpsp'])
+    lpsp_check = lpsp_df.rolling(instance_data['tlpsp'], min_periods=None, center=False, win_type=None, on=None, axis=0).mean()
+    mean_av = lpsp_check[lpsp_check['lpsp'] >= instance_data['nse']].count()
+    
+    if (mean_av['lpsp'] > 0):
         state = 'False'
     else:
         state = 'optimal'
@@ -717,7 +733,11 @@ def B_plus_D_plus_Ren(solution, demand_df, instance_data, cost_data, CRF, delta)
             #costsminus['cost_s-'][t] = sminus['s-'][t] * instance_data["sminus_cost"]                 
                 
                       
-    if (np.mean(lpsp['lpsp']) >= instance_data['nse']):
+    lpsp_df = pd.DataFrame(lpsp['lpsp'], columns = ['lpsp'])
+    lpsp_check = lpsp_df.rolling(instance_data['tlpsp'], min_periods=None, center=False, win_type=None, on=None, axis=0).mean()
+    mean_av = lpsp_check[lpsp_check['lpsp'] >= instance_data['nse']].count()
+    
+    if (mean_av['lpsp'] > 0):
         state = 'False'
     else:
         state = 'optimal'

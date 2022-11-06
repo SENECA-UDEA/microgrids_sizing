@@ -63,8 +63,7 @@ demand_df, forecast_df, generators, batteries, instance_data, fisc_data, cost_da
                                                                                                 fiscalData_filepath,
                                                                                                 costData_filepath)
 
-
-amax =  instance_data['amax']
+amax =  instance_data['amax'] 
 N_iterations = instance_data['N_iterations']
 #Calculate salvage, operation and replacement cost with investment cost
 generators, batteries = calculate_cost_data(generators, batteries, instance_data, cost_data)
@@ -139,7 +138,7 @@ if ('D' in technologies_dict.keys() or 'B' in technologies_dict.keys()):
     add_function = 'GRASP'
     remove_function = 'RANDOM'
     if (sol_best.results != None):
-        for i in range(50):
+        for i in range(instance_data['N_iterations']):
             rows_df.append([i, sol_current.feasible, 
                             sol_current.results.descriptive['area'], 
                             sol_current.results.descriptive['LCOE'], 
