@@ -8,6 +8,7 @@ import plotly.graph_objects as go
 import plotly.io as pio
 pio.renderers.default='browser'
 
+
 def def_strategy (batteries_dict, generators_dict):
     
     d=0
@@ -68,6 +69,7 @@ def d (solution, demand_df, instance_data, cost_data, CRF):
     
     for g in solution.generators_dict_sol.values():  
         lcoe_inf = (g.cost_up + g.cost_r - g.cost_s) * CRF + g.cost_fopm
+        #lcoe_inf = g.cost_up + g.cost_r - g.cost_s + g.cost_fopm
         lcoe_inftot += lcoe_inf
         lcoe_op =  (g.f0 + g.f1)*g.DG_max*fuel_cost * len_data
         auxiliar_dict_generator[g.id_gen] = (g.DG_max * len_data) / (lcoe_inf*CRF + lcoe_op)
@@ -158,6 +160,7 @@ def D_plus_S_and_or_W (solution, demand_df, instance_data, cost_data, CRF, delta
     for g in solution.generators_dict_sol.values():
         if (g.tec == 'D'):
             lcoe_inf = (g.cost_up + g.cost_r - g.cost_s) * CRF + g.cost_fopm
+            #lcoe_inf = g.cost_up + g.cost_r - g.cost_s + g.cost_fopm
             lcoe_inftot += lcoe_inf          
             lcoe_op =  (g.f0 + g.f1)*g.DG_max*fuel_cost * len_data
             auxiliar_dict_generator[g.id_gen] = (g.DG_max * len_data) / (lcoe_inf*CRF + lcoe_op)
@@ -165,6 +168,7 @@ def D_plus_S_and_or_W (solution, demand_df, instance_data, cost_data, CRF, delta
                  min_ref = g.DG_min
         else:
             lcoe_inf = (g.cost_up + g.cost_r - g.cost_s) * delta * CRF + g.cost_fopm
+            #lcoe_inf = (g.cost_up + g.cost_r - g.cost_s)*delta + g.cost_fopm
             lcoe_inftot += lcoe_inf    
             list_ren.append(g.id_gen)
 
@@ -280,11 +284,13 @@ def B_plus_S_and_or_W  (solution, demand_df, instance_data, cost_data, CRF, delt
     extra_generation = 0 
     for g in solution.generators_dict_sol.values():
         lcoe_inf = (g.cost_up + g.cost_r - g.cost_s) * delta * CRF + g.cost_fopm
+        #lcoe_inf = (g.cost_up + g.cost_r - g.cost_s)*delta + g.cost_fopm
         lcoe_inftot += lcoe_inf 
         list_ren.append(g.id_gen)
 
     for b in solution.batteries_dict_sol.values():
         lcoe_inf = (b.cost_up + b.cost_r - b.cost_s) * delta * CRF + b.cost_fopm
+        #lcoe_inf = (b.cost_up + b.cost_r - b.cost_s)*delta + b.cost_fopm
         lcoe_inftot += lcoe_inf    
         auxiliar_dict_batteries[b.id_bat] = (b.soc_max * len_data) / (lcoe_inf*CRF)        
     
@@ -552,11 +558,13 @@ def B_plus_D_plus_Ren(solution, demand_df, instance_data, cost_data, CRF, delta)
     for g in solution.generators_dict_sol.values():
         if (g.tec == 'D'):
             lcoe_inf = (g.cost_up + g.cost_r - g.cost_s) * CRF + g.cost_fopm
+            #lcoe_inf = g.cost_up + g.cost_r - g.cost_s + g.cost_fopm
             lcoe_inftot += lcoe_inf          
             lcoe_op =  (g.f0 + g.f1)*g.DG_max*fuel_cost * len_data
             auxiliar_dict_generator[g.id_gen] = (g.DG_max * len_data) / (lcoe_inf*CRF + lcoe_op)
         else:
             lcoe_inf = (g.cost_up + g.cost_r - g.cost_s) * delta * CRF + g.cost_fopm
+            #lcoe_inf = (g.cost_up + g.cost_r - g.cost_s)*delta + g.cost_fopm
             lcoe_inftot += lcoe_inf    
             list_ren.append(g.id_gen)
 
@@ -565,6 +573,7 @@ def B_plus_D_plus_Ren(solution, demand_df, instance_data, cost_data, CRF, delta)
     
     for b in solution.batteries_dict_sol.values():
         lcoe_inf = (b.cost_up + b.cost_r - b.cost_s) * delta * CRF + b.cost_fopm
+        #lcoe_inf = (b.cost_up + b.cost_r - b.cost_s)*delta + b.cost_fopm
         lcoe_inftot += lcoe_inf   
         auxiliar_dict_batteries[b.id_bat] = (b.soc_max * len_data) / (lcoe_inf*CRF)        
     

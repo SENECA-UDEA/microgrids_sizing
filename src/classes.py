@@ -28,7 +28,8 @@ class Solar(Generator):
         self.INOCT = 0
         super(Solar, self).__init__(id_gen, tec, br,area, cost_up,  cost_r, cost_s, cost_fopm)
 
-    def Solargeneration(self, t_amb, gt,G_stc):  
+    def Solargeneration(self, t_amb, gt,G_stc): 
+    #def Solargeneration(self, t_amb, gt,G_stc,deg): 
             #G_stc: Standar solar radiation
             #Calculate generation over the time
             for t in list(gt.index.values):
@@ -38,6 +39,8 @@ class Solar(Generator):
                 else:
                     TM = t_amb[t] + (self.INOCT - 20)*(Irad_panel/self.G_noct)
                     self.gen_rule[t] = self.Ppv_stc*(Irad_panel/G_stc)*(1 + self.kt*(TM-25))*self.fpv
+                    #year = math.floor(gt['t'][t]/8760) 
+                    #self.gen_rule[t] = self.gen_rule[t] * (1- deg)**(year)
             return self.gen_rule
     #calculate operative cost
     def Solarcost(self):
@@ -89,6 +92,7 @@ class Eolic(Generator):
         super(Eolic, self).__init__(id_gen, tec, br, area, cost_up, cost_r, cost_s, cost_fopm)
     
     def Windgeneration(self, forecastWt, h2, coef_hel): #Wt = wind speed over the time
+    #def Windgeneration(self, forecastWt, h2, coef_hel,deg): #Wt = wind speed over the time
         #Calculate generation over the time
         Hellmann = (self.h/h2)**coef_hel
         for t in list(forecastWt.index.values):
@@ -98,8 +102,12 @@ class Eolic(Generator):
               self.gen_rule[t] = 0
             elif i < self.s_rate:
               self.gen_rule[t] = self.P_y*((i**self.n_eq-self.s_in**self.n_eq)/(self.s_rate**self.n_eq-self.s_in**self.n_eq))
+              #year = math.floor(forecastWt['t'][t]/8760) 
+              #self.gen_rule[t] = self.gen_rule[t] * (1- deg)**(year)
             elif i <= self.s_out:                  
               self.gen_rule[t] =  self.P_y
+              #year = math.floor(forecastWt['t'][t]/8760) 
+              #self.gen_rule[t] = self.gen_rule[t] * (1- deg)**(year)
             else:
               self.gen_rule[t] = 0
         return self.gen_rule
