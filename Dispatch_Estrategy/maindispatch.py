@@ -95,7 +95,7 @@ technologies_dict, renewables_dict = create_technologies (generators_dict,
                                                           batteries_dict)
 
 
-if ('D' in technologies_dict.keys() or 'B' in technologies_dict.keys()):
+if ('D' in technologies_dict.keys() or 'B' in technologies_dict.keys() and generators_dict != {}):
     #create the initial solution operator
     sol_constructor = Sol_constructor(generators_dict, 
                                 batteries_dict,
