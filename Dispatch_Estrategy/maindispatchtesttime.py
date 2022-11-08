@@ -20,7 +20,7 @@ import numpy as np
 
 rows_df_time = []
 
-for iii in range(1, 2):
+for iii in range(1, 865):
     
     print(iii)
     #PARAMETROS DE LA CORRIDA - POR DEFECTO

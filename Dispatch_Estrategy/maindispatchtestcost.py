@@ -353,13 +353,13 @@ for iii in range(1, 433):
                                             greed = instance_data['inverter_greed_cost'])
     
     time_f_firstsol = time.time() - time_i_firstsol #final time
+
+    sol_feasible.results.descriptive['area'] = calculate_area(sol_feasible)    
     # set the initial solution as the best so far
     sol_best = copy.deepcopy(sol_feasible)
-   
+    
     # create the actual solution with the initial soluion
     sol_current = copy.deepcopy(sol_feasible)
-    sol_current.results.descriptive['area'] = calculate_area(sol_current)   
-    #check the available area
    
     #nputs for the model
     movement = "Initial Solution"
