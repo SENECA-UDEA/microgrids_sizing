@@ -222,14 +222,14 @@ class Search_operator():
                 sum_generation = solution.results.df_results[d.id_bat+'_b-'].sum(axis = 0, skipna = True)          
             else:
                 if dic.tec == 'D':
-                    sum_generation = solution.results.df_results[d.id_gen].sum(axis = 0, skipna = True)
-                    op_cost = solution.results.df_results[d.id_gen+'_cost'].sum(axis = 0, skipna = True)
+                    sum_generation = solution.results.df_results[dic.id_gen].sum(axis = 0, skipna = True)
+                    op_cost = solution.results.df_results[dic.id_gen+'_cost'].sum(axis = 0, skipna = True)
                     #op_cost *= ((((inf + txfc)**t_years)-1)/(inf+txfc))
-                    inv_cost = d.cost_up + d.cost_r - d.cost_s + d.cost_fopm 
+                    inv_cost = dic.cost_up + dic.cost_r - dic.cost_s + dic.cost_fopm 
                     #inv_cost = (d.cost_up * delta + d.cost_r - d.cost_s)*(1+i) 
                     #inv_cost2 = d.cost_fopm * ((((inf)**t_years)-1)/inf)
                 else:
-                    sum_generation = sum(d.gen_rule.values())
+                    sum_generation = sum(dic.gen_rule.values())
                     op_cost = dic.cost_rule
                     #op_cost *= ((((inf)**t_years)-1)/inf)
                     inv_cost = dic.cost_up * delta + dic.cost_r - dic.cost_s + dic.cost_fopm 

@@ -116,13 +116,16 @@ if ('D' in technologies_dict.keys() or 'B' in technologies_dict.keys() and gener
         generators_dict['aux_diesel'] = sol_feasible.generators_dict_sol['aux_diesel']
         generators_dict['aux_diesel'].area = 10000000
     
-    
+
+    sol_feasible.results.descriptive['area'] = calculate_area(sol_feasible)    
     # set the initial solution as the best so far
     sol_best = copy.deepcopy(sol_feasible)
     
     # create the actual solution with the initial soluion
     sol_current = copy.deepcopy(sol_feasible)
-    sol_current.results.descriptive['area'] = calculate_area(sol_current)
+
+
+    
     #nputs for the model
     movement = "Initial Solution"
     
@@ -209,7 +212,7 @@ if ('D' in technologies_dict.keys() or 'B' in technologies_dict.keys() and gener
      
             del df_results
             del sol_try
-        
+            
         if ('aux_diesel' in sol_best.generators_dict_sol.keys()):
             print('Not Feasible solutions')
         else:
@@ -237,3 +240,6 @@ if ('D' in technologies_dict.keys() or 'B' in technologies_dict.keys() and gener
         print('No feasible solution, review data')
 else:
     print('No feasible solution, solution need diesel generators or batteries')
+
+
+

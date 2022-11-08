@@ -20,7 +20,7 @@ import numpy as np
 
 rows_df_time = []
 
-for iii in range(1, 5):
+for iii in range(1, 2):
     
     print(iii)
     #PARAMETROS DE LA CORRIDA - POR DEFECTO
@@ -29,7 +29,7 @@ for iii in range(1, 5):
     #seed = None
     seed = 42
     rand_ob = Random_create(seed = seed)
-    place  = "Test"
+    place  = "Providencia"
     #iteraciones
     iteraciones_run = 30
     #area, por defecto 100%
@@ -124,7 +124,7 @@ for iii in range(1, 5):
     '''
     #instancias add o grasp
     if (iii >= (19 + (36 * ((iii-1)//36))) and (iii <= 36 * (((iii-1)//36)+1))):
-        remove_function_run = "random"
+        remove_function_run = "RANDOM"
         add_name4 = 'RANDOM'
     else:
         add_name4 = 'Grasp'
@@ -353,12 +353,12 @@ for iii in range(1, 5):
                                         greed = instance_data['inverter_greed_cost'])
    
     time_f_firstsol = time.time() - time_i_firstsol #final time
+    sol_feasible.results.descriptive['area'] = calculate_area(sol_feasible)    
     # set the initial solution as the best so far
     sol_best = copy.deepcopy(sol_feasible)
-   
+    
     # create the actual solution with the initial soluion
     sol_current = copy.deepcopy(sol_feasible)
-    sol_current.results.descriptive['area'] = calculate_area(sol_current)
     #check the available area
    
     #nputs for the model
