@@ -56,6 +56,7 @@ def d (solution, demand_df, instance_data, cost_data, CRF):
     lcoe_inftot = 0 #total investment cost
     len_data =  len(demand_df['demand'])
     costsminus = {'cost_s-': [0]*len_data} #not supplied cost
+    costsplus = {'cost_s+': [0]*len_data} #wasted cost
     splus = {'s+': [0]*len_data} #wasted energy
     sminus = {'s-': [0]*len_data} #not supplied energy
     lpsp = {'lpsp': [0]*len_data} #lpsp calculate
@@ -88,10 +89,19 @@ def d (solution, demand_df, instance_data, cost_data, CRF):
         #supply with each generator
         for i in sorted_generators:
              gen = solution.generators_dict_sol[i]
-             #if lowest that reference can generate
-             if (demand_tobe_covered < gen.DG_min):
+             #if all demand covered not generate
+             if (demand_tobe_covered == 0):
                  p[i][t] = 0
                  cost[i+'_cost'][t]=0
+             #if lowest that reference can generate                 
+             elif (demand_tobe_covered < gen.DG_min):
+                 p[i][t] = gen.DG_min
+                 ptot += p[i][t]
+                 cost[i+'_cost'][t]= (gen.f0 * gen.DG_max + gen.f1 * p[i][t])*fuel_cost
+                 splus['s+'][t] = (gen.DG_min - demand_tobe_covered)
+                 demand_tobe_covered = 0
+                 costsplus['cost_s+'][t] = splus['s+'][t] * instance_data["splus_cost"]
+                 splustot += costsplus['cost_s+'][t]
              #greatest rate, supply all the demand
              elif (gen.DG_max >= demand_tobe_covered):
                  p[i][t] = demand_tobe_covered
@@ -259,6 +269,20 @@ def D_plus_S_and_or_W (solution, demand_df, instance_data, cost_data, CRF, delta
                         costvopm += cost[i+'_cost'][t]
                         #update demand to be covered
                         demand_tobe_covered = demand_tobe_covered - gen.DG_max
+        else:
+        #use one diesel
+            i = sorted_generators[0]
+            gen = solution.generators_dict_sol[i]
+            p[i][t] = gen.DG_min
+            ptot += p[i][t]
+            cost[i+'_cost'][t] = (gen.f0 * gen.DG_max + gen.f1 * p[i][t])*fuel_cost
+            costvopm += cost[i+'_cost'][t]
+            splus['s+'][t] = (gen.DG_min - demand_tobe_covered)
+            demand_tobe_covered = 0
+            costsplus['cost_s+'][t] = splus['s+'][t] * instance_data["splus_cost"]
+            splustot += costsplus['cost_s+'][t]
+                      
+            
         #the generators finish, if there is still nse, lpsp is calculated
         if (demand_tobe_covered > 0):
             sminus['s-'][t] = demand_tobe_covered
@@ -554,8 +578,8 @@ def B_plus_D_plus_Ren(solution, demand_df, instance_data, cost_data, CRF, delta)
         #not renewable enery
         elif(generation_ren == 0):  
             #diesel generators supply at least the reference
-            demand_tobe_covered = demand_tobe_covered - ref
-            p[sorted_generators[0]][t] = ref
+            dem2 = demand_tobe_covered
+            demand_tobe_covered = max(0,demand_tobe_covered - ref)
             #charge with the batteries
             for i in sorted_batteries:
                 #still energy to supply
@@ -576,11 +600,20 @@ def B_plus_D_plus_Ren(solution, demand_df, instance_data, cost_data, CRF, delta)
             #batteries supplies all demand            
             if demand_tobe_covered == 0:
                 ptot += ref
+                i = sorted_generators[0]
+                gen = solution.generators_dict_sol[i]
+                p[i][t] = ref
+                cost[i+'_cost'][t] = (gen.f0 * gen.DG_max + gen.f1 * p[i][t])*fuel_cost
+                costvopm += cost[i+'_cost'][t]
+                splus['s+'][t] = (ref - dem2)
+                demand_tobe_covered = 0
+                costsplus['cost_s+'][t] = splus['s+'][t] * instance_data["splus_cost"]
+                splustot += costsplus['cost_s+'][t]
+                
             #need diesel generator
             else:
                 #initial generator supply more than min reference
                 demand_tobe_covered = demand_tobe_covered + ref
-                p[sorted_generators[0]][t] = 0
                 for j in sorted_generators:
                      gen = solution.generators_dict_sol[j]
                      #lowest that reference turn off
