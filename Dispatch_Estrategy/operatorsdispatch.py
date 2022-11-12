@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 Created on Wed May 11 10:23:49 2022
-@author: pmayaduque
+@author: scastellanos
 """
 from src.utilities import create_technologies
 from src.classes import Solution, Diesel
@@ -41,6 +41,7 @@ class Sol_constructor():
         demand_to_be_covered = max(self.demand_df['demand']) 
         demand_to_be_covered = demand_to_be_covered * (1 - instance_data['nse'])
         
+        #parameters
         rev = ""
         rev2 = ""
         aux_control = ""
@@ -124,18 +125,18 @@ class Sol_constructor():
                                                                           batteries_dict_sol)
  
 
-        
+        #check strategy to be used
         strategy_def = def_strategy(generators_dict = generators_dict_sol,
                             batteries_dict = batteries_dict_sol) 
         
-        
+        #default solution to use dispatch strategy
         sol_results = None
         sol_try = Solution(generators_dict_sol, 
                            batteries_dict_sol, 
                            technologies_dict_sol, 
                            renewables_dict_sol,
                            sol_results) 
-        
+        #run dispatch strategy
         if (strategy_def == "diesel"):
             lcoe_cost, df_results, state, time_f = d(sol_try, self.demand_df, instance_data, cost_data, CRF)
         elif (strategy_def == "diesel - solar") or (strategy_def == "diesel - wind") or (strategy_def == "diesel - solar - wind"):
@@ -145,6 +146,7 @@ class Sol_constructor():
         elif (strategy_def == "battery - diesel - wind") or (strategy_def == "battery - diesel - solar") or (strategy_def == "battery - diesel - solar - wind"):
             lcoe_cost, df_results, state, time_f  = B_plus_D_plus_Ren(sol_try, self.demand_df, instance_data, cost_data, CRF, delta)
         else:
+            #no feasible combination
             state = 'No feasible solution'
         
         if state != 'optimal': 
@@ -171,19 +173,22 @@ class Sol_constructor():
             technologies_dict_sol, renewables_dict_sol = create_technologies (generators_dict_sol, 
                                                                               batteries_dict_sol)
             
-            
+            #check solution strategy
             strategy_def = def_strategy(generators_dict = generators_dict_sol,
                     batteries_dict = batteries_dict_sol) 
+            #fefault solution to run
             sol_try = Solution(generators_dict_sol, 
                    batteries_dict_sol, 
                    technologies_dict_sol, 
                    renewables_dict_sol,
                    sol_results) 
+            #run dispatch strategy with false diesel
             if (strategy_def == "diesel"):
                 lcoe_cost, df_results, state, time_f = d(sol_try, self.demand_df, instance_data, cost_data, CRF)
             else:
                 state = 'No feasible solution'
 
+        #create initial solution
         sol_initial = Solution(generators_dict_sol, 
                                batteries_dict_sol, 
                                technologies_dict_sol, 
@@ -373,13 +378,13 @@ class Search_operator():
         
         return solution
     
-    def removerandomobject(self, sol_actual, rand_ob): #add generator or battery
+    def removerandomobject(self, sol_actual, rand_ob): #remove generator or battery
         solution = copy.deepcopy(sol_actual)
         dict_actual = {**solution.generators_dict_sol,**solution.batteries_dict_sol} 
 
 
         select_ob = rand_ob.create_rand_list(list(dict_actual.keys()))
-
+        #delete select object
         if dict_actual[select_ob].tec == 'B':
             remove_report =  pd.Series(solution.results.df_results[select_ob+'_b-'].values,index=solution.results.df_results[select_ob+'_b-'].keys()).to_dict()
             solution.batteries_dict_sol.pop(select_ob)
@@ -406,6 +411,7 @@ class Search_operator():
         #Check the object that is not in the current solution
         non_actual = list(set(list_keys_total) - set(list_keys_actual))
         
+        #create list
         for i in non_actual: 
             g = dict_total[i]
             if g.area <= available_area:

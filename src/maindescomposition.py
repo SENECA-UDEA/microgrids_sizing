@@ -2,7 +2,7 @@
 """
 Created on Wed Apr 20 11:14:21 2022
 
-@author: pmayaduque
+@author: scastellanos
 """
 from src.utilities import read_data, create_objects, calculate_sizingcost, create_technologies, calculate_area, calculate_energy, interest_rate
 from src.utilities import fiscal_incentive, calculate_cost_data
@@ -148,6 +148,7 @@ search_operator = Search_operator(generators_dict,
                             demand_df,
                             forecast_df)
 
+#check initial solution feasible
 if (sol_best.results != None):
     movement = "Initial Solution"
     for i in range(N_iterations):
@@ -159,7 +160,7 @@ if (sol_best.results != None):
         if sol_current.feasible == True:     
             # save copy as the last solution feasible seen
             sol_feasible = copy.deepcopy(sol_current) 
-            # Remove a generator or battery from the current solution
+            # Remove a generator or battery from the current solution - grasp or random
             if (remove_function == 'GRASP'):
                 sol_try, remove_report = search_operator.removeobject(sol_current, CRF, delta)
             elif (remove_function == 'RANDOM'):
@@ -170,7 +171,7 @@ if (sol_best.results != None):
             #  Create list of generators that could be added
             list_available_bat, list_available_gen, list_tec_gen  = search_operator.available(sol_current, amax)
             if (list_available_gen != [] or list_available_bat != []):
-                # Add a generator or battery to the current solution
+                # Add a generator or battery to the current solution - grasp or random
                 if (add_function == 'GRASP'):
                     sol_try, remove_report = search_operator.addobject(sol_current, list_available_bat, list_available_gen, list_tec_gen, remove_report,  CRF, instance_data['fuel_cost'], rand_ob, delta)
                 elif (add_function == 'RANDOM'):
@@ -215,6 +216,8 @@ if (sol_best.results != None):
             #Search the best solution
             if sol_try.results.descriptive['LCOE'] <= sol_best.results.descriptive['LCOE']:
                 sol_best = copy.deepcopy(sol_try)
+                #calculate area best solution
+                sol_best.results.descriptive['area'] = calculate_area(sol_best)
         else:
             sol_try.feasible = False
             sol_try.results.descriptive['LCOE'] = None
@@ -223,7 +226,7 @@ if (sol_best.results != None):
         del results            
         del termination
         del model 
-    
+        #calculate area solution
         sol_current.results.descriptive['area'] = calculate_area(sol_current)
     
     if ('aux_diesel' in sol_best.generators_dict_sol.keys()):
@@ -237,6 +240,7 @@ if (sol_best.results != None):
         generation_graph = sol_best.results.generation_graph(0,len(demand_df))
         plot(generation_graph)
         try:
+            #calculate stats
             percent_df, energy_df, renew_df, total_df, brand_df = calculate_energy(sol_best.batteries_dict_sol, sol_best.generators_dict_sol, sol_best.results, demand_df)
         except KeyError:
             pass

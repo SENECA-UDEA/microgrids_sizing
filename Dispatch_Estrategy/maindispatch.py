@@ -2,11 +2,9 @@
 """
 Created on Wed Apr 20 11:14:21 2022
 
-@author: pmayaduque
 """
 from src.utilities import read_data, create_objects, create_technologies, calculate_area, calculate_energy, interest_rate
 from src.utilities import fiscal_incentive, calculate_cost_data
-#import opt as opt
 from src.classes import Random_create
 import pandas as pd 
 from Dispatch_Estrategy.operatorsdispatch import Sol_constructor, Search_operator
@@ -17,6 +15,21 @@ import copy
 pd.options.display.max_columns = None
 
 
+
+#Set the seed for random
+'''
+seed = 42
+'''
+seed = None
+
+rand_ob = Random_create(seed = seed)
+
+#add and remove funtion
+add_function = 'GRASP'
+remove_function = 'RANDOM'
+
+
+#data place
 place = 'Providencia'
 
 
@@ -27,6 +40,10 @@ place = 'Leticia'
 place = 'Test'
 place = 'Oswaldo'
 '''
+
+#trm to current COP
+TRM = 3910
+
 github_rute = 'https://raw.githubusercontent.com/SENECA-UDEA/microgrids_sizing/development/data/'
 # file paths github
 demand_filepath = github_rute + place+'/demand_'+place+'.csv' 
@@ -47,13 +64,7 @@ fiscalData_filepath = "../data/Cost/fiscal_incentive.json"
 #cost Data
 costData_filepath = "../data/Cost/parameters_cost.json"
 
-#Set the seed for random
-'''
-seed = 42
-'''
-seed = None
 
-rand_ob = Random_create(seed = seed)
 
 # read data
 demand_df, forecast_df, generators, batteries, instance_data, fisc_data, cost_data = read_data(demand_filepath,
@@ -63,6 +74,7 @@ demand_df, forecast_df, generators, batteries, instance_data, fisc_data, cost_da
                                                                                                 fiscalData_filepath,
                                                                                                 costData_filepath)
 
+#calulate parameters
 amax =  instance_data['amax'] 
 N_iterations = instance_data['N_iterations']
 #Calculate salvage, operation and replacement cost with investment cost
@@ -95,6 +107,7 @@ technologies_dict, renewables_dict = create_technologies (generators_dict,
                                                           batteries_dict)
 
 
+#check diesel or batteries and at least one generator, for feasibility
 if ('D' in technologies_dict.keys() or 'B' in technologies_dict.keys() and generators_dict != {}):
     #create the initial solution operator
     sol_constructor = Sol_constructor(generators_dict, 
@@ -116,7 +129,7 @@ if ('D' in technologies_dict.keys() or 'B' in technologies_dict.keys() and gener
         generators_dict['aux_diesel'] = sol_feasible.generators_dict_sol['aux_diesel']
         generators_dict['aux_diesel'].area = 10000000
     
-
+    #calculate area
     sol_feasible.results.descriptive['area'] = calculate_area(sol_feasible)    
     # set the initial solution as the best so far
     sol_best = copy.deepcopy(sol_feasible)
@@ -126,7 +139,7 @@ if ('D' in technologies_dict.keys() or 'B' in technologies_dict.keys() and gener
 
 
     
-    #nputs for the model
+    #inputs for the model
     movement = "Initial Solution"
     
     #df of solutions
@@ -138,10 +151,10 @@ if ('D' in technologies_dict.keys() or 'B' in technologies_dict.keys() and gener
                                 demand_df,
                                 forecast_df)
     
-    add_function = 'GRASP'
-    remove_function = 'RANDOM'
+    #check that first solution is feasible
     if (sol_best.results != None):
         for i in range(instance_data['N_iterations']):
+            #create df to export results
             rows_df.append([i, sol_current.feasible, 
                             sol_current.results.descriptive['area'], 
                             sol_current.results.descriptive['LCOE'], 
@@ -171,12 +184,11 @@ if ('D' in technologies_dict.keys() or 'B' in technologies_dict.keys() and gener
                     sol_current = copy.deepcopy(sol_feasible)
                     continue # Skip running the model and go to the begining of the for loop
     
-            #Make model
-            
+            #review which dispatch strategy to use
             strategy_def = def_strategy(generators_dict = sol_try.generators_dict_sol,
                                         batteries_dict = sol_try.batteries_dict_sol) 
             
-    
+            #run the dispatch strategy
             if (strategy_def == "diesel"):
                 lcoe_cost, df_results, state, time_f = d(sol_try, demand_df, instance_data, cost_data, CRF)
             elif (strategy_def == "diesel - solar") or (strategy_def == "diesel - wind") or (strategy_def == "diesel - solar - wind"):
@@ -186,6 +198,7 @@ if ('D' in technologies_dict.keys() or 'B' in technologies_dict.keys() and gener
             elif (strategy_def == "battery - diesel - wind") or (strategy_def == "battery - diesel - solar") or (strategy_def == "battery - diesel - solar - wind"):
                 lcoe_cost, df_results, state, time_f  = B_plus_D_plus_Ren(sol_try, demand_df, instance_data, cost_data, CRF, delta)
             else:
+                #no feasible combination
                 state = 'No feasible solution'
                 df_results = []
             
@@ -198,7 +211,9 @@ if ('D' in technologies_dict.keys() or 'B' in technologies_dict.keys() and gener
                 sol_current = copy.deepcopy(sol_try)
                 #Search the best solution
                 if sol_try.results.descriptive['LCOE'] <= sol_best.results.descriptive['LCOE']:
+                    #calculate area
                     sol_try.results.descriptive['area'] = calculate_area(sol_try)
+                    #save sol_best
                     sol_best = copy.deepcopy(sol_try)   
             else:
                 sol_try.feasible = False
@@ -207,9 +222,9 @@ if ('D' in technologies_dict.keys() or 'B' in technologies_dict.keys() and gener
                 sol_try.results = Results(sol_try, df_results, lcoe_cost)
                 sol_current = copy.deepcopy(sol_try)
             
-        
+            #calculate area
             sol_current.results.descriptive['area'] = calculate_area(sol_current)
-     
+            #delete to avoid overwriting
             del df_results
             del sol_try
             
@@ -224,11 +239,12 @@ if ('D' in technologies_dict.keys() or 'B' in technologies_dict.keys() and gener
             generation_graph = sol_best.results.generation_graph(0,len(demand_df))
             plot(generation_graph)
             try:
+                #stats
                 percent_df, energy_df, renew_df, total_df, brand_df = calculate_energy(sol_best.batteries_dict_sol, sol_best.generators_dict_sol, sol_best.results, demand_df)
             except KeyError:
                 pass
             #calculate current COP   
-            TRM = 3910
+
             LCOE_COP = TRM * sol_best.results.descriptive['LCOE']
             #create Excel
             '''

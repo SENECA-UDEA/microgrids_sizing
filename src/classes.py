@@ -166,6 +166,7 @@ class Solution():
 
 
 class Random_create():
+    #crrate random numbers with seed
     def __init__(self, seed = None):
         self.seed = seed
         random.seed(self.seed)

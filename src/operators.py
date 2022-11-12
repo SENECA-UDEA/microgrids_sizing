@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 Created on Wed May 11 10:23:49 2022
-@author: pmayaduque
+@author: scastellanos
 """
 from src.utilities import create_technologies, calculate_sizingcost, interest_rate
 import src.opt as opt
@@ -197,6 +197,7 @@ class Sol_constructor():
             
             sol_results = opt.Results(model, generators_dict_sol)
         
+        #create solution
         sol_initial = Solution(generators_dict_sol, 
                                batteries_dict_sol, 
                                technologies_dict_sol, 
@@ -220,15 +221,7 @@ class Search_operator():
         dict_actual = {**solution.generators_dict_sol,**solution.batteries_dict_sol}
         min_relation = math.inf
         #Check which one generates less energy at the highest cost
-        '''
-        #if there is only one diesel the model don't choose it
-        cont = 0
-        cont2 = 0
-        for d in dict_actual.values(): 
-            cont2 += 1
-            if d.tec == 'D':
-                cont += 1
-        '''
+
         for d in dict_actual.values(): 
             if d.tec == 'B':
                 #Operation cost
@@ -244,15 +237,7 @@ class Search_operator():
                     op_cost = solution.results.df_results[d.id_gen+'_cost'].sum(axis = 0, skipna = True)
                     inv_cost = d.cost_up + d.cost_r - d.cost_s + d.cost_fopm 
                     #op_cost *= ((((inf + txfc)**t_years)-1)/(inf+txfc))
-                    '''
-                    if cont == 1 and cont2 != 1:
-                        inv_cost = 0.00001
-                        op_cost = 0.000001
-                    else:
-                        inv_cost = d.cost_up + d.cost_r - d.cost_s + d.cost_fopm 
-                        #inv_cost = (d.cost_up * delta + d.cost_r - d.cost_s)*(1+i) 
-                        #inv_cost2 = d.cost_fopm * ((((inf)**t_years)-1)/inf)
-                    '''
+
                 else:
                     sum_generation = sum(d.gen_rule.values())
                     op_cost = d.cost_rule
@@ -401,22 +386,7 @@ class Search_operator():
     def removerandomobject(self, sol_actual, rand_ob): #add generator or battery
         solution = copy.deepcopy(sol_actual)
         dict_actual = {**solution.generators_dict_sol,**solution.batteries_dict_sol} 
-        '''
-        #if there is only one diesel the model don't choose it
-        cont = 0
-        cont2 = 0
-        for d in dict_actual.values(): 
-            cont2 += 1
-            if d.tec == 'D':
-                cont += 1
-                name_diesel = d.id_gen
-        if cont == 1 and cont2 != 1:
-            list_search = list(dict_actual.keys())
-            list_search.remove(name_diesel)
-            select_ob = rand_ob.create_rand_list(list_search)
-        else:
-            select_ob = rand_ob.create_rand_list(list(dict_actual.keys()))
-        '''
+
         select_ob = rand_ob.create_rand_list(list(dict_actual.keys()))
         if dict_actual[select_ob].tec == 'B':
             remove_report =  pd.Series(solution.results.df_results[select_ob+'_b-'].values,index=solution.results.df_results[select_ob+'_b-'].keys()).to_dict()
@@ -444,7 +414,7 @@ class Search_operator():
         list_keys_actual = dict_actual.keys()
         #Check the object that is not in the current solution
         non_actual = list(set(list_keys_total) - set(list_keys_actual))
-        
+        #gill the data        
         for i in non_actual: 
             g = dict_total[i]
             if g.area <= available_area:

@@ -2,7 +2,7 @@
 """
 Created on Wed Apr 20 13:51:07 2022
 
-@author: pmayaduque
+@author: scastellanos
 """
 from src.classes import Solar, Eolic, Diesel, Battery
 import pandas as pd

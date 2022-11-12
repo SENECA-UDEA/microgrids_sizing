@@ -644,13 +644,18 @@ class Results():
                
         #Operative cost data frame
         generation_cost_data = {k+'_cost' : [0]*len(model.HTIME) for k in model.GENERATORS}
+        #diesel cost
         for (k,t), f in model.operative_cost.items():
           generation_cost_data [k+'_cost'][t] = value(f)
+        #renewable cost
+        for k in model.GENERATORS:
+            for t in model.HTIME:
+                if generators_dict[k].tec != 'D':
+                    generation_cost_data [k+'_cost'][t] = generators_dict[k].gen_rule[t] * generators_dict[k].cost_vopm 
+                
         generation_cost = pd.DataFrame(generation_cost_data, columns=[*generation_cost_data.keys()])
         
-        for k in model.GENERATORS:
-            if generators_dict[k].tec != 'D':
-                generation_cost_data [k+'_cost'] = generators_dict[k].gen_rule
+
             
         
         # batery charge and discharge
