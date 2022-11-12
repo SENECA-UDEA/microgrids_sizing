@@ -307,7 +307,6 @@ def B_plus_S_and_or_W  (solution, demand_df, instance_data, cost_data, CRF, delt
     #initial parameters 
     time_i = time.time()
     auxiliar_dict_batteries = {}
-    lcoe_op = 0 #operative cost
     lcoe_inf = 0 #investment cost
     lcoe_inftot = 0 #total investment cost
     len_data =  len(demand_df['demand'])

@@ -198,17 +198,17 @@ for k in dem_vec:
 
 'normal'
 s = np.random.normal(c[0], c[1], 1)
-n = s[0]
+n = max(0,s[0])
 
 'uniform'
 s = np.random.uniform(c[0], c[1],1)
-n = s[0]
+n = max(0,s[0])
 
 'traingular'
 s = np.random.triangular(c[0], c[1],c[2],2)
-n = s[0]
+n = max(0,s[0])
 
 
 'beta'
 s = np.random.beta(a1,b1,1)
-n = s[0]
+n = max(0,s[0])
