@@ -12,6 +12,8 @@ import math
 
 import scipy.stats as st
 
+import numpy as np
+
 place = 'Providencia'
 
 
@@ -141,6 +143,35 @@ def get_best_distribution(data):
 
     return best_dist, best_p, params[best_dist]
 
+
+def get_best_distribution2(data):
+    dist_names = ["exponweib","norm", "weibull_max", "weibull_min", "pareto", "genextreme", 
+                  "gamma", "beta", "rayleigh", "invgauss","uniform","expon",   
+                  "lognorm","pearson3"]
+    dist_results = []
+    params = {}
+    for dist_name in dist_names:
+        dist = getattr(st, dist_name)
+        param = dist.fit(demand)
+
+        params[dist_name] = param
+        # Applying the Kolmogorov-Smirnov test
+        D, p = st.kstest(data, dist_name, args=param)
+        print("p value for "+dist_name+" = "+str(p))
+        dist_results.append((dist_name, p))
+
+    # select the best fitted distribution
+    best_dist, best_p = (max(dist_results, key=lambda item: item[1]))
+    # store the name of the best fit and its p value
+
+    print("Best fitting distribution: "+str(best_dist))
+    print("Best p value: "+ str(best_p))
+    print("Parameters for the best fit: "+ str(params[best_dist]))
+
+    return best_dist, best_p, params[best_dist]
+from scipy.stats import pearson3
+skew, loc1, scale1 = pearson3.fit(demand)
+
 #np.random.distribution(parameters)
 nn = len(demand_df['t'])/24
 dem_vec = {k : [0]*int(nn) for k in range(int(24))}
@@ -158,10 +189,26 @@ for k in forecast_df['t']:
     wind_vec[l][k] = forecast_df['Wt'][t]
     sol_vec[l][k] = forecast_df['DNI'][t]
 
+a,b,c = get_best_distribution2(demand)
+pp = [1,2,3,4,5,6,7,8,9,8,7,5,10,100,20,2,5,4]
+a,b,c = get_best_distribution2(pp)
 
 for k in dem_vec:
     a, b, c = get_best_distribution(dem_vec[k])
 
+'normal'
+s = np.random.normal(c[0], c[1], 1)
+n = s[0]
+
+'uniform'
+s = np.random.uniform(c[0], c[1],1)
+n = s[0]
+
+'traingular'
+s = np.random.triangular(c[0], c[1],c[2],2)
+n = s[0]
 
 
-
+'beta'
+s = np.random.beta(a1,b1,1)
+n = s[0]

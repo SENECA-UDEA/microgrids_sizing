@@ -497,6 +497,7 @@ def make_model_operational(generators_dict=None,
         for i in generators_dict.values():
             if (i.tec == 'S' or i.tec == 'W'):
                 rev = 1
+                break
         if (rev == 1):
             expr4 = sum(model.d[t1] for t1 in model.HTIME)
             return sum( model.p[k,t] for k in model.GENERATORS if generators_dict[k].tec != 'D') <= expr4*(sum( model.v[k2,t] for k2 in model.GENERATORS_DIESEL)  + sum(model.soc[l,t] for l in model.BATTERIES)) 
