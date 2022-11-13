@@ -47,7 +47,7 @@ def def_strategy (batteries_dict, generators_dict):
     
     return dispatch
 
-def d (solution, demand_df, instance_data, cost_data, CRF):
+def d (solution, demand_df, instance_data, cost_data, CRF, rand_ob, dd):
     #initial parameters 
     time_i = time.time()
     auxiliar_dict_generator = {}
@@ -70,18 +70,29 @@ def d (solution, demand_df, instance_data, cost_data, CRF):
     bplus = {l+'_b+' : [0]*len_data for l in solution.batteries_dict_sol} #charge battery
     bminus = {l+'_b-' : [0]*len_data for l in solution.batteries_dict_sol} #discharge battery
     fuel_cost = instance_data['fuel_cost']
+    average_demand = np.mean(demand_df['demand'])
     
     #calculate investments cost
     for g in solution.generators_dict_sol.values():  
         lcoe_inf = (g.cost_up + g.cost_r - g.cost_s) * CRF + g.cost_fopm
         #lcoe_inf = g.cost_up + g.cost_r - g.cost_s + g.cost_fopm
         lcoe_inftot += lcoe_inf
-        lcoe_op =  (g.f0 + g.f1)*g.DG_max*fuel_cost * len_data
-        auxiliar_dict_generator[g.id_gen] = (g.DG_max * len_data) / (lcoe_inf*CRF + lcoe_op)
+
+        #assume it produces around the average
+        if (dd == "best"):
+            prod = min (average_demand, g.DG_max)
+            lcoe_op = (g.f0 * g.DG_max + g.f1 * prod)*fuel_cost * len_data
+            auxiliar_dict_generator[g.id_gen] = (prod * len_data) / (lcoe_inf*CRF + lcoe_op)
+        else:
+            lcoe_op =  (g.f0 + g.f1)*g.DG_max*fuel_cost * len_data
+            auxiliar_dict_generator[g.id_gen] = (g.DG_max * len_data) / (lcoe_inf*CRF + lcoe_op)
     
     #sort to initialize always with the best lcoe diesel generator
     sorted_generators = sorted(auxiliar_dict_generator, key=auxiliar_dict_generator.get,reverse=False) 
-
+    if (dd == "rand"):
+        #random order of generators
+        rand_ob.create_randomshuffle(sorted_generators)
+    
     #simulation
     for t in demand_df['t']:
         #initilialy demand to be covered is the same that demand
@@ -93,7 +104,7 @@ def d (solution, demand_df, instance_data, cost_data, CRF):
              if (demand_tobe_covered == 0):
                  p[i][t] = 0
                  cost[i+'_cost'][t]=0
-             #if lowest that reference can generate                 
+             #if lowest that reference can generate, calculate splus                
              elif (demand_tobe_covered < gen.DG_min):
                  p[i][t] = gen.DG_min
                  ptot += p[i][t]
@@ -158,7 +169,7 @@ def d (solution, demand_df, instance_data, cost_data, CRF):
     
     
 
-def D_plus_S_and_or_W (solution, demand_df, instance_data, cost_data, CRF, delta):
+def D_plus_S_and_or_W (solution, demand_df, instance_data, cost_data, CRF, delta, rand_ob, dd):
     
     #initial parameters 
     time_i = time.time()
@@ -185,6 +196,9 @@ def D_plus_S_and_or_W (solution, demand_df, instance_data, cost_data, CRF, delta
     list_ren = [] #renewable generation
     demand_tobe_covered = [] 
     min_ref = math.inf #initial min reference (diesel reference for renewable generators)
+    average_demand = np.mean(demand_df['demand'])
+    
+ 
 
 
     #calculate investment cost    
@@ -192,9 +206,16 @@ def D_plus_S_and_or_W (solution, demand_df, instance_data, cost_data, CRF, delta
         if (g.tec == 'D'):
             lcoe_inf = (g.cost_up + g.cost_r - g.cost_s) * CRF + g.cost_fopm
             #lcoe_inf = g.cost_up + g.cost_r - g.cost_s + g.cost_fopm
-            lcoe_inftot += lcoe_inf          
-            lcoe_op =  (g.f0 + g.f1)*g.DG_max*fuel_cost * len_data
-            auxiliar_dict_generator[g.id_gen] = (g.DG_max * len_data) / (lcoe_inf*CRF + lcoe_op)
+            if (dd == 'best'):
+                #assume it produces around the average
+                prod = min (average_demand, g.DG_max)
+                lcoe_op = (g.f0 * g.DG_max + g.f1 * prod)*fuel_cost * len_data
+                auxiliar_dict_generator[g.id_gen] = (prod * len_data) / (lcoe_inf*CRF + lcoe_op)
+            else:
+                lcoe_inftot += lcoe_inf          
+                lcoe_op =  (g.f0 + g.f1)*g.DG_max*fuel_cost * len_data
+                auxiliar_dict_generator[g.id_gen] = (g.DG_max * len_data) / (lcoe_inf*CRF + lcoe_op)
+            
             #get the lowest reference
             if g.DG_min <= min_ref:
                  min_ref = g.DG_min
@@ -206,7 +227,10 @@ def D_plus_S_and_or_W (solution, demand_df, instance_data, cost_data, CRF, delta
 
     #sorted diesel initial the best lcoe generator
     sorted_generators = sorted(auxiliar_dict_generator, key=auxiliar_dict_generator.get,reverse=False) 
-
+    if (dd == "rand"):
+        #random order of generators
+        rand_ob.create_randomshuffle(sorted_generators)
+    
     #reference is the generator diesel in the first position, it is necessary for the renewable objets
     ref = solution.generators_dict_sol[sorted_generators[0]].DG_min
     
@@ -326,7 +350,7 @@ def D_plus_S_and_or_W (solution, demand_df, instance_data, cost_data, CRF, delta
 
 
 
-def B_plus_S_and_or_W  (solution, demand_df, instance_data, cost_data, CRF, delta):
+def B_plus_S_and_or_W  (solution, demand_df, instance_data, cost_data, CRF, delta, rand_ob, bb):
     
     #initial parameters 
     time_i = time.time()
@@ -352,6 +376,7 @@ def B_plus_S_and_or_W  (solution, demand_df, instance_data, cost_data, CRF, delt
     dict_total = {**solution.generators_dict_sol,**solution.batteries_dict_sol}
     cost = {k+'_cost' : [0]*len_data for k in dict_total} #variable cost
     extra_generation = 0  #extra renewavble generation to waste or charge the battery
+    average_demand = np.mean(demand_df['demand'])
     
     #calculate cost investment
     for g in solution.generators_dict_sol.values():
@@ -364,11 +389,18 @@ def B_plus_S_and_or_W  (solution, demand_df, instance_data, cost_data, CRF, delt
         lcoe_inf = (b.cost_up + b.cost_r - b.cost_s) * delta * CRF + b.cost_fopm
         #lcoe_inf = (b.cost_up + b.cost_r - b.cost_s)*delta + b.cost_fopm
         lcoe_inftot += lcoe_inf    
-        auxiliar_dict_batteries[b.id_bat] = (b.soc_max * len_data) / (lcoe_inf*CRF)        
+        if (bb == 'best'):
+            auxiliar_dict_batteries[b.id_bat] = lcoe_inf*CRF * abs(average_demand - b.soc_max)
+        else:
+            auxiliar_dict_batteries[b.id_bat] = (b.soc_max * len_data) / (lcoe_inf*CRF)  
+
     
     #begin always with the best battery lcoe
     sorted_batteries = sorted(auxiliar_dict_batteries, key=auxiliar_dict_batteries.get,reverse=False) 
-
+    #random order of generators
+    if (bb == 'rand'):
+        rand_ob.create_randomshuffle(sorted_batteries)
+    
     #simulation
     for t in demand_df['t']:
         #initialy demand to be covered is the same that demand 
@@ -475,7 +507,7 @@ def B_plus_S_and_or_W  (solution, demand_df, instance_data, cost_data, CRF, delt
 
 
 
-def B_plus_D_plus_Ren(solution, demand_df, instance_data, cost_data, CRF, delta):
+def B_plus_D_plus_Ren(solution, demand_df, instance_data, cost_data, CRF, delta, rand_ob, dd, bb):
 
 
     #initial parameters 
@@ -506,15 +538,26 @@ def B_plus_D_plus_Ren(solution, demand_df, instance_data, cost_data, CRF, delta)
     extra_generation = 0  #extra renewavble generation to waste or charge the battery
     fuel_cost = instance_data['fuel_cost'] 
     aux_demand = 0
+    average_demand = np.mean(demand_df['demand'])
+    
 
+  
+    
     #calculate investment cost
     for g in solution.generators_dict_sol.values():
         if (g.tec == 'D'):
             lcoe_inf = (g.cost_up + g.cost_r - g.cost_s) * CRF + g.cost_fopm
-            #lcoe_inf = g.cost_up + g.cost_r - g.cost_s + g.cost_fopm
-            lcoe_inftot += lcoe_inf          
-            lcoe_op =  (g.f0 + g.f1)*g.DG_max*fuel_cost * len_data
-            auxiliar_dict_generator[g.id_gen] = (g.DG_max * len_data) / (lcoe_inf*CRF + lcoe_op)
+            if (dd == 'best'):
+                #assume it produces around the average
+                prod = min (average_demand, g.DG_max)
+                lcoe_op = (g.f0 * g.DG_max + g.f1 * prod)*fuel_cost * len_data
+                auxiliar_dict_generator[g.id_gen] = (prod * len_data) / (lcoe_inf*CRF + lcoe_op)
+            else:
+                #lcoe_inf = g.cost_up + g.cost_r - g.cost_s + g.cost_fopm
+                lcoe_inftot += lcoe_inf          
+                lcoe_op =  (g.f0 + g.f1)*g.DG_max*fuel_cost * len_data
+                auxiliar_dict_generator[g.id_gen] = (g.DG_max * len_data) / (lcoe_inf*CRF + lcoe_op)
+
         else:
             lcoe_inf = (g.cost_up + g.cost_r - g.cost_s) * delta * CRF + g.cost_fopm
             #lcoe_inf = (g.cost_up + g.cost_r - g.cost_s)*delta + g.cost_fopm
@@ -522,6 +565,10 @@ def B_plus_D_plus_Ren(solution, demand_df, instance_data, cost_data, CRF, delta)
             list_ren.append(g.id_gen)
     #initial generator always the best lcoe
     sorted_generators = sorted(auxiliar_dict_generator, key=auxiliar_dict_generator.get,reverse=False) 
+    #random order of generators
+    if (dd == 'rand'):
+        rand_ob.create_randomshuffle(sorted_generators)
+    
     #reference to generators renewables
     ref = solution.generators_dict_sol[sorted_generators[0]].DG_min
     
@@ -530,11 +577,19 @@ def B_plus_D_plus_Ren(solution, demand_df, instance_data, cost_data, CRF, delta)
         lcoe_inf = (b.cost_up + b.cost_r - b.cost_s) * delta * CRF + b.cost_fopm
         #lcoe_inf = (b.cost_up + b.cost_r - b.cost_s)*delta + b.cost_fopm
         lcoe_inftot += lcoe_inf   
-        auxiliar_dict_batteries[b.id_bat] = (b.soc_max * len_data) / (lcoe_inf*CRF)        
+        if (bb == 'best'):
+            auxiliar_dict_batteries[b.id_bat] = lcoe_inf*CRF * abs(average_demand - b.soc_max)
+        else:
+            auxiliar_dict_batteries[b.id_bat] = (b.soc_max * len_data) / (lcoe_inf*CRF)    
+        
     
     #initial battery alwatys the best lcoe
     sorted_batteries = sorted(auxiliar_dict_batteries, key=auxiliar_dict_batteries.get,reverse=False) 
+    #random order of generators
+    if (bb == 'rand'):
+        rand_ob.create_randomshuffle(sorted_batteries)
 
+    
     #simulation
     for t in demand_df['t']:
         #initialy demand to be covered is the same that demand
@@ -599,6 +654,7 @@ def B_plus_D_plus_Ren(solution, demand_df, instance_data, cost_data, CRF, delta)
                         demand_tobe_covered = demand_tobe_covered - bminus[i+'_b-'][t]
             #batteries supplies all demand            
             if demand_tobe_covered == 0:
+                #use one diesel, the reference and calculate suplus if apply
                 ptot += ref
                 i = sorted_generators[0]
                 gen = solution.generators_dict_sol[i]

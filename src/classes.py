@@ -188,6 +188,9 @@ class Random_create():
         selection = 0
         selection = random.sample(list_rand,n)
         return selection
+    def create_randomshuffle(self,list_rand):
+        random.shuffle(list_rand)
+        return list_rand
     def create_randomnpnormal(self, means,desv,size):
         selection = 0
         selection = np.random.normal(loc=means, scale=desv, size=size)

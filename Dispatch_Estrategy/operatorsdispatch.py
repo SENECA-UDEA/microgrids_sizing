@@ -25,7 +25,9 @@ class Sol_constructor():
                           delta,
                           CRF,
                           rand_ob,
-                          cost_data): #initial Diesel solution
+                          cost_data,
+                          dd,
+                          bb): #initial Diesel solution
 
     
         generators_dict_sol = {}
@@ -138,13 +140,13 @@ class Sol_constructor():
                            sol_results) 
         #run dispatch strategy
         if (strategy_def == "diesel"):
-            lcoe_cost, df_results, state, time_f = d(sol_try, self.demand_df, instance_data, cost_data, CRF)
+            lcoe_cost, df_results, state, time_f = d(sol_try, self.demand_df, instance_data, cost_data, CRF, rand_ob, dd)
         elif (strategy_def == "diesel - solar") or (strategy_def == "diesel - wind") or (strategy_def == "diesel - solar - wind"):
-            lcoe_cost, df_results, state, time_f  = D_plus_S_and_or_W(sol_try, self.demand_df, instance_data, cost_data,CRF,delta )
+            lcoe_cost, df_results, state, time_f  = D_plus_S_and_or_W(sol_try, self.demand_df, instance_data, cost_data,CRF,delta, rand_ob, dd )
         elif (strategy_def == "battery - solar") or (strategy_def == "battery - wind") or (strategy_def == "battery - solar - wind"):
-            lcoe_cost, df_results, state, time_f  = B_plus_S_and_or_W (sol_try, self.demand_df, instance_data, cost_data, CRF, delta)
+            lcoe_cost, df_results, state, time_f  = B_plus_S_and_or_W (sol_try, self.demand_df, instance_data, cost_data, CRF, delta, rand_ob, bb)
         elif (strategy_def == "battery - diesel - wind") or (strategy_def == "battery - diesel - solar") or (strategy_def == "battery - diesel - solar - wind"):
-            lcoe_cost, df_results, state, time_f  = B_plus_D_plus_Ren(sol_try, self.demand_df, instance_data, cost_data, CRF, delta)
+            lcoe_cost, df_results, state, time_f  = B_plus_D_plus_Ren(sol_try, self.demand_df, instance_data, cost_data, CRF, delta, rand_ob, dd, bb)
         else:
             #no feasible combination
             state = 'No feasible solution'
@@ -184,7 +186,7 @@ class Sol_constructor():
                    sol_results) 
             #run dispatch strategy with false diesel
             if (strategy_def == "diesel"):
-                lcoe_cost, df_results, state, time_f = d(sol_try, self.demand_df, instance_data, cost_data, CRF)
+                lcoe_cost, df_results, state, time_f = d(sol_try, self.demand_df, instance_data, cost_data, CRF, rand_ob, dd)
             else:
                 state = 'No feasible solution'
 
