@@ -20,9 +20,9 @@ import numpy as np
 
 rows_df_time = []
 
-for iii in range(1, 73):
-    for jjj in range(1,193):
-    
+for ppp in range(1, 26):
+    for jjj in range(1,3):
+        iii = 1
         #PARAMETROS DE LA CORRIDA - POR DEFECTO
         #lugar
         #set the same seed for every iteration
@@ -89,103 +89,64 @@ for iii in range(1, 73):
         jadd_name6 = ""
         jadd_name7 = ""
         #instancias con iteraciones diferentes a 100
-        if (iii <= 36):
-            iteraciones_run = 200
-            iadd_name1 = iteraciones_run
-        else:
-            iteraciones_run  = 500
-            iadd_name1 = iteraciones_run
 
-        #instancias tlpsp    
-        if (iii >= (13 + (36 * ((iii-1)//36))) and (iii <= (24 + (36 * ((iii-1)//36))))):
-            tlpsp_run = 24
-            iadd_name2 = '24tlpsp'      
-        elif (iii >= (25 + (36 * ((iii-1)//36))) and (iii <= (36 + (36 * ((iii-1)//36))))):
-            tlpsp_run = 168
-            iadd_name2 = '168tlpsp'
-        else:
-            iadd_name2 = '1tlpsp'
+        iteraciones_run = 300
+        iadd_name1 = iteraciones_run
 
-
- 
-
-        #instancias cambio tamaño horizonte temporal
-        if (iii >= (9 + (12 * ((iii-1)//12))) and (iii <= (12 + (12 * ((iii-1)//12))))):
-            aumento_tiempo = "True"
-            iadd_name3 = '120%htime'
-            htime_run = 1.2
-        elif (iii >= (1 + (12 * ((iii-1)//12))) and (iii <= (4 + (12 * ((iii-1)//12))))):
-            htime_run = 0.8
-            iadd_name3 = '80%htime'
-        else:
-            iadd_name3 = '100%htime'
-    
-        #instancias con diferente probabilidad de añadir una tecnología
-        if(iii%4==2):
-            b_p_run = 0.5
-            iadd_name4 = '50%bat'
-        elif(iii%4==0):
-            w_p_run = 0.5
-            iadd_name4 = '50%wind'
-        elif(iii%4==3): 
-            s_p_run = 0.5
-            iadd_name4 = '50%solar'
-        else:
-            iadd_name4 = "uniform"
-
-            
-        if (jjj <= 96):
+                    
+        if (ppp <= 5):
+            nse_run = 0
+            jadd_name1 = 'nse0%'
+        elif (ppp <= 10):
             nse_run = 0.01
-            jadd_name1 = 'nse1%'
-        else:
+            jadd_name1 = 'nse1%'  
+        elif (ppp <= 15):
+            nse_run = 0.05
+            jadd_name1 = 'nse5%'  
+        elif (ppp <= 20):
             nse_run = 0.1
-            jadd_name1 = 'nse10%'   
-        
-        if ((jjj <= 48) or ((jjj >=97)and(jjj <= 144))):
-            jadd_name2 = "delta"    
-        else:   
-            delta_run = 0
-            jadd_name2 = "wtOUTdelta"          
-        
-        if (jjj >= (1 + (48 * ((jjj-1)//48))) and (jjj <= (24 + (48 * ((jjj-1)//48))))):
-            splus_cost_run = 0.007
-            jadd_name3 = "s+cost0.0014"
-        else: 
-            splus_cost_run = 0.7
-            jadd_name3 = "s+cost0.14"     
+            jadd_name1 = 'nse10%'  
+        else:
+            nse_run = 0.15
+            jadd_name1 = 'nse15%'  
+
+        if (ppp%5 == 1):
+            tlpsp_run = 1
+            iadd_name2 = '1tlpsp'           
+        elif (ppp%5 == 2):
+            tlpsp_run = 2
+            iadd_name2 = '2tlpsp' 
+        elif (ppp%5 == 3):
+            tlpsp_run = 24
+            iadd_name2 = '24tlpsp' 
+        elif (ppp%5 == 4):
+            tlpsp_run = 168
+            iadd_name2 = '168tlpsp' 
+        else:
+            tlpsp_run = 720
+            iadd_name2 = '720tlpsp'             
             
-        if (jjj >= (1 + (24 * ((jjj-1)//24))) and (jjj <= (12 + (24 * ((jjj-1)//24))))):
+ 
+        iadd_name3 = '100%htime'
+    
+        iadd_name4 = "uniform"
+
+        jadd_name2 = "delta"    
+         
+        jadd_name5 = 'area100%'
+        splus_cost_run = 0.007
+        jadd_name3 = "s+cost0.0014"
+        jadd_name6 = 'fcost100%'
+        jadd_name7 = 'uniform'
+        
+        if (jjj%2 == 0):
             sminus_cost_run = 0.2
             jadd_name4 = "s-cost20%"
         else: 
             sminus_cost_run = 1
             jadd_name4 = "s-cost100%"     
-
-        if (jjj >= (1 + (12 * ((jjj-1)//12))) and (jjj <= (6 + (12 * ((jjj-1)//12))))):
-            area_run = 0.8
-            jadd_name5 = 'area80%'
-        else:
-            area_run = 1.2
-            jadd_name5 = 'area120%'      
-
-
-        if (jjj >= (1 + (6 * ((jjj-1)//6))) and (jjj <= (3 + (6 * ((jjj-1)//6))))):    
-            fuel_cost_run = 0.5
-            jadd_name6 = 'fcost50%'  
-        else:
-            fuel_cost_run = 1.5
-            jadd_name6 = 'fcost150%'    
-            
-        if (jjj%3 == 0):
-            die_cost_run = 0.8
-            jadd_name7 = 'die80%cost'
-        elif (jjj%3 == 1):
-            bat_cost_run = 0.8
-            jadd_name7 = 'bat80%cost'
-        else:
-            ren_cost_run = 0.8
-            jadd_name7 = 'ren80%cost'
- 
+   
+             
              
         # file paths local
         demand_filepath = "../data/"+place+"/demand_"+place+".csv"
@@ -639,7 +600,7 @@ for iii in range(1, 73):
             name_esci = str(iii) + ' ' + str(place) + ' iter: ' + str(iteraciones_run) + ' ' + str(iadd_name1) + ' ' + str(iadd_name2) + ' ' + str(iadd_name3)+ ' ' + str(iadd_name4)  
             name_escj =  str(jjj) + ' ' + str(jadd_name1) + ' ' + str(jadd_name2)+ ' ' + str(jadd_name3)+ ' ' + str(jadd_name4)+ ' ' + str(jadd_name5)+ ' ' + str(jadd_name6)+ ' ' + str(jadd_name7)
             name_esc = 'esc_'   + name_esci + ' MODEL- ' + name_escj
-            rows_df_time.append([iii,jjj,name_esc, place, iteraciones_run, amax, tlpsp_run, nse_run, aux_instance_data['splus_cost'],
+            rows_df_time.append([iii,jjj,ppp,name_esc, place, iteraciones_run, amax, tlpsp_run, nse_run, aux_instance_data['splus_cost'],
                                 sminus_cost_run,aux_instance_data['fuel_cost'],len(demand_df),demanda_run,
                                 forecast_df['GHI'].sum(),delta,ir,years_run,forecast_w_run,forecast_s_run,
                                 add_function_run, remove_function_run, len(default_batteries), len(default_diesel),
@@ -655,7 +616,7 @@ for iii in range(1, 73):
             del batteries_total
     
             #dataframe completo con todas las instancias
-            df_time = pd.DataFrame(rows_df_time, columns=["N problem","N algortihm", "Name", "City", "Iterations", "Area","Tlpsp",
+            df_time = pd.DataFrame(rows_df_time, columns=["N problem","N algortihm","ppp", "Name", "City", "Iterations", "Area","Tlpsp",
                                                           "NSE","S+_cost","S-_cost", "fuel_cost","Len_demand","Demand percent",
                                                           "GHI len","delta","ir","years","Forecast_wind",
                                                           "Forecast_solar","add_function","remove-function","json batteries", "json diesel",
@@ -698,5 +659,7 @@ LCOE_COP = TRM * model_results.descriptive['LCOE']
 sol_best.results.df_results.to_excel("resultsesc4.xlsx")
 '''# -*- coding: utf-8 -*-
 # -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+
 # -*- coding: utf-8 -*-
 

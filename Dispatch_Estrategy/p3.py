@@ -20,9 +20,10 @@ import numpy as np
 
 rows_df_time = []
 
-for iii in range(1, 73):
+for ppp in range(1, 5):
     for jjj in range(1,193):
-    
+        iii = 1
+
         #PARAMETROS DE LA CORRIDA - POR DEFECTO
         #lugar
         #set the same seed for every iteration
@@ -89,6 +90,8 @@ for iii in range(1, 73):
         jadd_name6 = ""
         jadd_name7 = ""
         #instancias con iteraciones diferentes a 100
+    
+        
         if (iii <= 36):
             iteraciones_run = 200
             iadd_name1 = iteraciones_run
@@ -97,12 +100,9 @@ for iii in range(1, 73):
             iadd_name1 = iteraciones_run
 
         #instancias tlpsp    
-        if (iii >= (13 + (36 * ((iii-1)//36))) and (iii <= (24 + (36 * ((iii-1)//36))))):
+        if (iii >= 3):
             tlpsp_run = 24
             iadd_name2 = '24tlpsp'      
-        elif (iii >= (25 + (36 * ((iii-1)//36))) and (iii <= (36 + (36 * ((iii-1)//36))))):
-            tlpsp_run = 168
-            iadd_name2 = '168tlpsp'
         else:
             iadd_name2 = '1tlpsp'
 
@@ -190,9 +190,12 @@ for iii in range(1, 73):
         # file paths local
         demand_filepath = "../data/"+place+"/demand_"+place+".csv"
         forecast_filepath = "../data/"+place+"/forecast_"+place+".csv"
-        units_filepath = "../data/"+place+"/parameters_"+place+".json"
         instanceData_filepath = "../data/"+place+"/instance_data_"+place+".json"
-       
+        
+        if (ppp <= 2):
+            units_filepath = "../data/"+place+"/parameters_"+place+"_big.json"
+        else:
+           units_filepath = "../data/"+place+"/parameters_"+place+"_small.json"
         #fiscal Data
         fiscalData_filepath = "../data/Cost/fiscal_incentive.json"
        
