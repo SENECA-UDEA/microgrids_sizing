@@ -75,6 +75,7 @@ for iii in range(1, 73):
         estado_json_b = "Igual"
         ren_cost_run = 1
         bat_cost_run = 1
+        die_cost_run = 1
         #string para poner el nombre al escenario
         iadd_name1 = ""
         iadd_name2 = ""
@@ -267,11 +268,17 @@ for iii in range(1, 73):
                 insert_ghi = rand_ob.create_randomnpnormal(mean_ghi, desvest_ghi, 1)
                 insert_sf = rand_ob.create_randomnpnormal(mean_sf, desvest_sf, 1)
                 numero_demand = int(insert_demand[0])
+                numero_demand = max(numero_demand,0)
                 numero_wt = int(insert_wt[0])
+                numero_wt = max(numero_wt, 0)
                 numero_dni = int(insert_dni[0])
+                numero_dni = max(numero_dni, 0)
                 numero_dhi = int(insert_dhi[0])
+                numero_dhi = max(numero_dhi, 0)
                 numero_ghi = int(insert_ghi[0])
+                numero_ghi = max(numero_ghi, 0)
                 numero_sf = int(insert_sf[0])
+                numero_sf = max(numero_sf, 0)
                
                 aux_demand.loc[len(aux_demand.index)] = [count,numero_demand]
                 aux_forecast.loc[len(aux_forecast.index)] = [count,numero_dni,20,numero_wt,0,numero_ghi,1,numero_sf,numero_dhi]
@@ -486,7 +493,7 @@ for iii in range(1, 73):
                 
                 strategy_def = def_strategy(generators_dict = sol_try.generators_dict_sol,
                                 batteries_dict = sol_try.batteries_dict_sol) 
-    
+                print("defined strategy")
                 if (strategy_def == "diesel"):
                     lcoe_cost, df_results, state, time_f = d(sol_try, demand_df, instance_data, cost_data, CRF)
                 elif (strategy_def == "diesel - solar") or (strategy_def == "diesel - wind") or (strategy_def == "diesel - solar - wind"):
@@ -499,6 +506,7 @@ for iii in range(1, 73):
                     state = 'No feasible solution'
                     df_results = []
                 
+                print("finished simulation - state: " + state)
     
                 time_f_make = time.time() - time_i_make
                 dict_time_make[i] = time_f_make

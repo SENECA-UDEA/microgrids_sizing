@@ -109,6 +109,7 @@ def d (solution, demand_df, instance_data, cost_data, CRF, rand_ob, dd):
                  p[i][t] = gen.DG_min
                  ptot += p[i][t]
                  cost[i+'_cost'][t]= (gen.f0 * gen.DG_max + gen.f1 * p[i][t])*fuel_cost
+                 costvopm += cost[i+'_cost'][t]
                  splus['s+'][t] = (gen.DG_min - demand_tobe_covered)
                  demand_tobe_covered = 0
                  costsplus['cost_s+'][t] = splus['s+'][t] * instance_data["splus_cost"]
@@ -205,6 +206,7 @@ def D_plus_S_and_or_W (solution, demand_df, instance_data, cost_data, CRF, delta
     for g in solution.generators_dict_sol.values():
         if (g.tec == 'D'):
             lcoe_inf = (g.cost_up + g.cost_r - g.cost_s) * CRF + g.cost_fopm
+            lcoe_inftot += lcoe_inf   
             #lcoe_inf = g.cost_up + g.cost_r - g.cost_s + g.cost_fopm
             if (dd == 'best'):
                 #assume it produces around the average
@@ -212,7 +214,7 @@ def D_plus_S_and_or_W (solution, demand_df, instance_data, cost_data, CRF, delta
                 lcoe_op = (g.f0 * g.DG_max + g.f1 * prod)*fuel_cost * len_data
                 auxiliar_dict_generator[g.id_gen] = (prod * len_data) / (lcoe_inf*CRF + lcoe_op)
             else:
-                lcoe_inftot += lcoe_inf          
+                       
                 lcoe_op =  (g.f0 + g.f1)*g.DG_max*fuel_cost * len_data
                 auxiliar_dict_generator[g.id_gen] = (g.DG_max * len_data) / (lcoe_inf*CRF + lcoe_op)
             
@@ -547,6 +549,7 @@ def B_plus_D_plus_Ren(solution, demand_df, instance_data, cost_data, CRF, delta,
     for g in solution.generators_dict_sol.values():
         if (g.tec == 'D'):
             lcoe_inf = (g.cost_up + g.cost_r - g.cost_s) * CRF + g.cost_fopm
+            lcoe_inftot += lcoe_inf  
             if (dd == 'best'):
                 #assume it produces around the average
                 prod = min (average_demand, g.DG_max)
@@ -554,7 +557,7 @@ def B_plus_D_plus_Ren(solution, demand_df, instance_data, cost_data, CRF, delta,
                 auxiliar_dict_generator[g.id_gen] = (prod * len_data) / (lcoe_inf*CRF + lcoe_op)
             else:
                 #lcoe_inf = g.cost_up + g.cost_r - g.cost_s + g.cost_fopm
-                lcoe_inftot += lcoe_inf          
+                        
                 lcoe_op =  (g.f0 + g.f1)*g.DG_max*fuel_cost * len_data
                 auxiliar_dict_generator[g.id_gen] = (g.DG_max * len_data) / (lcoe_inf*CRF + lcoe_op)
 
@@ -661,10 +664,11 @@ def B_plus_D_plus_Ren(solution, demand_df, instance_data, cost_data, CRF, delta,
                 p[i][t] = ref
                 cost[i+'_cost'][t] = (gen.f0 * gen.DG_max + gen.f1 * p[i][t])*fuel_cost
                 costvopm += cost[i+'_cost'][t]
-                splus['s+'][t] = (ref - dem2)
                 demand_tobe_covered = 0
-                costsplus['cost_s+'][t] = splus['s+'][t] * instance_data["splus_cost"]
-                splustot += costsplus['cost_s+'][t]
+                if (ref > dem2):
+                    splus['s+'][t] = (ref - dem2)
+                    costsplus['cost_s+'][t] = splus['s+'][t] * instance_data["splus_cost"]
+                    splustot += costsplus['cost_s+'][t]
                 
             #need diesel generator
             else:

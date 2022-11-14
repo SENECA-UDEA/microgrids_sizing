@@ -191,6 +191,7 @@ if ('D' in technologies_dict.keys() or 'B' in technologies_dict.keys() and gener
             strategy_def = def_strategy(generators_dict = sol_try.generators_dict_sol,
                                         batteries_dict = sol_try.batteries_dict_sol) 
             
+            print("defined strategy")
             #run the dispatch strategy
             if (strategy_def == "diesel"):
                 lcoe_cost, df_results, state, time_f = d(sol_try, demand_df, instance_data, cost_data, CRF, rand_ob, dd)
@@ -206,7 +207,7 @@ if ('D' in technologies_dict.keys() or 'B' in technologies_dict.keys() and gener
                 df_results = []
             
     
-       
+            print("finish simulation - state: " + state)
             #Create results
             if state == 'optimal':
                 sol_try.results = Results(sol_try, df_results, lcoe_cost)
