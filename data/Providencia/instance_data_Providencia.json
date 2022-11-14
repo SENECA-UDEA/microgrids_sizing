@@ -6,7 +6,7 @@
     "demand_covered": 0.01,
     "years" : 20,
     "tlpsp" : 1,
-    "splus_cost": 0.0028622,
+    "splus_cost": 0.2,
     "sminus_cost": 0.2,
     "h2" : 5,
     "coef_hel" : 0.1,

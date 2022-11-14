@@ -21,7 +21,7 @@ import numpy as np
 rows_df_time = []
 
 for iii in range(1, 73):
-    for jjj in range(1,289):
+    for jjj in range(1,193):
     
         #PARAMETROS DE LA CORRIDA - POR DEFECTO
         #lugar
@@ -134,51 +134,48 @@ for iii in range(1, 73):
             iadd_name4 = "uniform"
 
             
-        if (jjj <= 144):
+        if (jjj <= 96):
             nse_run = 0.01
             jadd_name1 = 'nse1%'
         else:
             nse_run = 0.1
             jadd_name1 = 'nse10%'   
         
-        if ((jjj <= 72) or ((jjj >=145)and(jjj <= 216))):
+        if ((jjj <= 48) or ((jjj >=97)and(jjj <= 144))):
             jadd_name2 = "delta"    
         else:   
             delta_run = 0
-            jadd_name2 = "wtOUTdelta"           
-     
-        if (jjj >= (1 + (72 * ((jjj-1)//72))) and (jjj <= (36 + (72 * ((jjj-1)//72))))):
+            jadd_name2 = "wtOUTdelta"          
+        
+        if (jjj >= (1 + (48 * ((jjj-1)//48))) and (jjj <= (24 + (48 * ((jjj-1)//48))))):
             splus_cost_run = 0.007
             jadd_name3 = "s+cost0.0014"
         else: 
             splus_cost_run = 0.7
-            jadd_name3 = "s+cost0.14"   
+            jadd_name3 = "s+cost0.14"     
             
-        if (jjj >= (1 + (36 * ((jjj-1)//36))) and (jjj <= (18 + (36 * ((jjj-1)//36))))):
+        if (jjj >= (1 + (24 * ((jjj-1)//24))) and (jjj <= (12 + (24 * ((jjj-1)//24))))):
             sminus_cost_run = 0.2
             jadd_name4 = "s-cost20%"
         else: 
             sminus_cost_run = 1
-            jadd_name4 = "s-cost100%"            
+            jadd_name4 = "s-cost100%"     
 
-
-        if (jjj >= (1 + (18 * ((jjj-1)//18))) and (jjj <= (6 + (18 * ((jjj-1)//18))))):
+        if (jjj >= (1 + (12 * ((jjj-1)//12))) and (jjj <= (6 + (12 * ((jjj-1)//12))))):
             area_run = 0.8
             jadd_name5 = 'area80%'
-        elif (jjj >= (7 + (18 * ((jjj-1)//18))) and (jjj <= (12 + (18 * ((jjj-1)//18))))):
-            area_run = 1
-            jadd_name5 = 'area100%'
         else:
             area_run = 1.2
-            jadd_name5 = 'area120%'
+            jadd_name5 = 'area120%'      
+
 
         if (jjj >= (1 + (6 * ((jjj-1)//6))) and (jjj <= (3 + (6 * ((jjj-1)//6))))):    
             fuel_cost_run = 0.5
             jadd_name6 = 'fcost50%'  
         else:
             fuel_cost_run = 1.5
-            jadd_name6 = 'fcost150%'
-
+            jadd_name6 = 'fcost150%'    
+            
         if (jjj%3 == 0):
             die_cost_run = 0.8
             jadd_name7 = 'die80%cost'
@@ -188,11 +185,8 @@ for iii in range(1, 73):
         else:
             ren_cost_run = 0.8
             jadd_name7 = 'ren80%cost'
-
-
-
-       
-         
+ 
+             
         # file paths local
         demand_filepath = "../data/"+place+"/demand_"+place+".csv"
         forecast_filepath = "../data/"+place+"/forecast_"+place+".csv"
