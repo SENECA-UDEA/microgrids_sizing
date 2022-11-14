@@ -499,9 +499,9 @@ for iii in range(1, 73):
                 elif (strategy_def == "diesel - solar") or (strategy_def == "diesel - wind") or (strategy_def == "diesel - solar - wind"):
                     lcoe_cost, df_results, state, time_f  = D_plus_S_and_or_W(sol_try, demand_df, instance_data, cost_data,CRF, delta )
                 elif (strategy_def == "battery - solar") or (strategy_def == "battery - wind") or (strategy_def == "battery - solar - wind"):
-                    lcoe_cost, df_results, state, time_f  = B_plus_S_and_or_W (sol_try, demand_df, instance_data, cost_data, CRF, delta)
+                    lcoe_cost, df_results, state, time_f  = B_plus_S_and_or_W (sol_try, demand_df, instance_data, cost_data, CRF, delta, rand_ob)
                 elif (strategy_def == "battery - diesel - wind") or (strategy_def == "battery - diesel - solar") or (strategy_def == "battery - diesel - solar - wind"):
-                    lcoe_cost, df_results, state, time_f  = B_plus_D_plus_Ren(sol_try, demand_df, instance_data, cost_data, CRF, delta)
+                    lcoe_cost, df_results, state, time_f  = B_plus_D_plus_Ren(sol_try, demand_df, instance_data, cost_data, CRF, delta, rand_ob)
                 else:
                     state = 'No feasible solution'
                     df_results = []
