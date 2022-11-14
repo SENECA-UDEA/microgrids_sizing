@@ -147,7 +147,7 @@ class Sol_constructor():
             lcoe_cost, df_results, state, time_f  = B_plus_D_plus_Ren(sol_try, self.demand_df, instance_data, cost_data, CRF, delta, rand_ob)
         else:
             #no feasible combination
-            state = 'No feasible solution'
+            state = 'no feasible'
         
         if state != 'optimal': 
 
@@ -186,7 +186,7 @@ class Sol_constructor():
             if (strategy_def == "diesel"):
                 lcoe_cost, df_results, state, time_f = d(sol_try, self.demand_df, instance_data, cost_data, CRF, rand_ob)
             else:
-                state = 'No feasible solution'
+                state = 'no feasible'
 
         #create initial solution
         sol_initial = Solution(generators_dict_sol, 

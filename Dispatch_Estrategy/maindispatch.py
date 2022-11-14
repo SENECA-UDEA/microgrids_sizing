@@ -200,7 +200,7 @@ if ('D' in technologies_dict.keys() or 'B' in technologies_dict.keys() and gener
                 lcoe_cost, df_results, state, time_f  = B_plus_D_plus_Ren(sol_try, demand_df, instance_data, cost_data, CRF, delta, rand_ob)
             else:
                 #no feasible combination
-                state = 'No feasible solution'
+                state = 'no feasible'
                 df_results = []
             
     

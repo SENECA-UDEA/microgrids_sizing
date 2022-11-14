@@ -497,7 +497,7 @@ for iii in range(1, 73):
                 elif (strategy_def == "battery - diesel - wind") or (strategy_def == "battery - diesel - solar") or (strategy_def == "battery - diesel - solar - wind"):
                     lcoe_cost, df_results, state, time_f  = B_plus_D_plus_Ren(sol_try, demand_df, instance_data, cost_data, CRF, delta, rand_ob)
                 else:
-                    state = 'No feasible solution'
+                    state = 'no feasible'
                     df_results = []
                 
                 print("finished simulation - state: " + state)

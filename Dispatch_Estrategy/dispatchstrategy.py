@@ -145,7 +145,7 @@ def d (solution, demand_df, instance_data, cost_data, CRF):
     
     #check feasible lpsp
     if (mean_av['lpsp'] > 0):
-        state = 'False'
+        state = 'no feasible'
     else:
         state = 'optimal'
     #create results
@@ -320,7 +320,7 @@ def D_plus_S_and_or_W (solution, demand_df, instance_data, cost_data, CRF, delta
     
     #check feasible - ,eet the lpsp 
     if (mean_av['lpsp'] > 0):
-        state = 'False'
+        state = 'no feasible'
     else:
         state = 'optimal'
     #create results df
@@ -472,7 +472,7 @@ def B_plus_S_and_or_W  (solution, demand_df, instance_data, cost_data, CRF, delt
     
     #meet lpsp - feasible solution
     if (mean_av['lpsp'] > 0):
-        state = 'False'
+        state = 'no feasible'
     else:
         state = 'optimal'
     
@@ -747,7 +747,7 @@ def B_plus_D_plus_Ren(solution, demand_df, instance_data, cost_data, CRF, delta,
     
     #calculate feasible - meet lpsp
     if (mean_av['lpsp'] > 0):
-        state = 'False'
+        state = 'no feasible'
     else:
         state = 'optimal'
     solution.feasible = state
