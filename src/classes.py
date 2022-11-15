@@ -195,3 +195,15 @@ class Random_create():
         selection = 0
         selection = np.random.normal(loc=means, scale=desv, size=size)
         return selection
+    def dist_triangular(self,a,b,c):
+        s = np.random.triangular(a, b, c, 1)
+        number = max(0,s[0])
+        return number
+    def dist_uniform(self,a,b):
+        s = np.random.uniform(a,b, 1)
+        number = max(0,s[0])
+        return number
+    def dist_normal(self,a,b):
+        s = np.random.normal(a,b, 1)
+        number = max(0,s[0])
+        return number

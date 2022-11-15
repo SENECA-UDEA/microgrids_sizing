@@ -10,7 +10,8 @@ import requests
 import json 
 import numpy as np
 import copy
-
+import scipy.stats as st
+import math
 
 def read_data(demand_filepath, 
               forecast_filepath,
@@ -451,8 +452,102 @@ def Get_SVF01(t_M):
 
 
 
+def best_distribution(data):
+    dist_names = ["exponweib","norm", "weibull_max", "weibull_min", "pareto", "genextreme", 
+                  "gamma", "beta", "rayleigh", "invgauss","uniform","expon",   
+                  "lognorm","pearson3","triang"]
+    dist_results = []
+    params = {}
+    if (sum(data) == 0 and np.std(data)== 0):
+        best_dist = 'No distribution'
+        best_p = None
+        params[best_dist] = 0
+    else:
+        for dist_name in dist_names:
+            dist = getattr(st, dist_name)
+            param = dist.fit(data)
+    
+            params[dist_name] = param
+            # Applying the Kolmogorov-Smirnov test
+            D, p = st.kstest(data, dist_name, args=param)
+            dist_results.append((dist_name, p))
+    
+        # select the best fitted distribution
+        best_dist, best_p = (max(dist_results, key=lambda item: item[1]))
+        # store the name of the best fit and its p value
+
+    return best_dist, best_p, params[best_dist]
+
+def get_best_distribution(dem_vec, wind_vec, sol_vecdni, sol_vecdhi, sol_vecghi):
+    
+    hours = len(dem_vec)
+    dem_dist = {}
+    wind_dist = {}
+    sol_distdni = {}
+    sol_distdhi = {} 
+    sol_distghi = {}
+    for i in range(int(hours)):
+        dem_dist[i] = best_distribution(dem_vec[i])
+        wind_dist[i] = best_distribution(wind_vec[i])
+        sol_distdni[i] = best_distribution(sol_vecdni[i])
+        sol_distdhi[i] = best_distribution(sol_vecdhi[i])
+        sol_distghi[i] = best_distribution(sol_vecghi[i])
+    return dem_dist, wind_dist, sol_distdni, sol_distdhi, sol_distghi
 
 
+def hour_data(demand_df, forecast_df):
+    hours_size = len(demand_df['t'])/24
+    dem_vec = {k : [0]*int(hours_size) for k in range(int(24))}
+    wind_vec = {k : [0]*int(hours_size) for k in range(int(24))}
+    sol_vecdni = {k : [0]*int(hours_size) for k in range(int(24))}
+    sol_vecdhi = {k : [0]*int(hours_size) for k in range(int(24))}
+    sol_vecghi = {k : [0]*int(hours_size) for k in range(int(24))}
+    
+    for t in demand_df['t']:
+        l = t%24
+        k = math.floor(t/24)
+        dem_vec[l][k] = demand_df['demand'][t]
+        wind_vec[l][k] = forecast_df['Wt'][t]
+        sol_vecdni[l][k] = forecast_df['DNI'][t]
+        sol_vecdhi[l][k] = forecast_df['DHI'][t]
+        sol_vecghi[l][k] = forecast_df['GHI'][t]
+        
+    return dem_vec, wind_vec, sol_vecdni, sol_vecdhi, sol_vecghi
 
+def calculate_stochasticity(rand_ob, demand, forecast, dem_dist, wind_dist, sol_distdni, sol_distdhi, sol_distghi):
+    demand_df = copy.deepcopy(demand)
+    forecast_df = copy.deepcopy(forecast)
+    for t in demand['t']:
+        l = t%24
+        n_d = generate_random(rand_ob, dem_dist[l])
+        demand_df['demand'][t] == n_d
+        nf_w = generate_random(rand_ob, wind_dist[l])
+        forecast_df['Wt'][t] == nf_w
+        nf_dni = generate_random(rand_ob, sol_distdni[l])
+        forecast_df['DNI'][t] == nf_dni
+        nf_dhi = generate_random(rand_ob, sol_distdhi[l])
+        forecast_df['DHI'][t] == nf_dhi
+        nf_ghi = generate_random(rand_ob, sol_distghi[l])
+        forecast_df['GHI'][t] == nf_ghi 
+        
+    return(demand_df, forecast_df)
+    
+def generate_number_distribution(rand_ob, param, limit):
+    a = param * (1 - limit)
+    b = param
+    c = param * (1 + limit)
+    number = rand_ob.dist_triangular(a,b,c)
+    return number
 
-
+def generate_random(rand_ob, dist):
+    if (dist[0] == 'norm'):
+        number = rand_ob.dist_normal(dist[2][0], dist[2][1])
+    elif (dist[0] == 'uniform'):
+        number = rand_ob.dist_uniform(dist[2][0], dist[2][1])
+    elif(dist[0] == 'No distribution'):
+        number = 0
+    elif (dist[0] == 'triangular'):
+        number = rand_ob.dist_triangular(dist[2][0], dist[2][1], dist[2][2])
+    else:
+        number = 0
+    return(number)
