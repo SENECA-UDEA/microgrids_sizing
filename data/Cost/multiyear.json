@@ -1,0 +1,7 @@
+{   
+    "sol_deg": 0.01,
+    "wind_deg": 0.01,
+    "diesel_deg":0.01,
+    "demand_tax":0.05,
+    "fuel_tax":0.02
+}
