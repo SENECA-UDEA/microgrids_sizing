@@ -515,7 +515,7 @@ for iii in range(1, 73):
                     
                     
                     #Search the best solution
-                    if sol_try.results.descriptive['LCOE'] <= sol_best.results.descriptive['LCOE']:
+                    if sol_try.results.descriptive['LCOE'] < sol_best.results.descriptive['LCOE']:
                         sol_try.results.descriptive['area'] = calculate_area(sol_try)
                         sol_best = copy.deepcopy(sol_try)   
                         tnpccrf_calc_best = tnpccrf_calc
@@ -644,7 +644,8 @@ for iii in range(1, 73):
                                 forecast_df['GHI'].sum(),delta,ir,years_run,forecast_w_run,forecast_s_run,
                                 add_function_run, remove_function_run, len(default_batteries), len(default_diesel),
                                 len(default_solar),len(default_wind), b_p_run, d_p_run, s_p_run,
-                                w_p_run, time_f_total, time_f_create_data,time_f_firstsol, time_f_iterations,
+                                w_p_run, die_cost_run, bat_cost_run, ren_cost_run,
+                                time_f_total, time_f_create_data,time_f_firstsol, time_f_iterations,
                                 time_iter_average, time_solve_average, time_make_average, time_remove_average,
                                 time_add_average, time_f_results, lcoe_export, len_gen, len_bat,
                                 len_diesel,len_solar,len_wind,mean_total_b,mean_total_d,mean_total_s, mean_total_w,
@@ -661,7 +662,8 @@ for iii in range(1, 73):
                                                           "Forecast_solar","add_function","remove-function","json batteries", "json diesel",
                                                           "json solar", "json wind",
                                                           "probability add batteries","probability add diesel",
-                                                          "probability add solar","probability add wind","TOTAL TIME",
+                                                          "probability add solar","probability add wind",
+                                                          "diesel %cost"," battery %cost","renewable %cost","TOTAL TIME",
                                                           "CREATE DATA TIME", "FIRST SOLUTION TIME","ITERATIONS TIME",
                                                           "ITERATIONS MEAN TIME","ITERATIONS MEAN SOLVER TIME",
                                                           "ITERATIONS MEAN MAKE MODEL TIME","ITERATIONS REMOVE FUNCTION MEAN",
