@@ -74,7 +74,7 @@ def d (solution, demand_df, instance_data, cost_data, CRF):
     
     #calculate investments cost
     for g in solution.generators_dict_sol.values():  
-        lcoe_inf = (g.cost_up + g.cost_r - g.cost_s) * CRF + g.cost_fopm
+        lcoe_inf = (g.cost_up   + g.cost_r - g.cost_s+ g.cost_fopm)* CRF 
         #lcoe_inf = g.cost_up + g.cost_r - g.cost_s + g.cost_fopm
         lcoe_inftot += lcoe_inf
 
@@ -199,7 +199,7 @@ def D_plus_S_and_or_W (solution, demand_df, instance_data, cost_data, CRF, delta
     #calculate investment cost    
     for g in solution.generators_dict_sol.values():
         if (g.tec == 'D'):
-            lcoe_inf = (g.cost_up + g.cost_r - g.cost_s) * CRF + g.cost_fopm
+            lcoe_inf = (g.cost_up + g.cost_r - g.cost_s+ g.cost_fopm) * CRF 
             lcoe_inftot += lcoe_inf   
             #lcoe_inf = g.cost_up + g.cost_r - g.cost_s + g.cost_fopm
 
@@ -212,7 +212,7 @@ def D_plus_S_and_or_W (solution, demand_df, instance_data, cost_data, CRF, delta
             if g.DG_min <= min_ref:
                  min_ref = g.DG_min
         else:
-            lcoe_inf = (g.cost_up + g.cost_r - g.cost_s) * delta * CRF + g.cost_fopm
+            lcoe_inf = (g.cost_up  * delta  + g.cost_r - g.cost_s+ g.cost_fopm)* CRF 
             #lcoe_inf = (g.cost_up + g.cost_r - g.cost_s)*delta + g.cost_fopm
             lcoe_inftot += lcoe_inf    
             list_ren.append(g.id_gen)
@@ -370,13 +370,13 @@ def B_plus_S_and_or_W  (solution, demand_df, instance_data, cost_data, CRF, delt
     
     #calculate cost investment
     for g in solution.generators_dict_sol.values():
-        lcoe_inf = (g.cost_up + g.cost_r - g.cost_s) * delta * CRF + g.cost_fopm
+        lcoe_inf = (g.cost_up  * delta  + g.cost_r - g.cost_s+ g.cost_fopm)* CRF 
         #lcoe_inf = (g.cost_up + g.cost_r - g.cost_s)*delta + g.cost_fopm
         lcoe_inftot += lcoe_inf 
         list_ren.append(g.id_gen)
     #calculate battery cost investment
     for b in solution.batteries_dict_sol.values():
-        lcoe_inf = (b.cost_up + b.cost_r - b.cost_s) * delta * CRF + b.cost_fopm
+        lcoe_inf = (b.cost_up * delta + b.cost_r - b.cost_s + b.cost_fopm) * CRF
         #lcoe_inf = (b.cost_up + b.cost_r - b.cost_s)*delta + b.cost_fopm
         lcoe_inftot += lcoe_inf    
         auxiliar_dict_batteries[b.id_bat] = lcoe_inf
@@ -531,7 +531,7 @@ def B_plus_D_plus_Ren(solution, demand_df, instance_data, cost_data, CRF, delta,
     #calculate investment cost
     for g in solution.generators_dict_sol.values():
         if (g.tec == 'D'):
-            lcoe_inf = (g.cost_up + g.cost_r - g.cost_s) * CRF + g.cost_fopm
+            lcoe_inf = (g.cost_up    + g.cost_r - g.cost_s+ g.cost_fopm)* CRF 
             lcoe_inftot += lcoe_inf  
 
             #assume it produces around the average
@@ -541,7 +541,7 @@ def B_plus_D_plus_Ren(solution, demand_df, instance_data, cost_data, CRF, delta,
             #lcoe_inf = g.cost_up + g.cost_r - g.cost_s + g.cost_fopm
                            
         else:
-            lcoe_inf = (g.cost_up + g.cost_r - g.cost_s) * delta * CRF + g.cost_fopm
+            lcoe_inf = (g.cost_up  * delta  + g.cost_r - g.cost_s+ g.cost_fopm)* CRF 
             #lcoe_inf = (g.cost_up + g.cost_r - g.cost_s)*delta + g.cost_fopm
             lcoe_inftot += lcoe_inf    
             list_ren.append(g.id_gen)
@@ -553,7 +553,7 @@ def B_plus_D_plus_Ren(solution, demand_df, instance_data, cost_data, CRF, delta,
     
     #calculate batteries cost
     for b in solution.batteries_dict_sol.values():
-        lcoe_inf = (b.cost_up + b.cost_r - b.cost_s) * delta * CRF + b.cost_fopm
+        lcoe_inf = (b.cost_up * delta + b.cost_r - b.cost_s + b.cost_fopm) * CRF 
         #lcoe_inf = (b.cost_up + b.cost_r - b.cost_s)*delta + b.cost_fopm
         lcoe_inftot += lcoe_inf   
         auxiliar_dict_batteries[b.id_bat] = lcoe_inf
