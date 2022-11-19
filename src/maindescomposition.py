@@ -210,7 +210,7 @@ if (sol_best.results != None):
         #Create results
         if termination['Temination Condition'] == 'optimal':
             sol_try.results.descriptive['LCOE'] = model.LCOE_value.expr()
-            sol_try.results = opt.Results(model, sol_try.generators_dict_sol)
+            sol_try.results = opt.Results(model, sol_try.generators_dict_sol, sol_try.batteries_dict_sol )
             sol_try.feasible = True
             sol_current = copy.deepcopy(sol_try)
             #Search the best solution

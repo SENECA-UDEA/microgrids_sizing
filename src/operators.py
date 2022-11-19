@@ -195,7 +195,7 @@ class Sol_constructor():
             results, termination = opt.solve_model(model, 
                                                    Solver_data)
             
-            sol_results = opt.Results(model, generators_dict_sol)
+            sol_results = opt.Results(model, generators_dict_sol, batteries_dict_sol)
         
         #create solution
         sol_initial = Solution(generators_dict_sol, 

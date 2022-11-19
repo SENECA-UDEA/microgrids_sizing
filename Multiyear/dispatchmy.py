@@ -379,6 +379,7 @@ def B_plus_S_and_or_W  (solution, demand_df, instance_data, cost_data, delta, ra
     demand_tobe_covered = [] 
     dict_total = {**solution.generators_dict_sol,**solution.batteries_dict_sol}
     cost = {k+'_cost' : [0]*len_data for k in dict_total} #variable cost
+    cost_b = {l+'_cost'  : [0]*len_data for l in solution.batteries_dict_sol} #variable cost
     extra_generation = 0  #extra renewavble generation to waste or charge the battery
 
     
@@ -453,12 +454,16 @@ def B_plus_S_and_or_W  (solution, demand_df, instance_data, cost_data, delta, ra
                      #battery have energy to supply all the load
                      if ((soc[i+'_soc'][t] - bat.soc_min)*bat.efd >= demand_tobe_covered/bat.efd):
                          bminus[i+'_b-'][t] = demand_tobe_covered
+                         cost_b[i+'_cost'][t] = bminus[i+'_b-'][t] * bat.cost_vopm
+                         costvopm += cost_b[i+'_cost'][t]
                          soc[i+'_soc'][t] -= demand_tobe_covered/bat.efd
                          ptot += bminus[i+'_b-'][t]
                          demand_tobe_covered = 0
                      #battery supplied according the most that can give to the load
                      elif ((soc[i+'_soc'][t] - bat.soc_min)*bat.efd > 0):
                         bminus[i+'_b-'][t] = (soc[i+'_soc'][t] - bat.soc_min)*bat.efd
+                        cost_b[i+'_cost'][t] = bminus[i+'_b-'][t] * bat.cost_vopm
+                        costvopm += cost_b[i+'_cost'][t]
                         ptot += bminus[i+'_b-'][t]
                         soc[i+'_soc'][t] -= bminus[i+'_b-'][t]/bat.efd
                         demand_tobe_covered = demand_tobe_covered - bminus[i+'_b-'][t]
@@ -498,9 +503,10 @@ def B_plus_S_and_or_W  (solution, demand_df, instance_data, cost_data, delta, ra
     bplus_df = pd.DataFrame(bplus, columns=[*bplus.keys()])
     bminus_df = pd.DataFrame(bminus, columns=[*bminus.keys()])    
     generation_cost = pd.DataFrame(cost, columns=[*cost.keys()])
+    batteries_cost = pd.DataFrame(cost_b, columns=[*cost_b.keys()])
     sminus_df = pd.DataFrame(list(zip(sminus['s-'], lpsp['lpsp'])), columns = ['S-', 'LPSP'])
     splus_df = pd.DataFrame(splus['s+'], columns = ['Wasted Energy'])
-    df_results = pd.concat([demand, generation, bminus_df, soc_df, bplus_df, sminus_df, splus_df, generation_cost], axis=1) 
+    df_results = pd.concat([demand, generation, bminus_df, soc_df, bplus_df, sminus_df, splus_df, generation_cost, batteries_cost], axis=1) 
     time_f = time.time() - time_i
     return lcoe_cost, df_results, state, time_f 
 
@@ -534,6 +540,7 @@ def B_plus_D_plus_Ren(solution, demand_df, instance_data, cost_data, delta, rand
     demand_tobe_covered = [] 
     dict_total = {**solution.generators_dict_sol,**solution.batteries_dict_sol}
     cost = {k+'_cost' : [0]*len_data for k in dict_total} #variable cost
+    cost_b = {l+'_cost'  : [0]*len_data for l in solution.batteries_dict_sol} #variable cost
     extra_generation = 0  #extra renewavble generation to waste or charge the battery
     fuel_cost_i = instance_data['fuel_cost'] 
     aux_demand = 0
@@ -636,12 +643,17 @@ def B_plus_D_plus_Ren(solution, demand_df, instance_data, cost_data, delta, rand
                      #battery covered all demand
                      if ((soc[i+'_soc'][t] - bat.soc_min)*bat.efd >= demand_tobe_covered/bat.efd):
                          bminus[i+'_b-'][t] = demand_tobe_covered
+                         cost_b[i+'_cost'][t] = bminus[i+'_b-'][t] * bat.cost_vopm
+                         costvopm += cost_b[i+'_cost'][t]
                          soc[i+'_soc'][t] -= demand_tobe_covered/bat.efd
                          ptot += bminus[i+'_b-'][t]
                          demand_tobe_covered = 0
                     #battery covered until deep od discharge
                      elif ((soc[i+'_soc'][t] - bat.soc_min)*bat.efd > 0):
                         bminus[i+'_b-'][t] = (soc[i+'_soc'][t] - bat.soc_min)*bat.efd
+                        #variable cost
+                        cost_b[i+'_cost'][t] = bminus[i+'_b-'][t] * bat.cost_vopm
+                        costvopm += cost_b[i+'_cost'][t]
                         ptot += bminus[i+'_b-'][t]
                         soc[i+'_soc'][t] -= bminus[i+'_b-'][t]/bat.efd
                         demand_tobe_covered = demand_tobe_covered - bminus[i+'_b-'][t]
@@ -704,11 +716,17 @@ def B_plus_D_plus_Ren(solution, demand_df, instance_data, cost_data, delta, rand
                      if ((soc[i+'_soc'][t] - bat.soc_min)*bat.efd >= demand_tobe_covered/bat.efd):
                          bminus[i+'_b-'][t] = demand_tobe_covered
                          soc[i+'_soc'][t] -= demand_tobe_covered/bat.efd
+                         #variable cost
+                         cost_b[i+'_cost'][t] = bminus[i+'_b-'][t] * bat.cost_vopm
+                         costvopm += cost_b[i+'_cost'][t]
                          ptot += bminus[i+'_b-'][t]
                          demand_tobe_covered = 0
                      #battery supply until dept of discharge
                      elif ((soc[i+'_soc'][t] - bat.soc_min)*bat.efd > 0):
                         bminus[i+'_b-'][t] = (soc[i+'_soc'][t] - bat.soc_min)*bat.efd
+                        #variable cost
+                        cost_b[i+'_cost'][t] = bminus[i+'_b-'][t] * bat.cost_vopm
+                        costvopm += cost_b[i+'_cost'][t]
                         ptot += bminus[i+'_b-'][t]
                         soc[i+'_soc'][t] -= bminus[i+'_b-'][t]/bat.efd
                         demand_tobe_covered = demand_tobe_covered - bminus[i+'_b-'][t]            
@@ -784,9 +802,10 @@ def B_plus_D_plus_Ren(solution, demand_df, instance_data, cost_data, delta, rand
     bplus_df = pd.DataFrame(bplus, columns=[*bplus.keys()])
     bminus_df = pd.DataFrame(bminus, columns=[*bminus.keys()])    
     generation_cost = pd.DataFrame(cost, columns=[*cost.keys()])
+    batteries_cost = pd.DataFrame(cost_b, columns=[*cost_b.keys()])
     sminus_df = pd.DataFrame(list(zip(sminus['s-'], lpsp['lpsp'])), columns = ['S-', 'LPSP'])
     splus_df = pd.DataFrame(splus['s+'], columns = ['Wasted Energy'])
-    df_results = pd.concat([demand, generation, bminus_df, soc_df, bplus_df, sminus_df, splus_df, generation_cost], axis=1) 
+    df_results = pd.concat([demand, generation, bminus_df, soc_df, bplus_df, sminus_df, splus_df, generation_cost, batteries_cost], axis=1) 
     time_f = time.time() - time_i
     return lcoe_cost, df_results, state, time_f 
    

@@ -131,7 +131,7 @@ class Diesel(Generator):
 
 
 class Battery():
-    def __init__(self, id_bat, tec, br, efc, efd, eb_zero, soc_max, dod_max, alpha, area, cost_up, cost_fopm, cost_r, cost_s ):
+    def __init__(self, id_bat, tec, br, efc, efd, eb_zero, soc_max, dod_max, alpha, area, cost_up, cost_fopm, cost_r, cost_s, cost_vopm):
   
         self.id_bat = id_bat #Battery id
         self.tec = tec #Technology associated to the battery, only allowed: "B"
@@ -147,6 +147,7 @@ class Battery():
         self.cost_fopm = cost_fopm #Operation & Maintenance cost
         self.cost_r = cost_r #Replacement cost
         self.cost_s = cost_s #Salvament cost
+        self.cost_vopm = cost_vopm #variable cost
         self.soc_min = 0 #Minimum level of energy that must be in the battery
         
     def calculatesoc(self): #Calculate soc_min with soc_max and dod_max

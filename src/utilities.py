@@ -304,6 +304,7 @@ def calculate_cost_data(generators, batteries, instance_data,
         aux_batteries['cost_r'] = cost_up * parameters_cost['param_r_bat'] * tax
         aux_batteries['cost_s'] = cost_up * parameters_cost['param_s_bat'] * (((1 + inf)/(1 + ir))**years)
         aux_batteries['cost_fopm'] =  cost_up * parameters_cost['param_f_bat']
+        aux_batteries['cost_vopm'] =  cost_up * parameters_cost['param_v_bat']
         batteries_def.append(copy.deepcopy(aux_batteries))
 
     return generators_def, batteries_def

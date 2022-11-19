@@ -292,6 +292,7 @@ def make_model(generators_dict=None,
         tnpc += sum(generators_dict[k].cost_up* model.greed *(1-model.aux[k]) for k in model.GENERATORS if generators_dict[k].tec != 'D')
         tnpc_op = sum(sum(model.operative_cost[k,t] for t in model.HTIME) for k in model.GENERATORS_DIESEL)
         tnpc_op += sum(generators_dict[k].cost_rule*model.w[k] for k in model.GENERATORS if generators_dict[k].tec != 'D')
+        tnpc_op += sum(sum(model.b_discharge[l,t] * batteries_dict[l].cost_vopm for l in model.BATTERIES) for t in model.HTIME)
         lcoe = ((tnpc * model.CRF + tnpc_op) / sum( model.d[t] for t in model.HTIME))
         lcoe +=  model.splus_cost * sum( model.s_plus[t] for t in model.HTIME)
         #s- cost piecewise
@@ -565,6 +566,7 @@ def make_model_operational(generators_dict=None,
     def obj2_rule(model):
         tnpc_op = sum(sum(model.operative_cost[k,t] for t in model.HTIME) for k in model.GENERATORS_DIESEL)
         tnpc_op += sum(generators_dict[k].cost_rule for k in model.GENERATORS if generators_dict[k].tec != 'D')
+        tnpc_op += sum(sum(model.b_discharge[l,t] * batteries_dict[l].cost_vopm for l in model.BATTERIES) for t in model.HTIME)
         lcoe = ((model.TNPCCRF + tnpc_op) / sum( model.d[t] for t in model.HTIME))
         lcoe +=  model.splus_cost * sum( model.s_plus[t] for t in model.HTIME)
         #lcoe +=  model.sminus_cost * sum( model.s_minus[t] for t in model.HTIME)
@@ -630,7 +632,7 @@ def solve_model(model,
 
 
 class Results():
-    def __init__(self, model, generators_dict):
+    def __init__(self, model, generators_dict, batteries_dict):
         
         # Hourly data frame
         demand = pd.DataFrame(model.d.values(), columns=['demand'])
@@ -656,6 +658,15 @@ class Results():
         generation_cost = pd.DataFrame(generation_cost_data, columns=[*generation_cost_data.keys()])
         
 
+        #Operative cost batteries
+        batteries_cost_data = {l+'_cost' : [0]*len(model.HTIME) for l in model.BATTERIES}
+        #Baterries cost
+        for (l,t), f in model.model.b_discharge.items():
+          batteries_cost_data [l+'_cost'][t] = value(f) * batteries_dict[l]
+        
+        batteries_cost = pd.DataFrame(batteries_cost_data, columns=[*batteries_cost_data.keys()])
+
+  
             
         
         # batery charge and discharge
@@ -695,7 +706,7 @@ class Results():
         splus_df = pd.DataFrame(splus_data, columns = ['Wasted Energy'])
         
 
-        self.df_results = pd.concat([demand, generation, b_discharge_df, b_charge_df, soc_df, sminus_df, splus_df, generation_cost], axis=1) 
+        self.df_results = pd.concat([demand, generation, b_discharge_df, b_charge_df, soc_df, sminus_df, splus_df, generation_cost, batteries_cost], axis=1) 
         
         # general descriptives of the solution
         self.descriptive = {}

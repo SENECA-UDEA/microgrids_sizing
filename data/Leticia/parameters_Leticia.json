@@ -2996,7 +2996,8 @@
             "cost_up": 4206.87,
             "cost_fopm": 37.997568,
             "cost_r": 892.5998552311466,
-            "cost_s": 264.00194447877436
+            "cost_s": 264.00194447877436,
+            "cost_vopm": 0
         },
         {
             "id_bat": "sun power V L 2-350 1",
@@ -3012,7 +3013,8 @@
             "cost_up": 4981.82,
             "cost_fopm": 56.2464,
             "cost_r": 1321.2826804408421,
-            "cost_s": 390.79235202450155
+            "cost_s": 390.79235202450155,
+            "cost_vopm": 0
         },
         {
             "id_bat": "sun power V L 2-350 2",
@@ -3028,7 +3030,8 @@
             "cost_up": 4981.82,
             "cost_fopm": 56.2464,
             "cost_r": 1321.2826804408421,
-            "cost_s": 390.79235202450155
+            "cost_s": 390.79235202450155,
+            "cost_vopm": 0
         },
         {
             "id_bat": "sun power V L 2-420 1",
@@ -3044,7 +3047,8 @@
             "cost_up": 5646.07,
             "cost_fopm": 76.495104,
             "cost_r": 1796.944445399545,
-            "cost_s": 531.477598753322
+            "cost_s": 531.477598753322,
+            "cost_vopm": 0
         },
         {
             "id_bat": "sun power V L 2-420 2",
@@ -3060,7 +3064,8 @@
             "cost_up": 5646.07,
             "cost_fopm": 76.495104,
             "cost_r": 1796.944445399545,
-            "cost_s": 531.477598753322
+            "cost_s": 531.477598753322,
+            "cost_vopm": 0
         },
         {
             "id_bat": "sun power V L 2-520 1",
@@ -3076,7 +3081,8 @@
             "cost_up": 5941.29,
             "cost_fopm": 99.66028800000001,
             "cost_r": 2341.1171641588844,
-            "cost_s": 692.4261526241537
+            "cost_s": 692.4261526241537,
+            "cost_vopm": 0
         },
         {
             "id_bat": "sun power V L 2-620 1",
@@ -3092,7 +3098,8 @@
             "cost_up": 6863.85,
             "cost_fopm": 137.276928,
             "cost_r": 3224.7686499140295,
-            "cost_s": 953.7814610680533
+            "cost_s": 953.7814610680533,
+            "cost_vopm": 0
         },
         {
             "id_bat": "LG Chem Resu",
@@ -3108,7 +3115,8 @@
             "cost_up": 2377.24,
             "cost_fopm": 47.544799999999995,
             "cost_r": 1116.8736272014519,
-            "cost_s": 330.33481642442035
+            "cost_s": 330.33481642442035,
+            "cost_vopm": 0
         },
         {
             "id_bat": "LG Chem Resu 10 KW",
@@ -3124,7 +3132,8 @@
             "cost_up": 4806,
             "cost_fopm": 96.12,
             "cost_r": 2257.952353287921,
-            "cost_s": 667.8287121770475
+            "cost_s": 667.8287121770475,
+            "cost_vopm": 0
         },
         {
             "id_bat": "Kijo Lithium",
@@ -3140,7 +3149,8 @@
             "cost_up": 971,
             "cost_fopm": 19.42,
             "cost_r": 456.194701423756,
-            "cost_s": 134.9275238293619
+            "cost_s": 134.9275238293619,
+            "cost_vopm": 0
         },
         {
             "id_bat": "sun power V L 2-730 1",
@@ -3156,7 +3166,8 @@
             "cost_up": 7749.5,
             "cost_fopm": 182.48832,
             "cost_r": 4286.828252096953,
-            "cost_s": 1267.9040754572716
+            "cost_s": 1267.9040754572716,
+            "cost_vopm": 0
         },
         {
             "id_bat": "sun power V L 2-1070 1",
@@ -3172,7 +3183,8 @@
             "cost_up": 11181.43,
             "cost_fopm": 385.939584,
             "cost_r": 9066.096461920115,
-            "cost_s": 2681.4558402087546
+            "cost_s": 2681.4558402087546,
+            "cost_vopm": 0
         },
         {
             "id_bat": "sun power V L 2-1370 1",
@@ -3188,7 +3200,8 @@
             "cost_up": 13321.77,
             "cost_fopm": 588.736128,
             "cost_r": 9829.984661706396,
-            "cost_s": 4090.4586992752957
+            "cost_s": 4090.4586992752957,
+            "cost_vopm": 0
         },
         {
             "id_bat": "sun power V L 2-1520 1",
@@ -3204,7 +3217,8 @@
             "cost_up": 14355.03,
             "cost_fopm": 703.8597120000001,
             "cost_r": 6534.349699281716,
-            "cost_s": 4890.321733440153
+            "cost_s": 4890.321733440153,
+            "cost_vopm": 0
         },
         {
             "id_bat": "sun power V L 2-1670 1",
@@ -3220,7 +3234,8 @@
             "cost_up": 15720.42,
             "cost_fopm": 846.874368,
             "cost_r": 9893.903164428015,
-            "cost_s": 5883.96814978351
+            "cost_s": 5883.96814978351,
+            "cost_vopm": 0
         },
         {
             "id_bat": "sun power V L 2-1820 1",
@@ -3236,7 +3251,8 @@
             "cost_up": 16975.1,
             "cost_fopm": 996.60288,
             "cost_r": 13411.171641588848,
-            "cost_s": 6924.261526241538
+            "cost_s": 6924.261526241538,
+            "cost_vopm": 0
         },
         {
             "id_bat": "sun power V L 2-2170 1",
@@ -3252,7 +3268,8 @@
             "cost_up": 19853.49,
             "cost_fopm": 1389.744384,
             "cost_r": 32646.448213914617,
-            "cost_s": 9655.755328984647
+            "cost_s": 9655.755328984647,
+            "cost_vopm": 0
         },
         {
             "id_bat": "sun power V L 2-2540 1",
@@ -3268,7 +3285,8 @@
             "cost_up": 24503.19,
             "cost_fopm": 2007.681024,
             "cost_r": 17162.38132326575,
-            "cost_s": 13949.095221808322
+            "cost_s": 13949.095221808322,
+            "cost_vopm": 0
         },
         {
             "id_bat": "sun power V L 2-2900 1",
@@ -3284,7 +3302,8 @@
             "cost_up": 2745.39,
             "cost_fopm": 2568.40704,
             "cost_r": 20334.3811919399,
-            "cost_s": 17844.94346514422
+            "cost_s": 17844.94346514422,
+            "cost_vopm": 0
         },
         {
             "id_bat": "sun power V L 2-3250 1",
@@ -3300,7 +3319,8 @@
             "cost_up": 30776.6,
             "cost_fopm": 3226.5792,
             "cost_r": 25795.48582719368,
-            "cost_s": 22417.83428915156
+            "cost_s": 22417.83428915156,
+            "cost_vopm": 0
         },
         {
             "id_bat": "sun power V L 2-3610 1",
@@ -3316,7 +3336,8 @@
             "cost_up": 33433.57,
             "cost_fopm": 3893.393664,
             "cost_r": 29459.60659493426,
-            "cost_s": 27050.77066820013
+            "cost_s": 27050.77066820013,
+            "cost_vopm": 0
         },
         {
             "id_bat": "sun power V L 2-3980 1",
@@ -3332,7 +3353,8 @@
             "cost_up": 36231.25,
             "cost_fopm": 4647.7739520000005,
             "cost_r": 30180.7337959707,
-            "cost_s": 32292.102505765575
+            "cost_s": 32292.102505765575,
+            "cost_vopm": 0
         },
         {
             "id_bat": "sun power V L 2-4340 1",
@@ -3348,7 +3370,8 @@
             "cost_up": 38968.83,
             "cost_fopm": 5455.650816,
             "cost_r": 32158.54763529306,
-            "cost_s": 37905.12129147876
+            "cost_s": 37905.12129147876,
+            "cost_vopm": 0
         },
         {
             "id_bat": "sun power V L 2-4700 1",
@@ -3364,7 +3387,8 @@
             "cost_up": 40481.83,
             "cost_fopm": 6137.5833600000005,
             "cost_r": 34177.80681661243,
-            "cost_s": 32643.09603816143
+            "cost_s": 32643.09603816143,
+            "cost_vopm": 0
         },
         {
             "id_bat": "Ps-1290 Powersonic",
@@ -3380,7 +3404,8 @@
             "cost_up": 1043,
             "cost_fopm": 20.86,
             "cost_r": 490,
-            "cost_s": 145
+            "cost_s": 145,
+            "cost_vopm": 0
         },
 	    {
             "id_bat": "PS-1229 Powersonic",
@@ -3396,7 +3421,8 @@
             "cost_up": 737,
             "cost_fopm": 14.74,
             "cost_r": 346,
-            "cost_s": 102
+            "cost_s": 102,
+            "cost_vopm": 0
         },
 	    {
             "id_bat": "PDC-12350 Powersonic",
@@ -3412,7 +3438,8 @@
             "cost_up": 2824,
             "cost_fopm": 56.48,
             "cost_r": 1327,
-            "cost_s": 392
+            "cost_s": 392,
+            "cost_vopm": 0
         },
 	    {  
             "id_bat": "PDC-12200 Powersonic",
@@ -3428,7 +3455,8 @@
             "cost_up": 2197,
             "cost_fopm": 43.94,
             "cost_r": 1032,
-            "cost_s": 305
+            "cost_s": 305,
+            "cost_vopm": 0
         },
 	    {
             "id_bat": "PDC-12800 Powersonic",
@@ -3444,7 +3472,8 @@
             "cost_up": 6384,
             "cost_fopm": 127.68,
             "cost_r": 2999,
-            "cost_s": 887
+            "cost_s": 887,
+            "cost_vopm": 0
         },
 	    {
             "id_bat": "PS-121000 Powersonic",
@@ -3460,7 +3489,8 @@
             "cost_up": 6997,
             "cost_fopm": 139.94,
             "cost_r": 3288,
-            "cost_s": 972
+            "cost_s": 972,
+            "cost_vopm": 0
         },
 	    {
             "id_bat": "PS-1250 Powersonic",
@@ -3476,7 +3506,8 @@
             "cost_up": 491,
             "cost_fopm": 9.82,
             "cost_r": 231,
-            "cost_s": 68
+            "cost_s": 68,
+            "cost_vopm": 0
         },
 	    {
             "id_bat": "PS-1270 Powersonic",
@@ -3492,7 +3523,8 @@
             "cost_up": 767,
             "cost_fopm": 15.34,
             "cost_r": 360,
-            "cost_s": 107
+            "cost_s": 107,
+            "cost_vopm": 0
         },
 	    {
             "id_bat": "PDC-122000 Powersonic",
@@ -3508,7 +3540,8 @@
             "cost_up": 17923,
             "cost_fopm": 358.46,
             "cost_r": 8421,
-            "cost_s": 2491
+            "cost_s": 2491,
+            "cost_vopm": 0
         },
 	    {
             "id_bat": "PS-12550 Powersonic",
@@ -3524,7 +3557,8 @@
             "cost_up": 4542,
             "cost_fopm": 90.84,
             "cost_r": 2134,
-            "cost_s": 631
+            "cost_s": 631,
+            "cost_vopm": 0
         },
         {
             "id_bat": "sun power V L 2-4700 - 36 1",
@@ -3540,7 +3574,8 @@
             "cost_up": 60722.9,
             "cost_fopm": 0,
             "cost_r": 0,
-            "cost_s": 0
+            "cost_s": 0,
+            "cost_vopm": 0
         }
     ]
 }
