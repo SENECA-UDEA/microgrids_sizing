@@ -19,9 +19,8 @@ import numpy as np
 
 
 rows_df_time = []
-
-for ppp in range(1, 5):
-    for jjj in range(1,193):
+for jjj in range(1,193):
+    for ppp in range(1, 3):    
         iii = 1
 
         #PARAMETROS DE LA CORRIDA - POR DEFECTO
@@ -192,10 +191,10 @@ for ppp in range(1, 5):
         forecast_filepath = "../data/"+place+"/forecast_"+place+".csv"
         instanceData_filepath = "../data/"+place+"/instance_data_"+place+".json"
         
-        if (ppp <= 2):
-            units_filepath = "../data/"+place+"/parameters_"+place+"_big.json"
+        if (ppp <= 1):
+            units_filepath = "../data/"+place+"/parameters_"+place+"_big"+".json"
         else:
-           units_filepath = "../data/"+place+"/parameters_"+place+"_small.json"
+           units_filepath = "../data/"+place+"/parameters_"+place+"_small"+".json"
         #fiscal Data
         fiscalData_filepath = "../data/Cost/fiscal_incentive.json"
        
@@ -617,7 +616,7 @@ for ppp in range(1, 5):
                 cost_vopm = cost_vopm + sol_best.results.df_results[i.id_gen+'_cost'].sum()
     
             lpsp_mean = sol_best.results.df_results['LPSP'].mean()
-            wasted_mean = sol_best.results.df_results['Wasted Energy'].sum()
+            wasted_mean = sol_best.results.df_results['Wasted Energy'].mean()
            
            
             #calcular promedios de las iteraciones
@@ -642,7 +641,7 @@ for ppp in range(1, 5):
             name_esci = str(iii) + ' ' + str(place) + ' iter: ' + str(iteraciones_run) + ' ' + str(iadd_name1) + ' ' + str(iadd_name2) + ' ' + str(iadd_name3)+ ' ' + str(iadd_name4)  
             name_escj =  str(jjj) + ' ' + str(jadd_name1) + ' ' + str(jadd_name2)+ ' ' + str(jadd_name3)+ ' ' + str(jadd_name4)+ ' ' + str(jadd_name5)+ ' ' + str(jadd_name6)+ ' ' + str(jadd_name7)
             name_esc = 'esc_'   + name_esci + ' MODEL- ' + name_escj
-            rows_df_time.append([iii,jjj,name_esc, place, iteraciones_run, amax, tlpsp_run, nse_run, aux_instance_data['splus_cost'],
+            rows_df_time.append([iii,jjj,ppp,name_esc, place, iteraciones_run, amax, tlpsp_run, nse_run, aux_instance_data['splus_cost'],
                                 sminus_cost_run,aux_instance_data['fuel_cost'],len(demand_df),demanda_run,
                                 forecast_df['GHI'].sum(),delta,ir,years_run,forecast_w_run,forecast_s_run,
                                 add_function_run, remove_function_run, len(default_batteries), len(default_diesel),
@@ -658,7 +657,7 @@ for ppp in range(1, 5):
             del batteries_total
     
             #dataframe completo con todas las instancias
-            df_time = pd.DataFrame(rows_df_time, columns=["N problem","N algortihm", "Name", "City", "Iterations", "Area","Tlpsp",
+            df_time = pd.DataFrame(rows_df_time, columns=["N problem","N algortihm","ppp", "Name", "City", "Iterations", "Area","Tlpsp",
                                                           "NSE","S+_cost","S-_cost", "fuel_cost","Len_demand","Demand percent",
                                                           "GHI len","delta","ir","years","Forecast_wind",
                                                           "Forecast_solar","add_function","remove-function","json batteries", "json diesel",
@@ -690,7 +689,7 @@ for ppp in range(1, 5):
             dfs = [df_time]
             #sol_best.results.df_results.to_excel("resultsprueba.xlsx")
             # run function
-            multiple_dfs(dfs, 'ExecTime', 'timedispatch.xlsx')
+            multiple_dfs(dfs, 'ExecTime', 'p3sizegenerators.xlsx')
             #multiple_dfs(dfs, 'ExecTime', 'anovafinap848to864.xlsx')
 
    

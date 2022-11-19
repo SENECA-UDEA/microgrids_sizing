@@ -448,7 +448,7 @@ for ppp in range(1, 26):
                     
                     
                     #Search the best solution
-                    if sol_try.results.descriptive['LCOE'] <= sol_best.results.descriptive['LCOE']:
+                    if sol_try.results.descriptive['LCOE'] < sol_best.results.descriptive['LCOE']:
                         sol_try.results.descriptive['area'] = calculate_area(sol_try)
                         sol_best = copy.deepcopy(sol_try)   
                         tnpccrf_calc_best = tnpccrf_calc
@@ -547,7 +547,7 @@ for ppp in range(1, 26):
                 cost_vopm = cost_vopm + sol_best.results.df_results[i.id_gen+'_cost'].sum()
     
             lpsp_mean = sol_best.results.df_results['LPSP'].mean()
-            wasted_mean = sol_best.results.df_results['Wasted Energy'].sum()
+            wasted_mean = sol_best.results.df_results['Wasted Energy'].mean()
            
            
             #calcular promedios de las iteraciones
@@ -620,7 +620,7 @@ for ppp in range(1, 26):
             dfs = [df_time]
             #sol_best.results.df_results.to_excel("resultsprueba.xlsx")
             # run function
-            multiple_dfs(dfs, 'ExecTime', 'timedispatch.xlsx')
+            multiple_dfs(dfs, 'ExecTime', 'areap5.xlsx')
             #multiple_dfs(dfs, 'ExecTime', 'anovafinap848to864.xlsx')
 
    

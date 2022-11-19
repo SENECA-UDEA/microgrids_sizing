@@ -20,8 +20,12 @@ import numpy as np
 
 rows_df_time = []
 
-for iii in range(1, 73):
-    for jjj in range(1,193):
+for iii in range(6, 73):
+    if (iii == 6):
+        ini = 35
+    else:
+        ini = 1
+    for jjj in range(ini,193):
     
         #PARAMETROS DE LA CORRIDA - POR DEFECTO
         #lugar
@@ -614,7 +618,7 @@ for iii in range(1, 73):
                 cost_vopm = cost_vopm + sol_best.results.df_results[i.id_gen+'_cost'].sum()
     
             lpsp_mean = sol_best.results.df_results['LPSP'].mean()
-            wasted_mean = sol_best.results.df_results['Wasted Energy'].sum()
+            wasted_mean = sol_best.results.df_results['Wasted Energy'].mean()
            
            
             #calcular promedios de las iteraciones
@@ -689,7 +693,7 @@ for iii in range(1, 73):
             dfs = [df_time]
             #sol_best.results.df_results.to_excel("resultsprueba.xlsx")
             # run function
-            multiple_dfs(dfs, 'ExecTime', 'timedispatch.xlsx')
+            multiple_dfs(dfs, 'ExecTime', 'timedispatchfinak4.xlsx')
             #multiple_dfs(dfs, 'ExecTime', 'anovafinap848to864.xlsx')
 
    

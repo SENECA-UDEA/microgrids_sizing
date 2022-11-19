@@ -100,7 +100,7 @@ def d (solution, demand_df, instance_data, cost_data, my_data):
              gen = solution.generators_dict_sol[i]
              dg_max_i =gen.DG_max
              #apply anual degradation to generator
-             dg_max = dg_max_i * (1 - my_data["diesel_tax"])**year
+             dg_max = dg_max_i * (1 - my_data["diesel_deg"])**year
              #if all demand covered not generate
              if (demand_tobe_covered == 0):
                  p[i][t] = 0
@@ -277,7 +277,7 @@ def D_plus_S_and_or_W (solution, demand_df, instance_data, cost_data, delta, my_
                      gen = solution.generators_dict_sol[i]
                      dg_max_i =gen.DG_max
                      #apply anual degradation to generator
-                     dg_max = dg_max_i * (1 - my_data["diesel_tax"])**year
+                     dg_max = dg_max_i * (1 - my_data["diesel_deg"])**year
                      #lowest that reference, don't turn on
                      if (demand_tobe_covered < gen.DG_min):
                          p[i][t] = 0
@@ -668,7 +668,7 @@ def B_plus_D_plus_Ren(solution, demand_df, instance_data, cost_data, delta, rand
                      gen = solution.generators_dict_sol[j]
                      dg_max_i =gen.DG_max
                      #apply anual degradation to generator
-                     dg_max = dg_max_i * (1 - my_data["diesel_tax"])**year
+                     dg_max = dg_max_i * (1 - my_data["diesel_deg"])**year
                      #lowest that reference turn off
                      if (demand_tobe_covered < gen.DG_min):
                          p[j][t] = 0
@@ -728,7 +728,7 @@ def B_plus_D_plus_Ren(solution, demand_df, instance_data, cost_data, delta, rand
                      gen = solution.generators_dict_sol[j]
                      dg_max_i =gen.DG_max
                      #apply anual degradation to generator
-                     dg_max = dg_max_i * (1 - my_data["diesel_tax"])**year
+                     dg_max = dg_max_i * (1 - my_data["diesel_deg"])**year
                      #lowest than reference, turn off
                      if (demand_tobe_covered < gen.DG_min):
                          p[j][t] = 0

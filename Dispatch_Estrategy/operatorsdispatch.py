@@ -184,7 +184,7 @@ class Sol_constructor():
                    sol_results) 
             #run dispatch strategy with false diesel
             if (strategy_def == "diesel"):
-                lcoe_cost, df_results, state, time_f = d(sol_try, self.demand_df, instance_data, cost_data, CRF, rand_ob)
+                lcoe_cost, df_results, state, time_f = d(sol_try, self.demand_df, instance_data, cost_data, CRF)
             else:
                 state = 'no feasible'
 

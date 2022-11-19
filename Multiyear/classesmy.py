@@ -103,11 +103,11 @@ class Eolic(Generator):
               self.gen_rule[t] = 0
             elif i < self.s_rate:
               self.gen_rule[t] = self.P_y*((i**self.n_eq-self.s_in**self.n_eq)/(self.s_rate**self.n_eq-self.s_in**self.n_eq))
-              year = math.floor(forecastWt['t'][t]/8760) 
+              year = math.floor(forecastWt[t]/8760) 
               self.gen_rule[t] = self.gen_rule[t] * (1- deg)**(year)
             elif i <= self.s_out:                  
               self.gen_rule[t] =  self.P_y
-              year = math.floor(forecastWt['t'][t]/8760) 
+              year = math.floor(forecastWt[t]/8760) 
               self.gen_rule[t] = self.gen_rule[t] * (1- deg)**(year)
             else:
               self.gen_rule[t] = 0

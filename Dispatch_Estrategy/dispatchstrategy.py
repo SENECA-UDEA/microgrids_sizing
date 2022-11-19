@@ -141,7 +141,7 @@ def d (solution, demand_df, instance_data, cost_data, CRF):
     #mean average lpsp
     lpsp_df = pd.DataFrame(lpsp['lpsp'], columns = ['lpsp'])
     lpsp_check = lpsp_df.rolling(instance_data['tlpsp'], min_periods=None, center=False, win_type=None, on=None, axis=0).mean()
-    mean_av = lpsp_check[lpsp_check['lpsp'] >= instance_data['nse']].count()
+    mean_av = lpsp_check[lpsp_check['lpsp'] > instance_data['nse']].count()
     
     #check feasible lpsp
     if (mean_av['lpsp'] > 0):
@@ -316,7 +316,7 @@ def D_plus_S_and_or_W (solution, demand_df, instance_data, cost_data, CRF, delta
     #movil average lpsp        
     lpsp_df = pd.DataFrame(lpsp['lpsp'], columns = ['lpsp'])
     lpsp_check = lpsp_df.rolling(instance_data['tlpsp'], min_periods=None, center=False, win_type=None, on=None, axis=0).mean()
-    mean_av = lpsp_check[lpsp_check['lpsp'] >= instance_data['nse']].count()
+    mean_av = lpsp_check[lpsp_check['lpsp'] > instance_data['nse']].count()
     
     #check feasible - ,eet the lpsp 
     if (mean_av['lpsp'] > 0):
@@ -468,7 +468,7 @@ def B_plus_S_and_or_W  (solution, demand_df, instance_data, cost_data, CRF, delt
     #movil average lpsp        
     lpsp_df = pd.DataFrame(lpsp['lpsp'], columns = ['lpsp'])
     lpsp_check = lpsp_df.rolling(instance_data['tlpsp'], min_periods=None, center=False, win_type=None, on=None, axis=0).mean()
-    mean_av = lpsp_check[lpsp_check['lpsp'] >= instance_data['nse']].count()
+    mean_av = lpsp_check[lpsp_check['lpsp'] > instance_data['nse']].count()
     
     #meet lpsp - feasible solution
     if (mean_av['lpsp'] > 0):
@@ -743,7 +743,7 @@ def B_plus_D_plus_Ren(solution, demand_df, instance_data, cost_data, CRF, delta,
     #movil average                
     lpsp_df = pd.DataFrame(lpsp['lpsp'], columns = ['lpsp'])
     lpsp_check = lpsp_df.rolling(instance_data['tlpsp'], min_periods=None, center=False, win_type=None, on=None, axis=0).mean()
-    mean_av = lpsp_check[lpsp_check['lpsp'] >= instance_data['nse']].count()
+    mean_av = lpsp_check[lpsp_check['lpsp'] > instance_data['nse']].count()
     
     #calculate feasible - meet lpsp
     if (mean_av['lpsp'] > 0):

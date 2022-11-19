@@ -93,7 +93,8 @@ for ppp in range(1, 26):
         iteraciones_run = 300
         iadd_name1 = iteraciones_run
 
-                    
+
+            
         if (ppp <= 5):
             nse_run = 0
             jadd_name1 = 'nse0%'
@@ -575,7 +576,7 @@ for ppp in range(1, 26):
                 cost_vopm = cost_vopm + sol_best.results.df_results[i.id_gen+'_cost'].sum()
     
             lpsp_mean = sol_best.results.df_results['LPSP'].mean()
-            wasted_mean = sol_best.results.df_results['Wasted Energy'].sum()
+            wasted_mean = sol_best.results.df_results['Wasted Energy'].mean()
            
            
             #calcular promedios de las iteraciones
@@ -648,7 +649,7 @@ for ppp in range(1, 26):
             dfs = [df_time]
             #sol_best.results.df_results.to_excel("resultsprueba.xlsx")
             # run function
-            multiple_dfs(dfs, 'ExecTime', 'timedispatch.xlsx')
+            multiple_dfs(dfs, 'ExecTime', 'p4nseylsp2p.xlsx')
             #multiple_dfs(dfs, 'ExecTime', 'anovafinap848to864.xlsx')
 
    
