@@ -462,6 +462,7 @@ def Get_SVF01(t_M):
 
 def calculate_multiyear_data(demand_df, forecast_df, my_data, years):
     
+    #total hours
     len_total = 8760 * years
     dem = {k : [0]*(len_total) for k in demand_df}
     forc = {k : [0]*(len_total) for k in forecast_df}
@@ -469,6 +470,7 @@ def calculate_multiyear_data(demand_df, forecast_df, my_data, years):
     for i in range(len_total):
         dem['t'][i] = i
         forc['t'][i] = i
+        #first year same 
         if (i < 8760):    
             dem['demand'][i]= demand_df['demand'][i]
             forc['DNI'][i] = forecast_df['DNI'][i]
@@ -479,10 +481,15 @@ def calculate_multiyear_data(demand_df, forecast_df, my_data, years):
             forc['day'][i] = forecast_df['day'][i]
             forc['SF'][i] = forecast_df['SF'][i]
             forc['DHI'][i] = forecast_df['DHI'][i]
+        #others years
         else:
+            #get the year
             k = math.floor(i/8760)
+            #apply tax
             val = demand_df['demand'][i - 8760*k] * (1 + my_data["demand_tax"])**k
+            #asign value
             dem['demand'][i] = val
+            #forecast is the same that first year
             val2 = forecast_df['DNI'][i-8760*k]
             forc['DNI'][i] = val2
             forc['t_ambt'][i] = forecast_df['t_ambt'][i-8760*k]
@@ -496,7 +503,7 @@ def calculate_multiyear_data(demand_df, forecast_df, my_data, years):
             val5 = forecast_df['DHI'][i-8760*k]
             forc['DHI'][i] = val5      
             
-        
+    #create dataframe
     demand = pd.DataFrame(dem, columns=['t','demand'])
     forecast = pd.DataFrame(forc, columns=['t', 'DNI', 't_ambt', 'Wt', 'Qt', 'GHI', 'day', 'SF', 'DHI'])
         

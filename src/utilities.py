@@ -452,49 +452,8 @@ def Get_SVF01(t_M):
 
 
 
-def best_distribution(data):
-    dist_names = ["exponweib","norm", "weibull_max", "weibull_min", "pareto", "genextreme", 
-                  "gamma", "beta", "rayleigh", "invgauss","uniform","expon",   
-                  "lognorm","pearson3","triang"]
-    dist_results = []
-    params = {}
-    if (sum(data) == 0 and np.std(data)== 0):
-        best_dist = 'No distribution'
-        best_p = None
-        params[best_dist] = 0
-    else:
-        for dist_name in dist_names:
-            dist = getattr(st, dist_name)
-            param = dist.fit(data)
-    
-            params[dist_name] = param
-            # Applying the Kolmogorov-Smirnov test
-            D, p = st.kstest(data, dist_name, args=param)
-            dist_results.append((dist_name, p))
-    
-        # select the best fitted distribution
-        best_dist, best_p = (max(dist_results, key=lambda item: item[1]))
-        # store the name of the best fit and its p value
 
-    return best_dist, best_p, params[best_dist]
-
-def get_best_distribution(dem_vec, wind_vec, sol_vecdni, sol_vecdhi, sol_vecghi):
-    
-    hours = len(dem_vec)
-    dem_dist = {}
-    wind_dist = {}
-    sol_distdni = {}
-    sol_distdhi = {} 
-    sol_distghi = {}
-    for i in range(int(hours)):
-        dem_dist[i] = best_distribution(dem_vec[i])
-        wind_dist[i] = best_distribution(wind_vec[i])
-        sol_distdni[i] = best_distribution(sol_vecdni[i])
-        sol_distdhi[i] = best_distribution(sol_vecdhi[i])
-        sol_distghi[i] = best_distribution(sol_vecghi[i])
-    return dem_dist, wind_dist, sol_distdni, sol_distdhi, sol_distghi
-
-
+#create the hourly dataframe
 def hour_data(demand_df, forecast_df):
     hours_size = len(demand_df['t'])/24
     dem_vec = {k : [0]*int(hours_size) for k in range(int(24))}
@@ -504,8 +463,11 @@ def hour_data(demand_df, forecast_df):
     sol_vecghi = {k : [0]*int(hours_size) for k in range(int(24))}
     
     for t in demand_df['t']:
+        #get the hour
         l = t%24
+        #get the day
         k = math.floor(t/24)
+        #create data
         dem_vec[l][k] = demand_df['demand'][t]
         wind_vec[l][k] = forecast_df['Wt'][t]
         sol_vecdni[l][k] = forecast_df['DNI'][t]
@@ -514,11 +476,65 @@ def hour_data(demand_df, forecast_df):
         
     return dem_vec, wind_vec, sol_vecdni, sol_vecdhi, sol_vecghi
 
+
+#fix a distribution for each set
+def get_best_distribution(dem_vec, wind_vec, sol_vecdni, sol_vecdhi, sol_vecghi):
+    #get the total hours
+    hours = len(dem_vec)
+    dem_dist = {}
+    wind_dist = {}
+    sol_distdni = {}
+    sol_distdhi = {} 
+    sol_distghi = {}
+    #calculate distribution each df
+    for i in range(int(hours)):
+        dem_dist[i] = best_distribution(dem_vec[i])
+        wind_dist[i] = best_distribution(wind_vec[i])
+        sol_distdni[i] = best_distribution(sol_vecdni[i])
+        sol_distdhi[i] = best_distribution(sol_vecdhi[i])
+        sol_distghi[i] = best_distribution(sol_vecghi[i])
+    return dem_dist, wind_dist, sol_distdni, sol_distdhi, sol_distghi
+
+
+#get the best distribution
+def best_distribution(data):
+    #available distributions
+    dist_names = ["exponweib","norm", "weibull_max", "weibull_min", "pareto", "genextreme", 
+                  "gamma", "beta", "rayleigh", "invgauss","uniform","expon",   
+                  "lognorm","pearson3","triang"]
+    dist_results = []
+    params = {}
+    #if 0 no distribution, 0 value, example solar generator at night
+    if (sum(data) == 0 and np.std(data)== 0):
+        best_dist = 'No distribution'
+        best_p = None
+        params[best_dist] = 0
+    else:
+        #fit each distribution
+        for dist_name in dist_names:
+            dist = getattr(st, dist_name)
+            param = dist.fit(data)
+    
+            params[dist_name] = param
+            # Applying the Kolmogorov-Smirnov test and get p-value
+            D, p = st.kstest(data, dist_name, args=param)
+            dist_results.append((dist_name, p))
+    
+        # select the best fitted distribution
+        best_dist, best_p = (max(dist_results, key=lambda item: item[1]))
+        # store the name of the best fit and its p value
+
+    return best_dist, best_p, params[best_dist]
+
+
+#create stochastic df
 def calculate_stochasticity(rand_ob, demand, forecast, dem_dist, wind_dist, sol_distdni, sol_distdhi, sol_distghi):
     demand_df = copy.deepcopy(demand)
     forecast_df = copy.deepcopy(forecast)
     for t in demand['t']:
+        #get the hour for the distribution
         l = t%24
+        #generate one random number for each hour (demand and forecast)
         n_d = generate_random(rand_ob, dem_dist[l])
         demand_df['demand'][t] == n_d
         nf_w = generate_random(rand_ob, wind_dist[l])
@@ -532,22 +548,49 @@ def calculate_stochasticity(rand_ob, demand, forecast, dem_dist, wind_dist, sol_
         
     return(demand_df, forecast_df)
     
+#generate one random number with distribution
+def generate_random(rand_ob, dist):
+    if (dist[0] == 'norm'):
+        number = rand_ob.dist_norm(dist[2][0], dist[2][1])
+    elif (dist[0] == 'uniform'):
+        number = rand_ob.dist_uniform(dist[2][0], dist[2][1])
+    elif(dist[0] == 'No distribution'):
+        number = 0
+    elif (dist[0] == 'triang'):
+        number = rand_ob.dist_triang(dist[2][0], dist[2][1], dist[2][2])
+    elif (dist[0] == 'exponweib'):
+        number = rand_ob.dist_exponweib(dist[2][0], dist[2][1], dist[2][2], dist[2][3])
+    elif (dist[0] == 'weibull_max'):
+        number = rand_ob.dist_weibull_max(dist[2][0], dist[2][1], dist[2][2])
+    elif (dist[0] == 'weibull_min'):
+        number = rand_ob.dist_weibull_min(dist[2][0], dist[2][1], dist[2][2])
+    elif (dist[0] == 'pareto'):
+        number = rand_ob.dist_pareto(dist[2][0], dist[2][1], dist[2][2])
+    elif (dist[0] == 'genextreme'):
+        number = rand_ob.dist_genextreme(dist[2][0], dist[2][1], dist[2][2])
+    elif (dist[0] == 'gamma'):
+        number = rand_ob.dist_gamma(dist[2][0], dist[2][1], dist[2][2])
+    elif (dist[0] == 'beta'):
+        number = rand_ob.dist_beta(dist[2][0], dist[2][1], dist[2][2], dist[2][3])
+    elif (dist[0] == 'rayleigh'):
+        number = rand_ob.dist_rayleigh(dist[2][0], dist[2][1])
+    elif (dist[0] == 'invgauss'):
+        number = rand_ob.dist_invgauss(dist[2][0], dist[2][1], dist[2][2])
+    elif (dist[0] == 'expon'):
+        number = rand_ob.dist_expon(dist[2][0], dist[2][1])
+    elif (dist[0] == 'lognorm'):
+        number = rand_ob.dist_lognorm(dist[2][0], dist[2][1], dist[2][2])
+    elif (dist[0] == 'pearson3'):
+        number = rand_ob.dist_pearson3(dist[2][0], dist[2][1], dist[2][2])        
+    else:
+        number = 0
+    return(number)
+
+#generate triangular distribution for parameters like fuel cost
 def generate_number_distribution(rand_ob, param, limit):
+    #simetric triangular
     a = param * (1 - limit)
     b = param
     c = param * (1 + limit)
     number = rand_ob.dist_triangular(a,b,c)
     return number
-
-def generate_random(rand_ob, dist):
-    if (dist[0] == 'norm'):
-        number = rand_ob.dist_normal(dist[2][0], dist[2][1])
-    elif (dist[0] == 'uniform'):
-        number = rand_ob.dist_uniform(dist[2][0], dist[2][1])
-    elif(dist[0] == 'No distribution'):
-        number = 0
-    elif (dist[0] == 'triangular'):
-        number = rand_ob.dist_triangular(dist[2][0], dist[2][1], dist[2][2])
-    else:
-        number = 0
-    return(number)

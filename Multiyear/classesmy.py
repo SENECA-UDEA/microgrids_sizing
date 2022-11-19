@@ -42,6 +42,7 @@ class Solar(Generator):
                     TM = t_amb[t] + (self.INOCT - 20)*(Irad_panel/self.G_noct)
                     self.gen_rule[t] = self.Ppv_stc*(Irad_panel/G_stc)*(1 + self.kt*(TM-25))*self.fpv
                     year = math.floor(gt['t'][t]/8760) 
+                    #degradarion rate
                     self.gen_rule[t] = self.gen_rule[t] * (1- deg)**(year)
             return self.gen_rule
     #calculate operative cost
@@ -108,6 +109,7 @@ class Eolic(Generator):
             elif i <= self.s_out:                  
               self.gen_rule[t] =  self.P_y
               year = math.floor(forecastWt[t]/8760) 
+              #degradarion rate
               self.gen_rule[t] = self.gen_rule[t] * (1- deg)**(year)
             else:
               self.gen_rule[t] = 0

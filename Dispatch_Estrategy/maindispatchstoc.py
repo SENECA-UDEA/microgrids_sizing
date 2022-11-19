@@ -13,6 +13,7 @@ from plotly.offline import plot
 from Dispatch_Estrategy.dispatchstrategy import def_strategy, d, B_plus_D_plus_Ren, D_plus_S_and_or_W, B_plus_S_and_or_W 
 from Dispatch_Estrategy.dispatchstrategy import Results
 import copy
+import math
 pd.options.display.max_columns = None
 
 
@@ -44,6 +45,12 @@ place = 'Oswaldo'
 
 #trm to current COP
 TRM = 3910
+
+#number of scenarios
+N_estoc = 10
+
+#range for triangular distribution fuel cost
+limit = 0.2
 
 github_rute = 'https://raw.githubusercontent.com/SENECA-UDEA/microgrids_sizing/development/data/'
 # file paths github
@@ -100,18 +107,28 @@ delta = fiscal_incentive(fisc_data['credit'],
 
 
 #STOCHASTICITY
+
+#get the df for each hour and each data
 dem_vec, wind_vec, sol_vecdni, sol_vecdhi, sol_vecghi = hour_data(demand_df_i, forecast_df_i)
 
+#get the gest distribution for each previous df
 dem_dist, wind_dist, sol_distdni, sol_distdhi, sol_distghi = get_best_distribution (dem_vec, wind_vec, sol_vecdni, sol_vecdhi, sol_vecghi)    
     
-    
-N_estoc = 10
+#mean for triangular
 param = instance_data['fuel_cost']
-limit = 0.2
+
+solutions = {}
+#scenarios
 for ppp in range(N_estoc):
     
-    #create_data
-    demand_df, forecast_df = calculate_stochasticity(rand_ob, demand_df_i, forecast_df_i, dem_dist, wind_dist, sol_distdni, sol_distdhi, sol_distghi)
+    #initial run is the original data
+    if (ppp == 1):
+        demand_df = demand_df_i
+        forecast_df = forecast_df_i
+    else:
+        #create stochastic df with distriburions
+        demand_df, forecast_df = calculate_stochasticity(rand_ob, demand_df_i, forecast_df_i, dem_dist, wind_dist, sol_distdni, sol_distdhi, sol_distghi)
+    
     # Create objects and generation rule
     generators_dict, batteries_dict,  = create_objects(generators,
                                                        batteries,  
@@ -121,7 +138,10 @@ for ppp in range(N_estoc):
     #create technologies
     technologies_dict, renewables_dict = create_technologies (generators_dict,
                                                               batteries_dict)
-    instance_data['fuel_cost'] = generate_number_distribution(rand_ob, param, limit)
+    if (ppp >= 2):
+        #calculate triangular to fuel cost
+        #if ppp = 1 use original data
+        instance_data['fuel_cost'] = generate_number_distribution(rand_ob, param, limit)
     #check diesel or batteries and at least one generator, for feasibility
     if ('D' in technologies_dict.keys() or 'B' in technologies_dict.keys() and generators_dict != {}):
         #create the initial solution operator
@@ -246,6 +266,8 @@ for ppp in range(N_estoc):
                 
             if ('aux_diesel' in sol_best.generators_dict_sol.keys()):
                 print('Not Feasible solutions')
+                #save the solution
+                solutions[ppp] = 'No Feasible solutions'
             else:
                 #df with the feasible solutions
                 df_iterations = pd.DataFrame(rows_df, columns=["i", "feasible", "area", "LCOE_actual", "LCOE_Best","Movement"])
@@ -253,7 +275,9 @@ for ppp in range(N_estoc):
                 print(sol_best.results.descriptive)
                 print(sol_best.results.df_results)
                 generation_graph = sol_best.results.generation_graph(0,len(demand_df))
-                plot(generation_graph)
+                #plot(generation_graph)
+                #save the solution
+                solutions[ppp]=sol_best
                 try:
                     #stats
                     percent_df, energy_df, renew_df, total_df, brand_df = calculate_energy(sol_best.batteries_dict_sol, sol_best.generators_dict_sol, sol_best.results, demand_df)
@@ -274,6 +298,73 @@ for ppp in range(N_estoc):
         print('No feasible solution, solution need diesel generators or batteries')
 
 
+best_sol = None
 
+#the fist feasible solution is going to be the best
+#by default the solution with the original data
+for iii in solutions.keys():
+    if (solutions[iii] != 'No Feasible solutions'):
+        best_sol = solutions[iii]
+        break
 
+#any feasible solution in all scenarios
+if (best_sol == None):
+    print('No Feasible solutions')
 
+#get the feasible solutions
+else:
+    tot = {}
+    cont = {}
+    lcoe_cont = {}
+    no_feasible = 0
+    for iii in solutions.keys():
+        #count no feasible solutions
+        if (solutions[iii] == 'No Feasible solutions'):
+            no_feasible += 1
+        else:
+            #get the generatos, lcoe and batteries of each solution
+            gen_list = list(solutions[iii].generators_dict_sol.keys())
+            bat_list = list(solutions[iii].batteries_dict_sol.keys())
+            lcoe = solutions[iii].results.descriptive['LCOE']
+            tot[iii] = gen_list + bat_list
+            #auxiliar dictionaries
+            cont[iii]=1
+            lcoe_cont[iii] = lcoe
+    
+    sum_lcoe = {}
+    #count the times that a solution is equal to others (same generators and batteries)
+    for fff in tot.keys():
+        sum_lcoe[fff]=0
+        #compare with all solutions
+        for ggg in tot.keys():
+            #count repeated values
+            if ((tot[fff]==tot[ggg]) and (fff != ggg)):
+                cont[fff] += 1
+                #sum lcoe of each equal solutions, similar to an average lcoe
+                sum_lcoe[fff] += lcoe_cont[fff]
+
+    #count the times that exist and repeated solution
+    #if all = 1, then return the solution feasible of original data or first feasible
+    max_repetition = max(cont.values())
+    if (max_repetition > 1):
+        #extract the solutions with more repetitions
+        list_rep = [k for k,v in cont.items() if v == max_repetition]
+        men_sol = math.inf
+        #evaluate the lowest average lcoe of all solutions, sum is equal to average because have equal denominator
+        for i in list_rep:
+            if sum_lcoe[i] < men_sol:
+               best_sol = solutions[i]
+               men_sol = sum_lcoe[i]
+        #return the selected solution
+        print(best_sol.results.descriptive)
+        print(best_sol.results.df_results)
+        #return number of no feasible solutions
+        print('number of no feasible scenarios: ' + str(no_feasible))
+    else:
+        #return the selected solution
+        print(best_sol.results.descriptive)
+        print(best_sol.results.df_results)
+        #return number of no feasible solutions
+        print('number of no feasible scenarios: ' + str(no_feasible))
+    
+    
