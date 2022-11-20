@@ -4,6 +4,7 @@
 import random as random
 import numpy as np
 import math
+import scipy.stats as sc 
 
 class Generator(): #Superclass generators
 
@@ -199,3 +200,68 @@ class Random_create():
         selection = 0
         selection = np.random.normal(loc=means, scale=desv, size=size)
         return selection
+    def dist_triang(self,a,b,c):
+        s = sc.triang.rvs(a,loc=b,scale=c,size=1,random_state=self.seed)
+        number = max(0,s[0])
+        return number
+    def dist_uniform(self,a,b):
+        s = sc.uniform.rvs(loc=a,scale=b,size=1,random_state=self.seed)
+        number = max(0,s[0])
+        return number
+    def dist_norm(self,a,b):
+        s = sc.norm.rvs(loc=a,scale=b,size=1,random_state=self.seed)
+        number = max(0,s[0])
+        return number
+    def dist_exponweib(self,a,b,c,d):
+        s = sc.exponweib.rvs(a,b,loc=c,scale=d,size=1,random_state=self.seed)
+        number = max(0,s[0])
+        return number
+    def dist_weibull_max(self,a,b,c):
+        s = sc.weibull_max.rvs(a,loc=b,scale=c,size=1,random_state=self.seed)
+        number = max(0,s[0])
+        return number
+    def dist_weibull_min(self,a,b,c):
+        s = sc.weibull_min.rvs(a,loc=b,scale=c,size=1,random_state=self.seed)
+        number = max(0,s[0])
+        return number
+    def dist_pareto(self,a,b,c):
+        s = sc.pareto.rvs(a,loc=b,scale=c,size=1,random_state=self.seed)
+        number = max(0,s[0])
+        return number
+    def dist_genextreme(self,a,b,c):
+        s = sc.genextreme.rvs(a,loc=b,scale=c,size=1,random_state=self.seed)
+        number = max(0,s[0])
+        return number
+    def dist_gamma(self,a,b,c):
+        s = sc.gamma.rvs(a,loc=b,scale=c,size=1,random_state=self.seed)
+        number = max(0,s[0])
+        return number
+    def dist_beta(self,a,b,c,d):
+        s = sc.beta.rvs(a,b,loc=c,scale=d,size=1,random_state=self.seed)
+        number = max(0,s[0])
+        return number
+    def dist_rayleigh(self,a,b):
+        s = sc.rayleigh.rvs(loc=a,scale=b,size=1,random_state=self.seed)
+        number = max(0,s[0])
+        return number
+    def dist_invgauss(self,a,b,c):
+        s = sc.triang.rvs(a,loc=b,scale=c,size=1,random_state=self.seed)
+        number = max(0,s[0])
+        return number
+    def dist_expon(self,a,b):
+        s = sc.expon.rvs(loc=a,scale=b,size=1,random_state=self.seed)
+        number = max(0,s[0])
+        return number
+    def dist_lognorm(self,a,b,c):
+        s = sc.lognorm.rvs(a,loc=b,scale=c,size=1,random_state=self.seed)
+        number = max(0,s[0])
+        return number
+    def dist_pearson3(self,a,b,c):
+        s = sc.pearson3.rvs(a,loc=b,scale=c,size=1,random_state=self.seed)
+        number = max(0,s[0])
+        return number
+    #triangular distribution for parameters
+    def dist_triangular(self,a,b,c):
+        s = np.random.triangular(a, b, c, 1)
+        number = max(0,s[0])
+        return number

@@ -357,7 +357,7 @@ def D_plus_S_and_or_W (solution, demand_df, instance_data, cost_data, delta, my_
 
 
 
-def B_plus_S_and_or_W  (solution, demand_df, instance_data, cost_data, delta, rand_ob):
+def B_plus_S_and_or_W  (solution, demand_df, instance_data, cost_data, delta, rand_ob, my_data):
     
     #initial parameters 
     time_i = time.time()
@@ -406,6 +406,7 @@ def B_plus_S_and_or_W  (solution, demand_df, instance_data, cost_data, delta, ra
     
     #simulation
     for t in demand_df['t']:
+        year = math.floor(t/8760)
         #initialy demand to be covered is the same that demand 
         demand_tobe_covered = demand_df['demand'][t]
         #calculate soc at 0 time
@@ -436,7 +437,11 @@ def B_plus_S_and_or_W  (solution, demand_df, instance_data, cost_data, delta, ra
             for bat in sorted_batteries:
                 b = solution.batteries_dict_sol[bat]
                 if extra_generation > 0:
-                    bplus[bat+'_b+'][t] = min(extra_generation,(b.soc_max - soc[bat+'_soc'][t])/b.efc)
+                    #apply anual degradation to battery
+                    bt_max_i =b.soc_max
+                    bt_max = bt_max_i * (1 - my_data["bat_deg"])**year
+                    #calculate max allowed energy to load the battery
+                    bplus[bat+'_b+'][t] = min(extra_generation,(bt_max - soc[bat+'_soc'][t])/b.efc)
                     #update soc
                     soc[bat+'_soc'][t] += bplus[bat+'_b+'][t] * b.efc
                     extra_generation = extra_generation - bplus[bat+'_b+'][t]
@@ -624,7 +629,10 @@ def B_plus_D_plus_Ren(solution, demand_df, instance_data, cost_data, delta, rand
             for bat in sorted_batteries:
                 b = solution.batteries_dict_sol[bat]
                 if extra_generation > 0:
-                    bplus[bat+'_b+'][t] = min(extra_generation,(b.soc_max - soc[bat+'_soc'][t])/b.efc)
+                    bt_max_i =b.soc_max
+                    bt_max = bt_max_i * (1 - my_data["bat_deg"])**year
+                    #calculate max allowed energy to load the battery
+                    bplus[bat+'_b+'][t] = min(extra_generation,(bt_max - soc[bat+'_soc'][t])/b.efc)
                     #update soc
                     soc[bat+'_soc'][t] += bplus[bat+'_b+'][t] * b.efc
                     #update extra generation
@@ -739,7 +747,11 @@ def B_plus_D_plus_Ren(solution, demand_df, instance_data, cost_data, delta, rand
                 for bat in sorted_batteries:
                     b = solution.batteries_dict_sol[bat]
                     if generation_ren > 0:
-                        bplus[bat+'_b+'][t] = min(generation_ren,(b.soc_max - soc[bat+'_soc'][t])/b.efc)
+                        #calculate degradarion battery
+                        bt_max_i =b.soc_max
+                        bt_max = bt_max_i * (1 - my_data["bat_deg"])**year
+                        #calculate max allowed energy to load the battery
+                        bplus[bat+'_b+'][t] = min(generation_ren,(bt_max - soc[bat+'_soc'][t])/b.efc)
                         soc[bat+'_soc'][t] += bplus[bat+'_b+'][t] * b.efc
                         #update generation ren
                         generation_ren = generation_ren - bplus[bat+'_b+'][t]                
