@@ -177,6 +177,7 @@ def calculate_energy(batteries_dict, generators_dict, model_results, demand_df):
        #check that the battery is installed
        if (model_results.descriptive['batteries'][bat.id_bat] == 1):
            column_data[bat.id_bat+'_%'] =  model_results.df_results[bat.id_bat+'_b-'] / model_results.df_results['demand']
+           column_data[bat.id_bat+'_%charge'] =  model_results.df_results[bat.id_bat+'_b+'] / model_results.df_results['demand']
            aux_total_data = model_results.df_results[bat.id_bat+'_b-']
            #sum all generation
            total_data += aux_total_data

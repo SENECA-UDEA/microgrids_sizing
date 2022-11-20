@@ -278,6 +278,7 @@ for ppp in range(N_estoc):
                 print(sol_best.results.descriptive)
                 print(sol_best.results.df_results)
                 generation_graph = sol_best.results.generation_graph(0,len(demand_df))
+                print('best solution number of not served hours: ' + str(best_nsh))
                 #plot(generation_graph)
                 #save the solution
                 solutions[ppp]=sol_best

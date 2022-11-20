@@ -247,6 +247,7 @@ if ('D' in technologies_dict.keys() or 'B' in technologies_dict.keys() and gener
             #print results best solution
             print(sol_best.results.descriptive)
             print(sol_best.results.df_results)
+            print('best solution number of not served hours: ' + str(best_nsh))
             generation_graph = sol_best.results.generation_graph(0,len(demand_df))
             plot(generation_graph)
             try:

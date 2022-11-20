@@ -240,7 +240,7 @@ if ('D' in technologies_dict.keys() or 'B' in technologies_dict.keys() and gener
             #print results best solution
             print(sol_best.results.descriptive)
             print(sol_best.results.df_results)
-            print('best solution number of not served hours: ' + best_nsh)
+            print('best solution number of not served hours: ' + str(best_nsh))
             generation_graph = sol_best.results.generation_graph(0,len(demand_df))
             plot(generation_graph)
             try:
@@ -253,8 +253,13 @@ if ('D' in technologies_dict.keys() or 'B' in technologies_dict.keys() and gener
             LCOE_COP = TRM * sol_best.results.descriptive['LCOE']
             #create Excel
             '''
-            sol_best.results.df_results.to_excel("resultsolarbat.xlsx")         
-            percent_df.to_excel("percentresultssolarbat.xlsx")
+            sol_best.results.df_results.to_excel("resultsdf.xlsx")         
+            percent_df.to_excel("percentresults.xlsx")
+            energy_df.to_excel("energyresults.xlsx")
+            renew_df.to_excel("renewresults.xlsx")
+            total_df.to_excel("totalresults.xlsx")
+            brand_df.to_excel("brandresults.xlsx")
+            
     
             '''
     else:
