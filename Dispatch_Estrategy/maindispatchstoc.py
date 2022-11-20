@@ -122,14 +122,15 @@ param = instance_data['fuel_cost']
 solutions = {}
 #scenarios
 for ppp in range(N_estoc):
-    
+
     #initial run is the original data
-    if (ppp == 1):
+    if (ppp == 0):
         demand_df = demand_df_i
         forecast_df = forecast_df_i
     else:
         #create stochastic df with distriburions
         demand_df, forecast_df = calculate_stochasticity(rand_ob, demand_df_i, forecast_df_i, dem_dist, wind_dist, sol_distdni, sol_distdhi, sol_distghi)
+
     
     # Create objects and generation rule
     generators_dict, batteries_dict,  = create_objects(generators,
@@ -137,10 +138,12 @@ for ppp in range(N_estoc):
                                                        forecast_df_i,
                                                        demand_df_i,
                                                        instance_data)
+
+
     #create technologies
     technologies_dict, renewables_dict = create_technologies (generators_dict,
                                                               batteries_dict)
-    if (ppp >= 2):
+    if (ppp >= 1):
         #calculate triangular to fuel cost
         #if ppp = 1 use original data
         instance_data['fuel_cost'] = generate_number_distribution(rand_ob, param, limit)
@@ -296,11 +299,13 @@ for ppp in range(N_estoc):
                 percent_df.to_excel("percentresultssolarbat.xlsx")
         
                 '''
+
         else:
             print('No feasible solution, review data')
     else:
         print('No feasible solution, solution need diesel generators or batteries')
-
+    del demand_df
+    del forecast_df
 
 best_sol = None
 

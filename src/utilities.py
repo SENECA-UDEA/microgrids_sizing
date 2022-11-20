@@ -531,23 +531,23 @@ def best_distribution(data):
 
 
 #create stochastic df
-def calculate_stochasticity(rand_ob, demand, forecast, dem_dist, wind_dist, sol_distdni, sol_distdhi, sol_distghi):
-    demand_df = copy.deepcopy(demand)
-    forecast_df = copy.deepcopy(forecast)
-    for t in demand['t']:
+def calculate_stochasticity(rand_ob, demand_df, forecast_df, dem_dist, wind_dist, sol_distdni, sol_distdhi, sol_distghi):
+    for t in demand_df['t']:
         #get the hour for the distribution
         l = t%24
         #generate one random number for each hour (demand and forecast)
         n_d = generate_random(rand_ob, dem_dist[l])
-        demand_df['demand'][t] == n_d
         nf_w = generate_random(rand_ob, wind_dist[l])
-        forecast_df['Wt'][t] == nf_w
         nf_dni = generate_random(rand_ob, sol_distdni[l])
-        forecast_df['DNI'][t] == nf_dni
         nf_dhi = generate_random(rand_ob, sol_distdhi[l])
-        forecast_df['DHI'][t] == nf_dhi
         nf_ghi = generate_random(rand_ob, sol_distghi[l])
-        forecast_df['GHI'][t] == nf_ghi 
+        demand_df.loc[t] = [t,n_d]
+        t_ambt = forecast_df['t_ambt'][t]
+        Qt = forecast_df['Qt'][t]
+        day = forecast_df['day'][t]
+        SF = forecast_df['SF'][t]
+        forecast_df.loc[t] = [t,nf_dni,t_ambt,nf_w,Qt,nf_ghi,day,SF,nf_dhi]
+               
         
     return(demand_df, forecast_df)
     

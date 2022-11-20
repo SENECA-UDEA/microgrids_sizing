@@ -244,7 +244,7 @@ class Random_create():
         number = max(0,s[0])
         return number
     def dist_invgauss(self,a,b,c):
-        s = sc.triang.rvs(a,loc=b,scale=c,size=1,random_state=self.seed)
+        s = sc.invgauss.rvs(a,loc=b,scale=c,size=1,random_state=self.seed)
         number = max(0,s[0])
         return number
     def dist_expon(self,a,b):
