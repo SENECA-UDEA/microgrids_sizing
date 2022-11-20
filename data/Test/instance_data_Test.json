@@ -12,7 +12,7 @@
     "coef_hel" : 0.1,
     "w":1,
     "caso":1,
-    "G_stc": 1000,
+    "G_stc": 800,
     "fuel_cost": 0.556,
     "Alpha_shortlist": 0.3,
     "N_iterations": 100,
@@ -22,5 +22,6 @@
     "longitude":-72.222,
     "latitude": 8.1221,
     "alpha_albedo": 0.2,
+    "shading factor": 1,
     "inverter_greed_cost": 0.1
 }

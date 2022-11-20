@@ -333,6 +333,7 @@ def fiscal_incentive (credit, depreciation, corporate_tax, ir, T1, T2):
 
     
 def irradiance_panel (forecast_df, instance_data):
+ 
     if (forecast_df['GHI'].sum() <= 0 or forecast_df['DHI'].sum() <= 0):
         #Default only DNI if it is not GHI or DHI
         gt_data = forecast_df['DNI']
@@ -344,10 +345,10 @@ def irradiance_panel (forecast_df, instance_data):
         long = instance_data["longitude"]
         latit = instance_data["latitude"]
         alpha = instance_data["alpha_albedo"]
+        SF1 = instance_data['shading factor']
         gt_data = {}
         for t in list(forecast_df['t'].index.values):
             LT = forecast_df['t'][t]
-            SF1 = forecast_df['SF'][t] #Shadow factor
             DNI = forecast_df['DNI'][t] #Direct normal Irradiance
             DHI = forecast_df['DHI'][t] #Diffuse Horizontal Irradiance
             GHI = forecast_df['GHI'][t] #Global horizontal Irradiance

@@ -20,12 +20,8 @@ import numpy as np
 
 rows_df_time = []
 
-for iii in range(7, 73):
-    if (iii == 7):
-        ini = 113
-    else:
-        ini = 1
-    for jjj in range(ini,193):
+for iii in range(1, 73):
+    for jjj in range(1,193):
     
         #PARAMETROS DE LA CORRIDA - POR DEFECTO
         #lugar
