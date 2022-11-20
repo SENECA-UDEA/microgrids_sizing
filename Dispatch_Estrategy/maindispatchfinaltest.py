@@ -92,6 +92,8 @@ for iii in range(6, 73):
         jadd_name5 = ""
         jadd_name6 = ""
         jadd_name7 = ""
+        #time not served best solution
+        best_nsh = 0
         #instancias con iteraciones diferentes a 100
         if (iii <= 36):
             iteraciones_run = 200
@@ -493,13 +495,13 @@ for iii in range(6, 73):
                                 batteries_dict = sol_try.batteries_dict_sol) 
                 print("defined strategy")
                 if (strategy_def == "diesel"):
-                    lcoe_cost, df_results, state, time_f = d(sol_try, demand_df, instance_data, cost_data, CRF)
+                    lcoe_cost, df_results, state, time_f, nsh  = d(sol_try, demand_df, instance_data, cost_data, CRF)
                 elif (strategy_def == "diesel - solar") or (strategy_def == "diesel - wind") or (strategy_def == "diesel - solar - wind"):
-                    lcoe_cost, df_results, state, time_f  = D_plus_S_and_or_W(sol_try, demand_df, instance_data, cost_data,CRF, delta )
+                    lcoe_cost, df_results, state, time_f, nsh   = D_plus_S_and_or_W(sol_try, demand_df, instance_data, cost_data,CRF, delta )
                 elif (strategy_def == "battery - solar") or (strategy_def == "battery - wind") or (strategy_def == "battery - solar - wind"):
-                    lcoe_cost, df_results, state, time_f  = B_plus_S_and_or_W (sol_try, demand_df, instance_data, cost_data, CRF, delta, rand_ob)
+                    lcoe_cost, df_results, state, time_f, nsh   = B_plus_S_and_or_W (sol_try, demand_df, instance_data, cost_data, CRF, delta, rand_ob)
                 elif (strategy_def == "battery - diesel - wind") or (strategy_def == "battery - diesel - solar") or (strategy_def == "battery - diesel - solar - wind"):
-                    lcoe_cost, df_results, state, time_f  = B_plus_D_plus_Ren(sol_try, demand_df, instance_data, cost_data, CRF, delta, rand_ob)
+                    lcoe_cost, df_results, state, time_f, nsh   = B_plus_D_plus_Ren(sol_try, demand_df, instance_data, cost_data, CRF, delta, rand_ob)
                 else:
                     state = 'no feasible'
                     df_results = []
@@ -524,6 +526,7 @@ for iii in range(6, 73):
                         sol_best = copy.deepcopy(sol_try)   
                         tnpccrf_calc_best = tnpccrf_calc
                         iter_best = i
+                        best_nsh = nsh
                 else:
                     sol_try.feasible = False
                     df_results = []
@@ -653,7 +656,7 @@ for iii in range(6, 73):
                                 time_iter_average, time_solve_average, time_make_average, time_remove_average,
                                 time_add_average, time_f_results, lcoe_export, len_gen, len_bat,
                                 len_diesel,len_solar,len_wind,mean_total_b,mean_total_d,mean_total_s, mean_total_w,
-                                area_ut,cost_vopm,tnpccrf_calc_best,lpsp_mean,wasted_mean, iter_best])    
+                                area_ut,cost_vopm,tnpccrf_calc_best,lpsp_mean,wasted_mean, iter_best, best_nsh])    
             del generators_dict
             del batteries_dict
             del generators_total
@@ -675,7 +678,7 @@ for iii in range(6, 73):
                                                           "LCOE","LEN GENERATORS", "LEN BATTERIES","LEN DIESEL","LEN SOLAR",
                                                           "LEN WIND","MEAN GENERATION BATTERY","MEAN GENERATION DIESEL",
                                                           "MEAN GENERATION SOLAR","MEAN GENERATION WIND","UTILIZED AREA",
-                                                          "COST VOPM","TNPC","LPSP MEAN","WASTED ENERGY MEAN","BEST ITER"])
+                                                          "COST VOPM","TNPC","LPSP MEAN","WASTED ENERGY MEAN","BEST ITER", "Not served hours"])
             
 
 

@@ -43,6 +43,8 @@ place = 'Oswaldo'
 
 #trm to current COP
 TRM = 3910
+#time not served best solution
+best_nsh = 0
 
 github_rute = 'https://raw.githubusercontent.com/SENECA-UDEA/microgrids_sizing/development/data/'
 # file paths github
@@ -191,13 +193,13 @@ if ('D' in technologies_dict.keys() or 'B' in technologies_dict.keys() and gener
             print("defined strategy")
             #run the dispatch strategy
             if (strategy_def == "diesel"):
-                lcoe_cost, df_results, state, time_f = d(sol_try, demand_df, instance_data, cost_data, CRF)
+                lcoe_cost, df_results, state, time_f, nsh = d(sol_try, demand_df, instance_data, cost_data, CRF)
             elif (strategy_def == "diesel - solar") or (strategy_def == "diesel - wind") or (strategy_def == "diesel - solar - wind"):
-                lcoe_cost, df_results, state, time_f  = D_plus_S_and_or_W(sol_try, demand_df, instance_data, cost_data,CRF, delta)
+                lcoe_cost, df_results, state, time_f, nsh  = D_plus_S_and_or_W(sol_try, demand_df, instance_data, cost_data,CRF, delta)
             elif (strategy_def == "battery - solar") or (strategy_def == "battery - wind") or (strategy_def == "battery - solar - wind"):
-                lcoe_cost, df_results, state, time_f  = B_plus_S_and_or_W (sol_try, demand_df, instance_data, cost_data, CRF, delta, rand_ob)
+                lcoe_cost, df_results, state, time_f, nsh  = B_plus_S_and_or_W (sol_try, demand_df, instance_data, cost_data, CRF, delta, rand_ob)
             elif (strategy_def == "battery - diesel - wind") or (strategy_def == "battery - diesel - solar") or (strategy_def == "battery - diesel - solar - wind"):
-                lcoe_cost, df_results, state, time_f  = B_plus_D_plus_Ren(sol_try, demand_df, instance_data, cost_data, CRF, delta, rand_ob)
+                lcoe_cost, df_results, state, time_f, nsh  = B_plus_D_plus_Ren(sol_try, demand_df, instance_data, cost_data, CRF, delta, rand_ob)
             else:
                 #no feasible combination
                 state = 'no feasible'
@@ -216,6 +218,7 @@ if ('D' in technologies_dict.keys() or 'B' in technologies_dict.keys() and gener
                     sol_try.results.descriptive['area'] = calculate_area(sol_try)
                     #save sol_best
                     sol_best = copy.deepcopy(sol_try)   
+                    best_nsh = nsh
             else:
                 sol_try.feasible = False
                 df_results = []
@@ -237,6 +240,7 @@ if ('D' in technologies_dict.keys() or 'B' in technologies_dict.keys() and gener
             #print results best solution
             print(sol_best.results.descriptive)
             print(sol_best.results.df_results)
+            print('best solution number of not served hours: ' + best_nsh)
             generation_graph = sol_best.results.generation_graph(0,len(demand_df))
             plot(generation_graph)
             try:

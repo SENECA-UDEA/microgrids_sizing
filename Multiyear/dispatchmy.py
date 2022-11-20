@@ -71,6 +71,7 @@ def d (solution, demand_df, instance_data, cost_data, my_data):
     bminus = {l+'_b-' : [0]*len_data for l in solution.batteries_dict_sol} #discharge battery
     fuel_cost_i = instance_data['fuel_cost']
     average_demand = np.mean(demand_df['demand'])
+    nsh = 0 #count not server hours
     
     #calculate investments cost
     for g in solution.generators_dict_sol.values():  
@@ -131,6 +132,7 @@ def d (solution, demand_df, instance_data, cost_data, my_data):
                 demand_tobe_covered = demand_tobe_covered - dg_max
         #the generators finish, if there is still nse, lpsp is calculated
         if (demand_tobe_covered > 0):
+            nsh += 1
             sminus['s-'][t] = demand_tobe_covered
             lpsp['lpsp'][t] = sminus['s-'][t] / demand_df['demand'][t]
             if (lpsp['lpsp'][t] <= cost_data['NSE_COST']["L1"][0]):
@@ -167,7 +169,7 @@ def d (solution, demand_df, instance_data, cost_data, my_data):
     splus_df = pd.DataFrame(splus['s+'], columns = ['Wasted Energy'])
     df_results = pd.concat([demand, generation, bminus_df, soc_df, bplus_df, sminus_df, splus_df, generation_cost], axis=1) 
     time_f = time.time() - time_i
-    return lcoe_cost, df_results, state, time_f
+    return lcoe_cost, df_results, state, time_f, nsh
     
     
 
@@ -199,7 +201,7 @@ def D_plus_S_and_or_W (solution, demand_df, instance_data, cost_data, delta, my_
     demand_tobe_covered = [] 
     min_ref = math.inf #initial min reference (diesel reference for renewable generators)
     average_demand = np.mean(demand_df['demand'])
-    
+    nsh = 0 #count not server hours
  
 
 
@@ -313,6 +315,7 @@ def D_plus_S_and_or_W (solution, demand_df, instance_data, cost_data, delta, my_
             
         #the generators finish, if there is still nse, lpsp is calculated
         if (demand_tobe_covered > 0):
+            nsh += 1
             sminus['s-'][t] = demand_tobe_covered
             lpsp['lpsp'][t] = sminus['s-'][t]  / demand_df['demand'][t]
             if (lpsp['lpsp'][t] <= cost_data['NSE_COST']["L1"][0]):
@@ -349,7 +352,7 @@ def D_plus_S_and_or_W (solution, demand_df, instance_data, cost_data, delta, my_
     splus_df = pd.DataFrame(splus['s+'], columns = ['Wasted Energy'])
     df_results = pd.concat([demand, generation, bminus_df, soc_df, bplus_df, sminus_df, splus_df, generation_cost], axis=1) 
     time_f = time.time() - time_i
-    return lcoe_cost, df_results, state, time_f 
+    return lcoe_cost, df_results, state, time_f, nsh 
 
 
 
@@ -381,7 +384,7 @@ def B_plus_S_and_or_W  (solution, demand_df, instance_data, cost_data, delta, ra
     cost = {k+'_cost' : [0]*len_data for k in dict_total} #variable cost
     cost_b = {l+'_cost'  : [0]*len_data for l in solution.batteries_dict_sol} #variable cost
     extra_generation = 0  #extra renewavble generation to waste or charge the battery
-
+    nsh = 0 #count not server hours
     
     #calculate cost investment
     for g in solution.generators_dict_sol.values():
@@ -469,6 +472,7 @@ def B_plus_S_and_or_W  (solution, demand_df, instance_data, cost_data, delta, ra
                         demand_tobe_covered = demand_tobe_covered - bminus[i+'_b-'][t]
         #the generators finish, if there is still nse, lpsp is calculated
         if (demand_tobe_covered > 0):
+            nsh += 1
             sminus['s-'][t] = demand_tobe_covered
             lpsp['lpsp'][t] = sminus['s-'][t]  / demand_df['demand'][t]
             if (lpsp['lpsp'][t] <= cost_data['NSE_COST']["L1"][0]):
@@ -508,7 +512,7 @@ def B_plus_S_and_or_W  (solution, demand_df, instance_data, cost_data, delta, ra
     splus_df = pd.DataFrame(splus['s+'], columns = ['Wasted Energy'])
     df_results = pd.concat([demand, generation, bminus_df, soc_df, bplus_df, sminus_df, splus_df, generation_cost, batteries_cost], axis=1) 
     time_f = time.time() - time_i
-    return lcoe_cost, df_results, state, time_f 
+    return lcoe_cost, df_results, state, time_f, nsh
 
 
 
@@ -545,7 +549,7 @@ def B_plus_D_plus_Ren(solution, demand_df, instance_data, cost_data, delta, rand
     fuel_cost_i = instance_data['fuel_cost'] 
     aux_demand = 0
     average_demand = np.mean(demand_df['demand'])
-    
+    nsh = 0 #count not server hours
 
   
     
@@ -768,6 +772,7 @@ def B_plus_D_plus_Ren(solution, demand_df, instance_data, cost_data, delta, rand
 
         #the generators finish, if there is still nse, lpsp is calculated
         if (demand_tobe_covered > 0):
+            nsh += 1
             sminus['s-'][t] = demand_tobe_covered
             lpsp['lpsp'][t] = sminus['s-'][t]  / demand_df['demand'][t]
             if (lpsp['lpsp'][t] <= cost_data['NSE_COST']["L1"][0]):
@@ -807,7 +812,7 @@ def B_plus_D_plus_Ren(solution, demand_df, instance_data, cost_data, delta, rand
     splus_df = pd.DataFrame(splus['s+'], columns = ['Wasted Energy'])
     df_results = pd.concat([demand, generation, bminus_df, soc_df, bplus_df, sminus_df, splus_df, generation_cost, batteries_cost], axis=1) 
     time_f = time.time() - time_i
-    return lcoe_cost, df_results, state, time_f 
+    return lcoe_cost, df_results, state, time_f, nsh
    
 
 class Results():
