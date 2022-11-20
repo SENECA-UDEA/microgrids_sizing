@@ -496,7 +496,7 @@ def B_plus_S_and_or_W  (solution, demand_df, instance_data, cost_data, CRF, delt
     generation_cost = pd.DataFrame(cost, columns=[*cost.keys()])
     sminus_df = pd.DataFrame(list(zip(sminus['s-'], lpsp['lpsp'])), columns = ['S-', 'LPSP'])
     splus_df = pd.DataFrame(splus['s+'], columns = ['Wasted Energy'])
-    df_results = pd.concat([demand, generation, bminus_df, soc_df, bplus_df, sminus_df, splus_df, generation_cost, batteries_cost], axis=1) 
+    df_results = pd.concat([demand, generation, bminus_df, soc_df, bplus_df, sminus_df, splus_df, generation_cost], axis=1) 
     time_f = time.time() - time_i
     return lcoe_cost, df_results, state, time_f, nsh
 

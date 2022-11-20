@@ -31,7 +31,7 @@ remove_function = 'RANDOM'
 
 #data place
 place = 'Providencia'
-
+place = 'Oswaldo'
 
 '''
 place = 'San_Andres'
