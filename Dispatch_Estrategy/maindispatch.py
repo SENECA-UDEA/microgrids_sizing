@@ -18,9 +18,9 @@ pd.options.display.max_columns = None
 
 #Set the seed for random
 '''
-seed = 42
-'''
 seed = None
+'''
+seed = 100
 
 rand_ob = Random_create(seed = seed)
 
