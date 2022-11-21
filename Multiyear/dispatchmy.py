@@ -75,8 +75,7 @@ def d (solution, demand_df, instance_data, cost_data, my_data):
     
     #calculate investments cost
     for g in solution.generators_dict_sol.values():  
-        lcoe_inf = (g.cost_up + g.cost_r - g.cost_s)  + g.cost_fopm
-        #lcoe_inf = g.cost_up + g.cost_r - g.cost_s + g.cost_fopm
+        lcoe_inf = g.cost_up + g.cost_r - g.cost_s + g.cost_fopm
         lcoe_inftot += lcoe_inf
 
         #assume it produces around the average
@@ -159,7 +158,7 @@ def d (solution, demand_df, instance_data, cost_data, my_data):
         state = 'optimal'
     #create results
     demand = pd.DataFrame(demand_df['demand'], columns=['demand'])
-    lcoe_cost = sminustot + splustot + (lcoe_inftot + costvopm)/ptot
+    lcoe_cost = (sminustot + splustot + lcoe_inftot + costvopm)/ptot
     generation = pd.DataFrame(p, columns=[*p.keys()])
     soc_df = pd.DataFrame(soc, columns=[*soc.keys()])
     bplus_df = pd.DataFrame(bplus, columns=[*bplus.keys()])
@@ -208,9 +207,8 @@ def D_plus_S_and_or_W (solution, demand_df, instance_data, cost_data, delta, my_
     #calculate investment cost    
     for g in solution.generators_dict_sol.values():
         if (g.tec == 'D'):
-            lcoe_inf = (g.cost_up + g.cost_r - g.cost_s) + g.cost_fopm
+            lcoe_inf = g.cost_up + g.cost_r - g.cost_s + g.cost_fopm
             lcoe_inftot += lcoe_inf   
-            #lcoe_inf = g.cost_up + g.cost_r - g.cost_s + g.cost_fopm
 
             #assume it produces around the average
             prod = min (average_demand, g.DG_max)
@@ -221,7 +219,7 @@ def D_plus_S_and_or_W (solution, demand_df, instance_data, cost_data, delta, my_
             if g.DG_min <= min_ref:
                  min_ref = g.DG_min
         else:
-            lcoe_inf = (g.cost_up + g.cost_r - g.cost_s) * delta  + g.cost_fopm
+            lcoe_inf = (g.cost_up + g.cost_r) * delta - g.cost_s  + g.cost_fopm
             #lcoe_inf = (g.cost_up + g.cost_r - g.cost_s)*delta + g.cost_fopm
             lcoe_inftot += lcoe_inf    
             list_ren.append(g.id_gen)
@@ -341,7 +339,7 @@ def D_plus_S_and_or_W (solution, demand_df, instance_data, cost_data, delta, my_
     else:
         state = 'optimal'
     #create results df
-    lcoe_cost = sminustot + splustot + (lcoe_inftot + costvopm)/ptot
+    lcoe_cost = (sminustot + splustot + lcoe_inftot + costvopm)/ptot
     demand = pd.DataFrame(demand_df['demand'], columns=['demand'])
     generation = pd.DataFrame(p, columns=[*p.keys()])
     soc_df = pd.DataFrame(soc, columns=[*soc.keys()])
@@ -387,14 +385,12 @@ def B_plus_S_and_or_W  (solution, demand_df, instance_data, cost_data, delta, ra
     
     #calculate cost investment
     for g in solution.generators_dict_sol.values():
-        lcoe_inf = (g.cost_up + g.cost_r - g.cost_s) * delta + g.cost_fopm
-        #lcoe_inf = (g.cost_up + g.cost_r - g.cost_s)*delta + g.cost_fopm
+        lcoe_inf = (g.cost_up + g.cost_r )* delta  - g.cost_s + g.cost_fopm
         lcoe_inftot += lcoe_inf 
         list_ren.append(g.id_gen)
     #calculate battery cost investment
     for b in solution.batteries_dict_sol.values():
-        lcoe_inf = (b.cost_up + b.cost_r - b.cost_s) * delta + b.cost_fopm
-        #lcoe_inf = (b.cost_up + b.cost_r - b.cost_s)*delta + b.cost_fopm
+        lcoe_inf = (b.cost_up + b.cost_r) * delta - b.cost_s + b.cost_fopm
         lcoe_inftot += lcoe_inf    
         auxiliar_dict_batteries[b.id_bat] = lcoe_inf
 
@@ -504,7 +500,7 @@ def B_plus_S_and_or_W  (solution, demand_df, instance_data, cost_data, delta, ra
         state = 'optimal'
     
     #calculate results
-    lcoe_cost = sminustot + splustot + (lcoe_inftot + costvopm)/ptot
+    lcoe_cost = (sminustot + splustot + lcoe_inftot + costvopm)/ptot
     demand = pd.DataFrame(demand_df['demand'], columns=['demand'])
     generation = pd.DataFrame(p, columns=[*p.keys()])
     soc_df = pd.DataFrame(soc, columns=[*soc.keys()])
@@ -558,7 +554,7 @@ def B_plus_D_plus_Ren(solution, demand_df, instance_data, cost_data, delta, rand
     #calculate investment cost
     for g in solution.generators_dict_sol.values():
         if (g.tec == 'D'):
-            lcoe_inf = (g.cost_up + g.cost_r - g.cost_s) + g.cost_fopm
+            lcoe_inf = g.cost_up + g.cost_r - g.cost_s + g.cost_fopm
             lcoe_inftot += lcoe_inf  
 
             #assume it produces around the average
@@ -568,8 +564,7 @@ def B_plus_D_plus_Ren(solution, demand_df, instance_data, cost_data, delta, rand
             #lcoe_inf = g.cost_up + g.cost_r - g.cost_s + g.cost_fopm
                            
         else:
-            lcoe_inf = (g.cost_up + g.cost_r - g.cost_s) * delta  + g.cost_fopm
-            #lcoe_inf = (g.cost_up + g.cost_r - g.cost_s)*delta + g.cost_fopm
+            lcoe_inf = (g.cost_up + g.cost_r) * delta  - g.cost_s + g.cost_fopm
             lcoe_inftot += lcoe_inf    
             list_ren.append(g.id_gen)
     #initial generator always the best lcoe
@@ -580,8 +575,7 @@ def B_plus_D_plus_Ren(solution, demand_df, instance_data, cost_data, delta, rand
     
     #calculate batteries cost
     for b in solution.batteries_dict_sol.values():
-        lcoe_inf = (b.cost_up + b.cost_r - b.cost_s) * delta  + b.cost_fopm
-        #lcoe_inf = (b.cost_up + b.cost_r - b.cost_s)*delta + b.cost_fopm
+        lcoe_inf = (b.cost_up + b.cost_r ) * delta  - b.cost_s + b.cost_fopm
         lcoe_inftot += lcoe_inf   
         auxiliar_dict_batteries[b.id_bat] = lcoe_inf
         
@@ -809,7 +803,7 @@ def B_plus_D_plus_Ren(solution, demand_df, instance_data, cost_data, delta, rand
     solution.feasible = state
 
     #create df results
-    lcoe_cost = sminustot + splustot + (lcoe_inftot + costvopm)/ptot
+    lcoe_cost = (sminustot + splustot + lcoe_inftot + costvopm)/ptot
     demand = pd.DataFrame(demand_df['demand'], columns=['demand'])
     generation = pd.DataFrame(p, columns=[*p.keys()])
     soc_df = pd.DataFrame(soc, columns=[*soc.keys()])

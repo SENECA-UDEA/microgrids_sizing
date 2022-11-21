@@ -134,22 +134,24 @@ def calculate_sizingcost(generators_dict, batteries_dict, ir, years, delta, gree
             for gen in generators_dict.values(): 
                 if (gen.tec == 'D'):
                     ref = 1
+                    break
             
             for gen in generators_dict.values(): 
                 if (gen.tec != 'D'): 
                     #fiscal incentive if not diesel
-                    expr += gen.cost_up * delta
+                    expr += gen.cost_up * delta 
+                    expr += gen.cost_r * delta
                     if (ref == 0):
-                        expr += gen.cost_up * greed
+                        expr += gen.cost_up * greed * delta
                 else:
                     expr += gen.cost_up
-                expr += gen.cost_r 
+                    expr += gen.cost_r 
                 expr -= gen.cost_s 
                 expr += gen.cost_fopm 
                 #expr2 += gen.cost_fopm  
             for bat in batteries_dict.values(): 
                 expr += bat.cost_up * delta
-                expr += bat.cost_r
+                expr += bat.cost_r * delta
                 expr -= bat.cost_s
                 expr += bat.cost_fopm
                 #expr2 += gen.cost_fopm 

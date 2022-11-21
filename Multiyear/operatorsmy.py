@@ -221,7 +221,7 @@ class Search_operator():
                 #Operation cost
                 op_cost = 0 
                 #Investment cost
-                inv_cost = d.cost_up * delta + d.cost_r - d.cost_s + d.cost_fopm
+                inv_cost = d.cost_up * delta + d.cost_r * delta - d.cost_s + d.cost_fopm
                 #inv_cost = (d.cost_up * delta + d.cost_r - d.cost_s)*(1+i) 
                 #inv_cost2 = d.cost_fopm * ((((inf)**t_years)-1)/inf)
                 sum_generation = solution.results.df_results[d.id_bat+'_b-'].sum(axis = 0, skipna = True)          
@@ -237,7 +237,7 @@ class Search_operator():
                     sum_generation = sum(dic.gen_rule.values())
                     op_cost = dic.cost_rule
                     #op_cost *= ((((inf)**t_years)-1)/inf)
-                    inv_cost = dic.cost_up * delta + dic.cost_r - dic.cost_s + dic.cost_fopm 
+                    inv_cost = dic.cost_up * delta + dic.cost_r * delta - dic.cost_s + dic.cost_fopm 
                     #inv_cost = (d.cost_up * delta + d.cost_r - d.cost_s)*(1+i) 
                     #inv_cost2 = d.cost_fopm * ((((inf)**t_years)-1)/inf)
             relation = sum_generation / (inv_cost  + op_cost)
@@ -310,13 +310,13 @@ class Search_operator():
                         if dic.tec == 'D':
                             #Operation cost at maximum capacity
                             generation_total = len(remove_report) * dic.DG_max
-                            lcoe_op = dic.cost_fopm + (dic.f0 + dic.f1)*dic.DG_max*fuel_cost * len(remove_report)
-                            lcoe_inf = (dic.cost_up + dic.cost_r - dic.cost_s) 
+                            lcoe_op =  (dic.f0 + dic.f1)*dic.DG_max*fuel_cost * len(remove_report)
+                            lcoe_inf = (dic.cost_up + dic.cost_r - dic.cost_s + dic.cost_fopm) 
                         else:
                             #Operation cost with generation rule
                             generation_total = sum(dic.gen_rule.values())
-                            lcoe_op = dic.cost_fopm + dic.cost_vopm * generation_total
-                            lcoe_inf = (dic.cost_up * delta + dic.cost_r - dic.cost_s) 
+                            lcoe_op =  dic.cost_vopm * generation_total
+                            lcoe_inf = (dic.cost_up * delta + dic.cost_r * delta - dic.cost_s + dic.cost_fopm) 
                         total_lcoe = (lcoe_inf + lcoe_op)/generation_total
                         if total_lcoe <= best_cost:
                             best_cost = total_lcoe

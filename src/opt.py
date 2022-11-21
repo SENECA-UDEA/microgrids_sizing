@@ -283,27 +283,30 @@ def make_model(generators_dict=None,
     #Objective function
     def obj2_rule(model):
         tnpc =  sum(batteries_dict[l].cost_up * model.delta * model.q[l] for l in model.BATTERIES) 
-        tnpc += sum(generators_dict[k].cost_up*model.w[k] for k in model.GENERATORS if generators_dict[k].tec == 'D')
+        tnpc += sum(generators_dict[k].cost_up*model.w[k] for k in model.GENERATORS_DIESEL)
         tnpc += sum(generators_dict[k].cost_up* model.delta *model.w[k] for k in model.GENERATORS if generators_dict[k].tec != 'D')
-        tnpc += sum(generators_dict[k].cost_r*model.w[k] for k in model.GENERATORS) + sum(batteries_dict[l].cost_r * model.q[l]  for l in model.BATTERIES) 
+        tnpc +=  sum(batteries_dict[l].cost_r * model.delta * model.q[l] for l in model.BATTERIES) 
+        tnpc += sum(generators_dict[k].cost_r*model.w[k] for k in model.GENERATORS_DIESEL)
+        tnpc += sum(generators_dict[k].cost_r* model.delta *model.w[k] for k in model.GENERATORS if generators_dict[k].tec != 'D')
         tnpc -= (sum(generators_dict[k].cost_s*model.w[k] for k in model.GENERATORS) + sum(batteries_dict[l].cost_s * model.q[l]  for l in model.BATTERIES))
         tnpc += sum(generators_dict[k].cost_fopm*model.w[k] for k in model.GENERATORS) + sum(batteries_dict[l].cost_fopm * model.q[l]  for l in model.BATTERIES)
         #sum greed forming or following
-        tnpc += sum(generators_dict[k].cost_up* model.greed *(1-model.aux[k]) for k in model.GENERATORS if generators_dict[k].tec != 'D')
+        tnpc += sum(generators_dict[k].cost_up*model.delta* model.greed *(1-model.aux[k]) for k in model.GENERATORS if generators_dict[k].tec != 'D')
         tnpc_op = sum(sum(model.operative_cost[k,t] for t in model.HTIME) for k in model.GENERATORS_DIESEL)
         tnpc_op += sum(generators_dict[k].cost_rule*model.w[k] for k in model.GENERATORS if generators_dict[k].tec != 'D')
         tnpc_op += sum(sum(model.b_discharge[l,t] * batteries_dict[l].cost_vopm for l in model.BATTERIES) for t in model.HTIME)
-        lcoe = ((tnpc * model.CRF + tnpc_op) / sum( model.d[t] for t in model.HTIME))
-        lcoe +=  model.splus_cost * sum( model.s_plus[t] for t in model.HTIME)
+        lcoe_cost = tnpc * model.CRF + tnpc_op 
+        lcoe_cost += model.splus_cost * sum( model.s_plus[t] for t in model.HTIME)
         #s- cost piecewise
-        lcoe += sum(model.x1cost * model.x1[t] for t in model.HTIME)
-        lcoe += sum(model.x2cost * model.x2[t] for t in model.HTIME)
-        lcoe += sum(model.x3cost * model.x3[t] for t in model.HTIME)
-        lcoe += sum(model.x4cost * model.x4[t] for t in model.HTIME)
+        lcoe_cost += sum(model.x1cost * model.x1[t] for t in model.HTIME)
+        lcoe_cost += sum(model.x2cost * model.x2[t] for t in model.HTIME)
+        lcoe_cost += sum(model.x3cost * model.x3[t] for t in model.HTIME)
+        lcoe_cost += sum(model.x4cost * model.x4[t] for t in model.HTIME)
+        lcoe = lcoe_cost/ (sum( model.d[t] for t in model.HTIME))
         #lcoe +=  model.sminus_cost * sum( model.s_minus[t] for t in model.HTIME)
         return lcoe
     model.LCOE_value = pyo.Objective(sense = pyo.minimize, rule=obj2_rule)
-    
+    '''
     #Objective function with multiyear formulation proposed
     def obj2_rulemulti(model):
         tnpc =  sum(batteries_dict[l].cost_up * model.delta * model.q[l] for l in model.BATTERIES) 
@@ -331,7 +334,7 @@ def make_model(generators_dict=None,
         lcoe = lcoe1 + lcoe2 + lcoe3
         return lcoe
     #model.LCOE_value = pyo.Objective(sense = pyo.minimize, rule=obj2_rulemulti)
-
+    '''
     
     return model
 
@@ -567,16 +570,17 @@ def make_model_operational(generators_dict=None,
         tnpc_op = sum(sum(model.operative_cost[k,t] for t in model.HTIME) for k in model.GENERATORS_DIESEL)
         tnpc_op += sum(generators_dict[k].cost_rule for k in model.GENERATORS if generators_dict[k].tec != 'D')
         tnpc_op += sum(sum(model.b_discharge[l,t] * batteries_dict[l].cost_vopm for l in model.BATTERIES) for t in model.HTIME)
-        lcoe = ((model.TNPCCRF + tnpc_op) / sum( model.d[t] for t in model.HTIME))
-        lcoe +=  model.splus_cost * sum( model.s_plus[t] for t in model.HTIME)
-        #lcoe +=  model.sminus_cost * sum( model.s_minus[t] for t in model.HTIME)
-        lcoe += sum(model.x1cost * model.x1[t] for t in model.HTIME)
-        lcoe += sum(model.x2cost * model.x2[t] for t in model.HTIME)
-        lcoe += sum(model.x3cost * model.x3[t] for t in model.HTIME)
-        lcoe += sum(model.x4cost * model.x4[t] for t in model.HTIME)
+        lcoe_cost = model.TNPCCRF + tnpc_op
+        lcoe_cost +=  model.splus_cost * sum( model.s_plus[t] for t in model.HTIME)
+        #lcoe_cost +=  model.sminus_cost * sum( model.s_minus[t] for t in model.HTIME)
+        lcoe_cost += sum(model.x1cost * model.x1[t] for t in model.HTIME)
+        lcoe_cost += sum(model.x2cost * model.x2[t] for t in model.HTIME)
+        lcoe_cost += sum(model.x3cost * model.x3[t] for t in model.HTIME)
+        lcoe_cost += sum(model.x4cost * model.x4[t] for t in model.HTIME)
+        lcoe = lcoe_cost / (sum( model.d[t] for t in model.HTIME))
         return lcoe
     model.LCOE_value = pyo.Objective(sense = pyo.minimize, rule=obj2_rule)
-    
+    '''
     #Objective function with multiyear proposed
     def obj2_rulemulti(model):
         tnpc_opr = sum(sum(model.operative_cost[k,t] for t in model.HTIME) for k in model.GENERATORS_DIESEL)
@@ -596,7 +600,7 @@ def make_model_operational(generators_dict=None,
         lcoe = lcoe1 + lcoe2 + lcoe3
         return lcoe
     #model.LCOE_value = pyo.Objective(sense = pyo.minimize, rule=obj2_rulemulti)
-    
+    '''
     return model
 
 
