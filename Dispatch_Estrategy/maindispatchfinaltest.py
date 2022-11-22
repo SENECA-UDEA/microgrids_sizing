@@ -10,7 +10,7 @@ from src.classes import Random_create
 import pandas as pd 
 from Dispatch_Estrategy.operatorsdispatch import Sol_constructor, Search_operator
 from plotly.offline import plot
-from Dispatch_Estrategy.dispatchstrategy import def_strategy, d, B_plus_D_plus_Ren, D_plus_S_and_or_W, B_plus_S_and_or_W 
+from Dispatch_Estrategy.dispatchstrategy import def_strategy, dies, B_plus_D_plus_Ren, D_plus_S_and_or_W, B_plus_S_and_or_W 
 from Dispatch_Estrategy.dispatchstrategy import Results
 import copy
 pd.options.display.max_columns = None
@@ -20,8 +20,12 @@ import numpy as np
 
 rows_df_time = []
 
-for iii in range(1, 73):
-    for jjj in range(1,193):
+for iii in range(5, 73):
+    if (iii == 5):
+        ini = 158
+    else:
+        ini = 1
+    for jjj in range(ini,193):
     
         #PARAMETROS DE LA CORRIDA - POR DEFECTO
         #lugar
@@ -491,7 +495,7 @@ for iii in range(1, 73):
                                 batteries_dict = sol_try.batteries_dict_sol) 
                 print("defined strategy")
                 if (strategy_def == "diesel"):
-                    lcoe_cost, df_results, state, time_f, nsh  = d(sol_try, demand_df, instance_data, cost_data, CRF)
+                    lcoe_cost, df_results, state, time_f, nsh  = dies(sol_try, demand_df, instance_data, cost_data, CRF)
                 elif (strategy_def == "diesel - solar") or (strategy_def == "diesel - wind") or (strategy_def == "diesel - solar - wind"):
                     lcoe_cost, df_results, state, time_f, nsh   = D_plus_S_and_or_W(sol_try, demand_df, instance_data, cost_data,CRF, delta )
                 elif (strategy_def == "battery - solar") or (strategy_def == "battery - wind") or (strategy_def == "battery - solar - wind"):
@@ -692,7 +696,7 @@ for iii in range(1, 73):
             dfs = [df_time]
             #sol_best.results.df_results.to_excel("resultsprueba.xlsx")
             # run function
-            multiple_dfs(dfs, 'ExecTime', 'timedispatchfinal.xlsx')
+            multiple_dfs(dfs, 'ExecTime', 'timedispatchfinal3.xlsx')
             #multiple_dfs(dfs, 'ExecTime', 'anovafinap848to864.xlsx')
 
    

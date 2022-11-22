@@ -10,7 +10,7 @@ from src.classes import Random_create
 import pandas as pd 
 from Dispatch_Estrategy.operatorsdispatch import Sol_constructor, Search_operator
 from plotly.offline import plot
-from Dispatch_Estrategy.dispatchstrategy import def_strategy, d, B_plus_D_plus_Ren, D_plus_S_and_or_W, B_plus_S_and_or_W 
+from Dispatch_Estrategy.dispatchstrategy import def_strategy, dies, B_plus_D_plus_Ren, D_plus_S_and_or_W, B_plus_S_and_or_W 
 from Dispatch_Estrategy.dispatchstrategy import Results
 import copy
 import math
@@ -231,7 +231,7 @@ for ppp in range(N_estoc):
                 print("defined strategy")
                 #run the dispatch strategy
                 if (strategy_def == "diesel"):
-                    lcoe_cost, df_results, state, time_f, nsh  = d(sol_try, demand_df, instance_data, cost_data, CRF)
+                    lcoe_cost, df_results, state, time_f, nsh  = dies(sol_try, demand_df, instance_data, cost_data, CRF)
                 elif (strategy_def == "diesel - solar") or (strategy_def == "diesel - wind") or (strategy_def == "diesel - solar - wind"):
                     lcoe_cost, df_results, state, time_f, nsh   = D_plus_S_and_or_W(sol_try, demand_df, instance_data, cost_data,CRF, delta)
                 elif (strategy_def == "battery - solar") or (strategy_def == "battery - wind") or (strategy_def == "battery - solar - wind"):

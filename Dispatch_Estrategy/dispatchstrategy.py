@@ -47,7 +47,7 @@ def def_strategy (batteries_dict, generators_dict):
     
     return dispatch
 
-def d (solution, demand_df, instance_data, cost_data, CRF):
+def dies (solution, demand_df, instance_data, cost_data, CRF):
     #initial parameters 
     time_i = time.time()
     auxiliar_dict_generator = {}

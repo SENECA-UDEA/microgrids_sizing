@@ -9,7 +9,7 @@ from Multiyear.classesmy import Random_create
 import pandas as pd 
 from Multiyear.operatorsmy import Sol_constructor, Search_operator
 from plotly.offline import plot
-from Multiyear.dispatchmy import def_strategy, d, B_plus_D_plus_Ren, D_plus_S_and_or_W, B_plus_S_and_or_W 
+from Multiyear.dispatchmy import def_strategy, dies, B_plus_D_plus_Ren, D_plus_S_and_or_W, B_plus_S_and_or_W 
 from Multiyear.dispatchmy import Results
 import copy
 pd.options.display.max_columns = None
@@ -72,7 +72,7 @@ myearData_filepath = "../data/Cost/multiyear.json"
 
 
 # read data
-demand_df, forecast_df, generators, batteries, instance_data, fisc_data, cost_data, my_data = read_data(demand_filepath,
+demand_df_i, forecast_df_i, generators, batteries, instance_data, fisc_data, cost_data, my_data = read_data(demand_filepath,
                                                                                                         forecast_filepath,
                                                                                                         units_filepath,
                                                                                                         instanceData_filepath,
@@ -81,7 +81,7 @@ demand_df, forecast_df, generators, batteries, instance_data, fisc_data, cost_da
                                                                                                         myearData_filepath)
 
 #calculate multiyear data
-demand_df, forecast_df = calculate_multiyear_data(demand_df, forecast_df, my_data, instance_data['years'])
+demand_df, forecast_df = calculate_multiyear_data(demand_df_i, forecast_df_i, my_data, instance_data['years'])
 
 #calulate parameters
 amax =  instance_data['amax'] 
@@ -200,7 +200,7 @@ if ('D' in technologies_dict.keys() or 'B' in technologies_dict.keys() and gener
             print("defined strategy")
             #run the dispatch strategy
             if (strategy_def == "diesel"):
-                lcoe_cost, df_results, state, time_f, nsh  = d(sol_try, demand_df, instance_data, cost_data, my_data)
+                lcoe_cost, df_results, state, time_f, nsh  = dies(sol_try, demand_df, instance_data, cost_data, my_data)
             elif (strategy_def == "diesel - solar") or (strategy_def == "diesel - wind") or (strategy_def == "diesel - solar - wind"):
                 lcoe_cost, df_results, state, time_f, nsh   = D_plus_S_and_or_W(sol_try, demand_df, instance_data, cost_data, delta, my_data)
             elif (strategy_def == "battery - solar") or (strategy_def == "battery - wind") or (strategy_def == "battery - solar - wind"):

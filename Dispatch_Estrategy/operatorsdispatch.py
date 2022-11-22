@@ -8,7 +8,7 @@ from src.classes import Solution, Diesel
 import copy
 import math
 import pandas as pd
-from Dispatch_Estrategy.dispatchstrategy import def_strategy, d, B_plus_D_plus_Ren, D_plus_S_and_or_W, B_plus_S_and_or_W 
+from Dispatch_Estrategy.dispatchstrategy import def_strategy, dies, B_plus_D_plus_Ren, D_plus_S_and_or_W, B_plus_S_and_or_W 
 from Dispatch_Estrategy.dispatchstrategy import Results 
 
 class Sol_constructor():
@@ -138,7 +138,7 @@ class Sol_constructor():
                            sol_results) 
         #run dispatch strategy
         if (strategy_def == "diesel"):
-            lcoe_cost, df_results, state, time_f, nsh = d(sol_try, self.demand_df, instance_data, cost_data, CRF)
+            lcoe_cost, df_results, state, time_f, nsh = dies(sol_try, self.demand_df, instance_data, cost_data, CRF)
         elif (strategy_def == "diesel - solar") or (strategy_def == "diesel - wind") or (strategy_def == "diesel - solar - wind"):
             lcoe_cost, df_results, state, time_f, nsh  = D_plus_S_and_or_W(sol_try, self.demand_df, instance_data, cost_data,CRF,delta)
         elif (strategy_def == "battery - solar") or (strategy_def == "battery - wind") or (strategy_def == "battery - solar - wind"):
@@ -184,7 +184,7 @@ class Sol_constructor():
                    sol_results) 
             #run dispatch strategy with false diesel
             if (strategy_def == "diesel"):
-                lcoe_cost, df_results, state, time_f, nsh = d(sol_try, self.demand_df, instance_data, cost_data, CRF)
+                lcoe_cost, df_results, state, time_f, nsh = dies(sol_try, self.demand_df, instance_data, cost_data, CRF)
             else:
                 state = 'no feasible'
 
@@ -221,10 +221,10 @@ class Search_operator():
                 #Operation cost
                 op_cost = 0 
                 #Investment cost
-                inv_cost = d.cost_up * delta + d.cost_r * delta - d.cost_s + d.cost_fopm
+                inv_cost = dic.cost_up * delta + dic.cost_r * delta - dic.cost_s + dic.cost_fopm
                 #inv_cost = (d.cost_up * delta + d.cost_r - d.cost_s)*(1+i) 
                 #inv_cost2 = d.cost_fopm * ((((inf)**t_years)-1)/inf)
-                sum_generation = solution.results.df_results[d.id_bat+'_b-'].sum(axis = 0, skipna = True)          
+                sum_generation = solution.results.df_results[dic.id_bat+'_b-'].sum(axis = 0, skipna = True)          
             else:
                 if dic.tec == 'D':
                     sum_generation = solution.results.df_results[dic.id_gen].sum(axis = 0, skipna = True)
