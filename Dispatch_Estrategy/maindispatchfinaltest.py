@@ -20,9 +20,9 @@ import numpy as np
 
 rows_df_time = []
 
-for iii in range(5, 73):
+for iii in range(9, 73):
     if (iii == 5):
-        ini = 158
+        ini = 52
     else:
         ini = 1
     for jjj in range(ini,193):
