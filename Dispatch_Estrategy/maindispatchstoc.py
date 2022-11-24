@@ -52,7 +52,7 @@ TRM = 3910
 N_estoc = 10
 
 #range for triangular distribution fuel cost
-limit = 0.2
+limit = 0.1
 
 github_rute = 'https://raw.githubusercontent.com/SENECA-UDEA/microgrids_sizing/development/data/'
 # file paths github
@@ -135,8 +135,8 @@ for ppp in range(N_estoc):
     # Create objects and generation rule
     generators_dict, batteries_dict,  = create_objects(generators,
                                                        batteries,  
-                                                       forecast_df_i,
-                                                       demand_df_i,
+                                                       forecast_df,
+                                                       demand_df,
                                                        instance_data)
 
 
