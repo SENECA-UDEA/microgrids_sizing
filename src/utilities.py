@@ -459,46 +459,31 @@ def Get_SVF01(t_M):
 
 
 #create the hourly dataframe
-def hour_data(demand_df, forecast_df):
-    hours_size = len(demand_df['t'])/24
-    dem_vec = {k : [0]*int(hours_size) for k in range(int(24))}
-    wind_vec = {k : [0]*int(hours_size) for k in range(int(24))}
-    sol_vecdni = {k : [0]*int(hours_size) for k in range(int(24))}
-    sol_vecdhi = {k : [0]*int(hours_size) for k in range(int(24))}
-    sol_vecghi = {k : [0]*int(hours_size) for k in range(int(24))}
+def hour_data(data):
+    hours_size = len(data)/24
+    vec = {k : [0]*int(hours_size) for k in range(int(24))}
     
-    for t in demand_df['t']:
+    for t in data.index.tolist():
         #get the hour
         l = t%24
         #get the day
         k = math.floor(t/24)
         #create data
-        dem_vec[l][k] = demand_df['demand'][t]
-        wind_vec[l][k] = forecast_df['Wt'][t]
-        sol_vecdni[l][k] = forecast_df['DNI'][t]
-        sol_vecdhi[l][k] = forecast_df['DHI'][t]
-        sol_vecghi[l][k] = forecast_df['GHI'][t]
+        vec[l][k] = data[t]
         
-    return dem_vec, wind_vec, sol_vecdni, sol_vecdhi, sol_vecghi
+    return vec
 
 
 #fix a distribution for each set
-def get_best_distribution(dem_vec, wind_vec, sol_vecdni, sol_vecdhi, sol_vecghi):
+def get_best_distribution(vec):
     #get the total hours
-    hours = len(dem_vec)
-    dem_dist = {}
-    wind_dist = {}
-    sol_distdni = {}
-    sol_distdhi = {} 
-    sol_distghi = {}
-    #calculate distribution each df
+    hours = len(vec)
+    dist = {}
+
+    #calculate distribution of df
     for i in range(int(hours)):
-        dem_dist[i] = best_distribution(dem_vec[i])
-        wind_dist[i] = best_distribution(wind_vec[i])
-        sol_distdni[i] = best_distribution(sol_vecdni[i])
-        sol_distdhi[i] = best_distribution(sol_vecdhi[i])
-        sol_distghi[i] = best_distribution(sol_vecghi[i])
-    return dem_dist, wind_dist, sol_distdni, sol_distdhi, sol_distghi
+        dist[i] = best_distribution(vec[i])
+    return dist
 
 
 #get the best distribution
@@ -533,17 +518,25 @@ def best_distribution(data):
 
 
 #create stochastic df
-def calculate_stochasticity(rand_ob, demand_df, forecast_df, dem_dist, wind_dist, sol_distdni, sol_distdhi, sol_distghi):
+def calculate_stochasticity_demand(rand_ob, demand_df, dem_dist):
     for t in demand_df['t']:
         #get the hour for the distribution
         l = t%24
         #generate one random number for each hour (demand and forecast)
         n_d = generate_random(rand_ob, dem_dist[l])
+        demand_df.loc[t] = [t,n_d]
+        
+    return demand_df
+    
+def calculate_stochasticity_forecast(rand_ob, forecast_df, wind_dist, sol_distdni, sol_distdhi, sol_distghi):
+    for t in forecast_df['t']:
+        #get the hour for the distribution
+        l = t%24
+        #generate one random number for each hour (demand and forecast)
         nf_w = generate_random(rand_ob, wind_dist[l])
         nf_dni = generate_random(rand_ob, sol_distdni[l])
         nf_dhi = generate_random(rand_ob, sol_distdhi[l])
         nf_ghi = generate_random(rand_ob, sol_distghi[l])
-        demand_df.loc[t] = [t,n_d]
         t_ambt = forecast_df['t_ambt'][t]
         Qt = forecast_df['Qt'][t]
         day = forecast_df['day'][t]
@@ -551,8 +544,8 @@ def calculate_stochasticity(rand_ob, demand_df, forecast_df, dem_dist, wind_dist
         forecast_df.loc[t] = [t,nf_dni,t_ambt,nf_w,Qt,nf_ghi,day,SF,nf_dhi]
                
         
-    return(demand_df, forecast_df)
-    
+    return forecast_df
+
 #generate one random number with distribution
 def generate_random(rand_ob, dist):
     if (dist[0] == 'norm'):

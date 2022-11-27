@@ -5,7 +5,7 @@ Created on Wed Apr 20 11:14:21 2022
 """
 from src.utilities import read_data, create_objects, create_technologies, calculate_area, calculate_energy, interest_rate
 from src.utilities import fiscal_incentive, calculate_cost_data
-from src.utilities import get_best_distribution, hour_data, calculate_stochasticity, generate_number_distribution
+from src.utilities import get_best_distribution, hour_data, calculate_stochasticity_forecast, calculate_stochasticity_demand, generate_number_distribution
 from src.classes import Random_create
 import pandas as pd 
 from Dispatch_Estrategy.operatorsdispatch import Sol_constructor, Search_operator
@@ -111,26 +111,39 @@ delta = fiscal_incentive(fisc_data['credit'],
 #STOCHASTICITY
 
 #get the df for each hour and each data
-dem_vec, wind_vec, sol_vecdni, sol_vecdhi, sol_vecghi = hour_data(demand_df_i, forecast_df_i)
-
-#get the gest distribution for each previous df
-dem_dist, wind_dist, sol_distdni, sol_distdhi, sol_distghi = get_best_distribution (dem_vec, wind_vec, sol_vecdni, sol_vecdhi, sol_vecghi)    
-    
+demand_d = demand_df_i['demand']
+forecast_w = forecast_df_i['Wt']
+forecast_d = forecast_df_i['DNI']
+forecast_h = forecast_df_i['DHI']
+forecast_g = forecast_df_i['GHI']
+dem_vec = hour_data(demand_d)
+wind_vec = hour_data(forecast_w)
+sol_vecdni = hour_data(forecast_d)
+sol_vecdhi = hour_data(forecast_h)
+sol_vecghi = hour_data(forecast_g)
+#get the gest distribution for each previous df   
+dem_dist = get_best_distribution (dem_vec) 
+wind_dist = get_best_distribution (wind_vec) 
+sol_distdni = get_best_distribution (sol_vecdni) 
+sol_distdhi = get_best_distribution (sol_vecdhi) 
+sol_distghi = get_best_distribution (sol_vecghi) 
 #mean for triangular
 param = instance_data['fuel_cost']
 
 solutions = {}
 #scenarios
-for ppp in range(N_estoc):
-
+for ppp in range(N_iterations):
+    demand_p = copy.deepcopy(demand_df_i)
+    forecast_p = copy.deepcopy(forecast_df_i)
     #initial run is the original data
     if (ppp == 0):
         demand_df = demand_df_i
         forecast_df = forecast_df_i
     else:
         #create stochastic df with distriburions
-        demand_df, forecast_df = calculate_stochasticity(rand_ob, demand_df_i, forecast_df_i, dem_dist, wind_dist, sol_distdni, sol_distdhi, sol_distghi)
-
+        demand_df = calculate_stochasticity_demand(rand_ob, demand_p, dem_dist)
+        forecast_df = calculate_stochasticity_forecast(rand_ob, forecast_p, wind_dist, sol_distdni, sol_distdhi, sol_distghi)
+    
     
     # Create objects and generation rule
     generators_dict, batteries_dict,  = create_objects(generators,

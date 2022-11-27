@@ -20,9 +20,9 @@ import numpy as np
 
 rows_df_time = []
 
-for iii in range(12, 73):
-    if (iii == 12):
-        ini = 21
+for iii in range(18, 73):
+    if (iii == 18):
+        ini = 154
     else:
         ini = 1
     for jjj in range(ini,193):
@@ -696,7 +696,7 @@ for iii in range(12, 73):
             dfs = [df_time]
             #sol_best.results.df_results.to_excel("resultsprueba.xlsx")
             # run function
-            multiple_dfs(dfs, 'ExecTime', 'timedispatchfinal4.xlsx')
+            multiple_dfs(dfs, 'ExecTime', 'timedispatchfinall.xlsx')
             #multiple_dfs(dfs, 'ExecTime', 'anovafinap848to864.xlsx')
 
    
