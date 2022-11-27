@@ -304,6 +304,18 @@ def make_model(generators_dict=None,
         return lcoe
     model.LCOE_value = pyo.Objective(sense = pyo.minimize, rule=obj2_rule)
     '''
+    #ambiental cost
+    model.ambiental = pyo.Param (initialize = ambiental)
+    model.ambiental_turn_on = pyo.Param (initialize = ambiental_turn_on)
+    # Defines operative cost
+    def cop_rule(model,k, t):
+      gen = generators_dict[k]
+      aux = (gen.f0 * gen.DG_max * model.v[k,t] + gen.f1 * model.p[k,t] )*model.fuel_cost
+      aux2 = model.v[k,t] * model.ambiental_turn_on + model.p[k,t] * model.ambiental
+      return model.operative_cost[k,t] == aux + aux2
+    model.cop_rule = pyo.Constraint(model.GENERATORS_DIESEL, model.HTIME, rule=cop_rule)
+        
+    
     #Objective function with multiyear formulation proposed
     def obj2_rulemulti(model):
         tnpc =  sum(batteries_dict[l].cost_up * model.delta * model.q[l] for l in model.BATTERIES) 
@@ -578,6 +590,15 @@ def make_model_operational(generators_dict=None,
         return lcoe
     model.LCOE_value = pyo.Objective(sense = pyo.minimize, rule=obj2_rule)
     '''
+    #ambiental cost
+    model.ambiental = pyo.Param (initialize = ambiental)
+    model.ambiental_turn_on = pyo.Param (initialize = ambiental_turn_on)
+    # Defines operative cost
+    def cop_rule(model,k, t):
+      gen = generators_dict[k]
+      aux = (gen.f0 * gen.DG_max * model.v[k,t] + gen.f1 * model.p[k,t] )*model.fuel_cost
+      aux2 = model.v[k,t] * model.ambiental_turn_on + model.p[k,t] * model.ambiental
+      
     #Objective function with multiyear proposed
     def obj2_rulemulti(model):
         tnpc_opr = sum(sum(model.operative_cost[k,t] for t in model.HTIME) for k in model.GENERATORS_DIESEL)
