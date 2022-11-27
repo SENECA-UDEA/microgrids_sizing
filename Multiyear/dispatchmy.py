@@ -70,6 +70,7 @@ def dies (solution, demand_df, instance_data, cost_data, my_data):
     bplus = {l+'_b+' : [0]*len_data for l in solution.batteries_dict_sol} #charge battery
     bminus = {l+'_b-' : [0]*len_data for l in solution.batteries_dict_sol} #discharge battery
     fuel_cost_i = instance_data['fuel_cost']
+    inverter = instance_data['inverter_cost']
     average_demand = np.mean(demand_df['demand'])
     nsh = 0 #count not server hours
     
@@ -158,7 +159,7 @@ def dies (solution, demand_df, instance_data, cost_data, my_data):
         state = 'optimal'
     #create results
     demand = pd.DataFrame(demand_df['demand'], columns=['demand'])
-    lcoe_cost = (sminustot + splustot + lcoe_inftot + costvopm)/ptot
+    lcoe_cost = (sminustot + splustot + lcoe_inftot + costvopm + inverter)/ptot
     generation = pd.DataFrame(p, columns=[*p.keys()])
     soc_df = pd.DataFrame(soc, columns=[*soc.keys()])
     bplus_df = pd.DataFrame(bplus, columns=[*bplus.keys()])
@@ -196,6 +197,7 @@ def D_plus_S_and_or_W (solution, demand_df, instance_data, cost_data, delta, my_
     bplus = {l+'_b+' : [0]*len_data for l in solution.batteries_dict_sol} #charge battery
     bminus = {l+'_b-' : [0]*len_data for l in solution.batteries_dict_sol} #discharge battery
     fuel_cost_i = instance_data['fuel_cost']
+    inverter = instance_data['inverter_cost']
     list_ren = [] #renewable generation
     demand_tobe_covered = [] 
     min_ref = math.inf #initial min reference (diesel reference for renewable generators)
@@ -339,7 +341,7 @@ def D_plus_S_and_or_W (solution, demand_df, instance_data, cost_data, delta, my_
     else:
         state = 'optimal'
     #create results df
-    lcoe_cost = (sminustot + splustot + lcoe_inftot + costvopm)/ptot
+    lcoe_cost = (sminustot + splustot + lcoe_inftot + costvopm + inverter)/ptot
     demand = pd.DataFrame(demand_df['demand'], columns=['demand'])
     generation = pd.DataFrame(p, columns=[*p.keys()])
     soc_df = pd.DataFrame(soc, columns=[*soc.keys()])
@@ -380,6 +382,7 @@ def B_plus_S_and_or_W  (solution, demand_df, instance_data, cost_data, delta, ra
     demand_tobe_covered = [] 
     dict_total = {**solution.generators_dict_sol,**solution.batteries_dict_sol}
     cost = {k+'_cost' : [0]*len_data for k in dict_total} #variable cost
+    inverter = instance_data['inverter_cost']
     extra_generation = 0  #extra renewavble generation to waste or charge the battery
     nsh = 0 #count not server hours
     
@@ -500,7 +503,7 @@ def B_plus_S_and_or_W  (solution, demand_df, instance_data, cost_data, delta, ra
         state = 'optimal'
     
     #calculate results
-    lcoe_cost = (sminustot + splustot + lcoe_inftot + costvopm)/ptot
+    lcoe_cost = (sminustot + splustot + lcoe_inftot + costvopm + inverter)/ptot
     demand = pd.DataFrame(demand_df['demand'], columns=['demand'])
     generation = pd.DataFrame(p, columns=[*p.keys()])
     soc_df = pd.DataFrame(soc, columns=[*soc.keys()])
@@ -545,6 +548,7 @@ def B_plus_D_plus_Ren(solution, demand_df, instance_data, cost_data, delta, rand
     cost = {k+'_cost' : [0]*len_data for k in dict_total} #variable cost
     extra_generation = 0  #extra renewavble generation to waste or charge the battery
     fuel_cost_i = instance_data['fuel_cost'] 
+    inverter = instance_data['inverter_cost']
     aux_demand = 0
     average_demand = np.mean(demand_df['demand'])
     nsh = 0 #count not server hours
@@ -803,7 +807,7 @@ def B_plus_D_plus_Ren(solution, demand_df, instance_data, cost_data, delta, rand
     solution.feasible = state
 
     #create df results
-    lcoe_cost = (sminustot + splustot + lcoe_inftot + costvopm)/ptot
+    lcoe_cost = (sminustot + splustot + lcoe_inftot + costvopm + inverter)/ptot
     demand = pd.DataFrame(demand_df['demand'], columns=['demand'])
     generation = pd.DataFrame(p, columns=[*p.keys()])
     soc_df = pd.DataFrame(soc, columns=[*soc.keys()])

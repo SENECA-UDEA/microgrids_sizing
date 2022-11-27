@@ -6,7 +6,7 @@ Created on Wed Apr 20 11:14:21 2022
 """
 
 from src.utilities import read_data, create_objects, calculate_sizingcost, create_technologies, calculate_area, calculate_energy, interest_rate
-from src.utilities import fiscal_incentive, calculate_cost_data
+from src.utilities import fiscal_incentive, calculate_cost_data, calculate_invertercost
 import src.opt as opt
 from src.classes import Random_create
 import pandas as pd 
@@ -354,7 +354,7 @@ for iii in range(1, 433):
                                             ir = ir,
                                             years = aux_instance_data['years'],
                                             delta = delta,
-                                            greed = instance_data['inverter_greed_cost'])
+                                            inverter = instance_data['inverter_cost'])
     
     time_f_firstsol = time.time() - time_i_firstsol #final time
     # set the initial solution as the best so far
@@ -439,7 +439,12 @@ for iii in range(1, 433):
             if (sol_try.generators_dict_sol == {} and sol_try.batteries_dict_sol == {}):
                 select_ob = rand_ob.create_rand_list(list(generators_dict.keys()))
                 sol_try.generators_dict_sol[select_ob] = generators_dict[select_ob]
-               
+          
+            #calculate inverter cost with installed generators
+            #val = instance_data['inverter_cost']#first of the functions
+            #instance_data['inverter cost'] = calculate_invertercost(sol_try.generators_dict_sol,sol_try.batteries_dict_sol,val)
+            
+            
             tnpccrf_calc = calculate_sizingcost(sol_try.generators_dict_sol,
                                                 sol_try.batteries_dict_sol,
                                                 ir = ir,

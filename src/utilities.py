@@ -116,24 +116,39 @@ def create_technologies(generators_dict, batteries_dict):
     return technologies_dict, renewables_dict
  
 
-#calculate total cost for two stage approach
-def calculate_sizingcost(generators_dict, batteries_dict, ir, years, delta, greed):
+#calculate inverter cost with the instaled generators and batteries
+def calculate_invertercost(generators_dict, batteries_dict, inverter_cost):
             expr = 0
-        
-            ref = 0
             
             for gen in generators_dict.values(): 
-                if (gen.tec == 'D'):
-                    ref = 1
-                    break
+                if (gen.tec == 'D'): 
+                    #cost as percentage of rated size network
+                    expr += gen.DG_max * inverter_cost
+
+                elif (gen.tec == 'S'):
+                    #cost as percentage of rated size network
+                    expr += gen.Ppv_stc * inverter_cost                    
+                else:
+                    #cost as percentage of rated size network
+                    expr += gen.P_y * inverter_cost
+
+            for bat in batteries_dict.values(): 
+                #cost as percentage of rated size network
+                expr += bat.soc_max * inverter_cost
+
+            return expr
+
+
+#calculate total cost for two stage approach
+def calculate_sizingcost(generators_dict, batteries_dict, ir, years, delta, inverter):
+            expr = 0
             
             for gen in generators_dict.values(): 
                 if (gen.tec != 'D'): 
                     #fiscal incentive if not diesel
                     expr += gen.cost_up * delta
                     expr += gen.cost_r  * delta
-                    if (ref == 0):
-                        expr += gen.cost_up * greed * delta
+
                 else:
                     expr += gen.cost_up
                     expr += gen.cost_r 
@@ -149,7 +164,7 @@ def calculate_sizingcost(generators_dict, batteries_dict, ir, years, delta, gree
              
             CRF = (ir * (1 + ir)**(years))/((1 + ir)**(years)-1)    
             #Operative cost doesn't take into account the crf
-            TNPCCRF = expr*CRF 
+            TNPCCRF = (expr + inverter)*CRF 
             #TNCCCRF = expr * (1+ir) + expr2 * ((((inf)**t_years)-1)/inf)
             return TNPCCRF
 

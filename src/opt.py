@@ -30,7 +30,7 @@ def make_model(generators_dict=None,
                sminus_cost = 0,
                tlpsp = 1,
                delta = 1,
-               greed = 0,
+               inverter = 0,
                nse_cost = {"L1":[0.015,0],
                               "L2":[0.05,0],
                               "L3":[0.9, 0],
@@ -51,7 +51,7 @@ def make_model(generators_dict=None,
     #sminus_cost = Penalized unsupplied demand
     #tlpsp = Number of lpsp periods for moving average
     #Delta = tax incentive
-    #greed = cost greed forming if not diesel
+    #inverter = inverter cost
     #nse_cost = cost to calcalte not supplied load
     
     # Sets
@@ -79,8 +79,7 @@ def make_model(generators_dict=None,
     model.splus_cost = pyo.Param (initialize = splus_cost)
     model.sminus_cost = pyo.Param (initialize = sminus_cost)
     model.delta = pyo.Param (initialize = delta)
-    #data from greed forming or greed following
-    model.greed = pyo.Param (initialize = greed)
+    model.inverter = pyo.Param (initialize = inverter)
     #parameters to piecewise function
     model.x1cost = pyo.Param (initialize = nse_cost["L1"][1])
     model.x2cost = pyo.Param (initialize = nse_cost["L2"][1])
@@ -103,7 +102,7 @@ def make_model(generators_dict=None,
     model.bd = pyo.Var(model.BATTERIES, model.HTIME, within=pyo.Binary) #Charge or not the battery in each period
     model.bc = pyo.Var(model.BATTERIES, model.HTIME, within=pyo.Binary) #Disharge or not the battery in each period
     model.operative_cost = pyo.Var(model.GENERATORS_DIESEL, model.HTIME, within=pyo.NonNegativeReals)
-    model.aux = pyo.Var(model.GENERATORS_REN, within=pyo.Binary) #greed forming or greed following
+    
     
     model.x1 = pyo.Var(model.HTIME, within=pyo.NonNegativeReals) #calculate not supplied cost piecewise
     model.x2 = pyo.Var(model.HTIME, within=pyo.NonNegativeReals) #calculate not supplied cost piecewise
@@ -238,12 +237,6 @@ def make_model(generators_dict=None,
             return pyo.Constraint.Skip
     model.oprelation_rule = pyo.Constraint(model.HTIME, rule=oprelation_rule)
 
-    # Defines rule auxiliar greed forming
-    def greed_rule(model,k):
-        expr = sum(model.d[t1] for t1 in model.HTIME)
-        return model.aux[k] <=  expr * (1-model.w[k]) + sum( model.w[k1] for k1 in model.GENERATORS_DIESEL)
-    model.greed_rule = pyo.Constraint(model.GENERATORS_REN, rule=greed_rule)
-    
     
     #Constraints s- cost piecewise
     def sminusx_rule(model,t):
@@ -290,8 +283,12 @@ def make_model(generators_dict=None,
         tnpc += sum(generators_dict[k].cost_r* model.delta *model.w[k] for k in model.GENERATORS if generators_dict[k].tec != 'D')
         tnpc -= (sum(generators_dict[k].cost_s*model.w[k] for k in model.GENERATORS) + sum(batteries_dict[l].cost_s * model.q[l]  for l in model.BATTERIES))
         tnpc += sum(generators_dict[k].cost_fopm*model.w[k] for k in model.GENERATORS) + sum(batteries_dict[l].cost_fopm * model.q[l]  for l in model.BATTERIES)
-        #sum greed forming or following
-        tnpc += sum(generators_dict[k].cost_up*model.delta* model.greed *(1-model.aux[k]) for k in model.GENERATORS if generators_dict[k].tec != 'D')
+        #sum inverter cost
+        tnpc += model.inverter
+        #tnpc += sum(generators_dict[k].DG_max* model.inverter *model.w[k] for k in model.GENERATORS if generators_dict[k].tec == 'D')
+        #tnpc += sum(generators_dict[k].Ppv_stc* model.inverter *model.w[k] for k in model.GENERATORS if generators_dict[k].tec == 'S')
+        #tnpc += sum(generators_dict[k].P_y* model.inverter *model.w[k] for k in model.GENERATORS if generators_dict[k].tec == 'W')
+        #tnpc += sum(batteries_dict[k].soc_max* model.inverter *model.q[l] for l in model.BATTERIES)
         tnpc_op = sum(sum(model.operative_cost[k,t] for t in model.HTIME) for k in model.GENERATORS_DIESEL)
         tnpc_op += sum(generators_dict[k].cost_rule*model.w[k] for k in model.GENERATORS if generators_dict[k].tec != 'D')
         tnpc_op += sum(sum(model.b_discharge[l,t] * batteries_dict[l].cost_vopm for l in model.BATTERIES) for t in model.HTIME)

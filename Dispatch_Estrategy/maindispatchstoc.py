@@ -4,7 +4,7 @@ Created on Wed Apr 20 11:14:21 2022
 
 """
 from src.utilities import read_data, create_objects, create_technologies, calculate_area, calculate_energy, interest_rate
-from src.utilities import fiscal_incentive, calculate_cost_data
+from src.utilities import fiscal_incentive, calculate_cost_data, calculate_invertercost
 from src.utilities import get_best_distribution, hour_data, calculate_stochasticity_forecast, calculate_stochasticity_demand, generate_number_distribution
 from src.classes import Random_create
 import pandas as pd 
@@ -236,6 +236,11 @@ for ppp in range(N_iterations):
                         # return to the last feasible solution
                         sol_current = copy.deepcopy(sol_feasible)
                         continue # Skip running the model and go to the begining of the for loop
+        
+                #calculate inverter cost with installed generators
+                #val = instance_data['inverter_cost']#first of the functions
+                #instance_data['inverter cost'] = calculate_invertercost(sol_try.generators_dict_sol,sol_try.batteries_dict_sol,val)
+                
         
                 #review which dispatch strategy to use
                 strategy_def = def_strategy(generators_dict = sol_try.generators_dict_sol,

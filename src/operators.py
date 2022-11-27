@@ -121,12 +121,17 @@ class Sol_constructor():
         technologies_dict_sol, renewables_dict_sol = create_technologies (generators_dict_sol, 
                                                                           batteries_dict_sol)
         ir = interest_rate(instance_data['i_f'],instance_data['inf'])
+        #calculate inverter cost with installed generators
+        #val = instance_data['inverter_cost']#first of the functions
+        #instance_data['inverter cost'] = calculate_invertercost(generators_dict_sol,batteries_dict_sol,val)
+        
+        
         tnpccrf_calc = calculate_sizingcost(generators_dict_sol, 
                                             batteries_dict_sol, 
                                             ir = ir,
                                             years = instance_data['years'],
                                             delta = delta,
-                                            greed = instance_data['inverter_greed_cost'])
+                                            inverter = instance_data['inverter_cost'])
         
         model = opt.make_model_operational(generators_dict = generators_dict_sol,
                                            batteries_dict = batteries_dict_sol,  
@@ -170,12 +175,18 @@ class Sol_constructor():
             technologies_dict_sol, renewables_dict_sol = create_technologies (generators_dict_sol, 
                                                                               batteries_dict_sol)
             
+            #calculate inverter cost with installed generators
+            #val = instance_data['inverter_cost']#first of the functions
+            #instance_data['inverter cost'] = calculate_invertercost(generators_dict_sol,batteries_dict_sol,val)
+            
+    
+            
             tnpccrf_calc = calculate_sizingcost(generators_dict_sol, 
                                                 batteries_dict_sol, 
                                                 ir = ir,
                                                 years = instance_data['years'],
                                                 delta = delta,
-                                                greed = instance_data['inverter_greed_cost'])
+                                                inverter = instance_data['inverter_cost'])
             
             #create model with false diesel
             model = opt.make_model_operational(generators_dict = generators_dict_sol,

@@ -8,6 +8,7 @@
     "tlpsp" : 1,
     "splus_cost": 0.2,
     "sminus_cost": 0.2,
+    "inverter_cost": 0,
     "h2" : 5,
     "coef_hel" : 0.1,
     "w":1,
@@ -22,6 +23,5 @@
     "longitude": -81.373,
     "latitude": 13.34215,
     "alpha_albedo": 0.2,
-    "shading factor": 1,
-    "inverter_greed_cost": 0.1
+    "shading factor": 1
 }

@@ -221,7 +221,7 @@ for iii in range(1, 28):
                            sminus_cost = instance_data['sminus_cost']*sminus_cost_run,
                            tlpsp = tlpsp_run,
                            delta = delta,
-                           greed = instance_data['inverter_greed_cost'],
+                           inverter = instance_data['inverter_cost'],
                            nse_cost = cost_data['NSE_COST'])    
     
     

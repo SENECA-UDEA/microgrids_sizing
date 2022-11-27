@@ -136,6 +136,11 @@ class Sol_constructor():
                            technologies_dict_sol, 
                            renewables_dict_sol,
                            sol_results) 
+        #calculate inverter cost with installed generators
+        #val = instance_data['inverter_cost']#first of the functions
+        #instance_data['inverter cost'] = calculate_invertercost(sol_try.generators_dict_sol,sol_try.batteries_dict_sol,val)
+        
+        
         #run dispatch strategy
         if (strategy_def == "diesel"):
             lcoe_cost, df_results, state, time_f, nsh = dies(sol_try, self.demand_df, instance_data, cost_data, my_data)
@@ -182,6 +187,11 @@ class Sol_constructor():
                    technologies_dict_sol, 
                    renewables_dict_sol,
                    sol_results) 
+            #calculate inverter cost with installed generators
+            #val = instance_data['inverter_cost']#first of the functions
+            #instance_data['inverter cost'] = calculate_invertercost(sol_try.generators_dict_sol,sol_try.batteries_dict_sol,val)
+            
+            
             #run dispatch strategy with false diesel
             if (strategy_def == "diesel"):
                 lcoe_cost, df_results, state, time_f, nsh = dies(sol_try, self.demand_df, instance_data, cost_data, my_data)

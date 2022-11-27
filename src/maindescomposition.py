@@ -5,7 +5,7 @@ Created on Wed Apr 20 11:14:21 2022
 @author: scastellanos
 """
 from src.utilities import read_data, create_objects, calculate_sizingcost, create_technologies, calculate_area, calculate_energy, interest_rate
-from src.utilities import fiscal_incentive, calculate_cost_data
+from src.utilities import fiscal_incentive, calculate_cost_data, calculate_invertercost
 import src.opt as opt
 from src.classes import Random_create
 import pandas as pd 
@@ -181,13 +181,20 @@ if (sol_best.results != None):
                 # return to the last feasible solution
                 sol_current = copy.deepcopy(sol_feasible)
                 continue # Skip running the model and go to the begining of the for loop
+        
+        #calculate inverter cost with installed generators
+        #val = instance_data['inverter_cost']#first of the functions
+        #instance_data['inverter cost'] = calculate_invertercost(sol_try.generators_dict_sol,sol_try.batteries_dict_sol,val)
+        
+
+        
         #Calculate strategic cost
         tnpccrf_calc = calculate_sizingcost(sol_try.generators_dict_sol, 
                                             sol_try.batteries_dict_sol, 
                                             ir = ir,
                                             years = instance_data['years'],
                                             delta = delta,
-                                            greed = instance_data['inverter_greed_cost'])
+                                            inverter = instance_data['inverter_cost'])
         #Make model
         model = opt.make_model_operational(generators_dict = sol_try.generators_dict_sol,
                                            batteries_dict = sol_try.batteries_dict_sol,  

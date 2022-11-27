@@ -4,7 +4,7 @@ Created on Wed Apr 20 11:14:21 2022
 
 """
 from Multiyear.utilitiesmy import read_data, create_objects, create_technologies, calculate_area, calculate_energy, interest_rate
-from Multiyear.utilitiesmy import fiscal_incentive, calculate_cost_data, calculate_multiyear_data
+from Multiyear.utilitiesmy import fiscal_incentive, calculate_cost_data, calculate_multiyear_data, calculate_invertercost
 from Multiyear.classesmy import Random_create
 import pandas as pd 
 from Multiyear.operatorsmy import Sol_constructor, Search_operator
@@ -196,6 +196,12 @@ if ('D' in technologies_dict.keys() or 'B' in technologies_dict.keys() and gener
             #review which dispatch strategy to use
             strategy_def = def_strategy(generators_dict = sol_try.generators_dict_sol,
                                         batteries_dict = sol_try.batteries_dict_sol) 
+            
+            #calculate inverter cost with installed generators
+            #val = instance_data['inverter_cost']#first of the functions
+            #instance_data['inverter cost'] = calculate_invertercost(sol_try.generators_dict_sol,sol_try.batteries_dict_sol,val)
+            
+    
             
             print("defined strategy")
             #run the dispatch strategy

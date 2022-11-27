@@ -5,7 +5,7 @@ Created on Wed Apr 20 11:14:21 2022
 @author: pmayaduque
 """
 from src.utilities import read_data, create_objects, create_technologies, calculate_area, calculate_energy, interest_rate
-from src.utilities import fiscal_incentive, calculate_cost_data, calculate_sizingcost
+from src.utilities import fiscal_incentive, calculate_cost_data, calculate_sizingcost, calculate_invertercost
 from src.classes import Random_create
 import pandas as pd 
 from Dispatch_Estrategy.operatorsdispatch import Sol_constructor, Search_operator
@@ -481,13 +481,16 @@ for iii in range(18, 73):
                         sol_current = copy.deepcopy(sol_feasible)
                         continue # Skip running the model and go to the begining of the for loop
                
-                   
+                #calculate inverter cost with installed generators
+                #instance_data['inverter cost'] = calculate_invertercost(sol_try.generators_dict_sol,sol_try.batteries_dict_sol,instance_data['inverter_cost'])
+                
+                #calculate tnpc
                 tnpccrf_calc = calculate_sizingcost(sol_try.generators_dict_sol,
                                                     sol_try.batteries_dict_sol,
                                                     ir = ir,
                                                     years = years_run,
                                                     delta = delta,
-                                                    greed = instance_data['inverter_greed_cost'])
+                                                    inverter = instance_data['inverter_cost'])
                 
                 time_i_make = time.time()
                 
@@ -661,6 +664,7 @@ for iii in range(18, 73):
             del batteries_dict
             del generators_total
             del batteries_total
+            del instance_data
     
             #dataframe completo con todas las instancias
             df_time = pd.DataFrame(rows_df_time, columns=["N problem","N algortihm", "Name", "City", "Iterations", "Area","Tlpsp",
