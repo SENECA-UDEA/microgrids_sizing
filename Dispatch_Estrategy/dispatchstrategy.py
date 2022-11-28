@@ -441,7 +441,6 @@ def B_plus_S_and_or_W  (solution, demand_df, instance_data, cost_data, CRF, delt
             #supply the load with batteries
             for i in sorted_batteries:
                 if demand_tobe_covered > 0:
-                     nsh += 1
                      bat = solution.batteries_dict_sol[i]
                      #battery have energy to supply all the load
                      if ((soc[i+'_soc'][t] - bat.soc_min)*bat.efd >= demand_tobe_covered/bat.efd):
@@ -463,6 +462,7 @@ def B_plus_S_and_or_W  (solution, demand_df, instance_data, cost_data, CRF, delt
                         demand_tobe_covered = demand_tobe_covered - bminus[i+'_b-'][t]
         #the generators finish, if there is still nse, lpsp is calculated
         if (demand_tobe_covered > 0):
+            nsh += 1
             sminus['s-'][t] = demand_tobe_covered
             lpsp['lpsp'][t] = sminus['s-'][t]  / demand_df['demand'][t]
             if (lpsp['lpsp'][t] <= cost_data['NSE_COST']["L1"][0]):
