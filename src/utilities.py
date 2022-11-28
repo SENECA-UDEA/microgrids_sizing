@@ -296,7 +296,7 @@ def calculate_cost_data(generators, batteries, instance_data,
             aux_generators['cost_r'] = parameters_cost['param_r_solar']
             aux_generators['cost_s'] = cost_up * parameters_cost['param_s_solar'] * (((1 + inf)/(1 + ir))**years)
             aux_generators['cost_fopm'] = cost_up * parameters_cost['param_f_solar'] 
-            aux_generators['cost_vopm'] =  parameters_cost['param_v_solar']      
+            aux_generators['cost_vopm'] =  cost_up * parameters_cost['param_v_solar']      
         elif (i['tec'] == 'W'):
             cost_up = i['cost_up']
             aux_generators = []
@@ -304,7 +304,7 @@ def calculate_cost_data(generators, batteries, instance_data,
             aux_generators['cost_r'] = parameters_cost['param_r_wind']  
             aux_generators['cost_s'] = cost_up * parameters_cost['param_s_wind']   * (((1 + inf)/(1 + ir))**years)
             aux_generators['cost_fopm'] =  cost_up * parameters_cost['param_f_wind']  
-            aux_generators['cost_vopm'] =  parameters_cost['param_v_wind']  
+            aux_generators['cost_vopm'] =  cost_up * parameters_cost['param_v_wind']  
             
         elif (i['tec'] == 'D'):
             cost_up = i['cost_up']

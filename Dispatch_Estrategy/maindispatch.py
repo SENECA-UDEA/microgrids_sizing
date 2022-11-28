@@ -109,6 +109,17 @@ technologies_dict, renewables_dict = create_technologies (generators_dict,
                                                           batteries_dict)
 
 
+if (place == 'Oswaldo'):
+    cost_data["NSE_COST"]["L1"][1] = 0.2
+    cost_data["NSE_COST"]["L2"][1] = 0.2
+    cost_data["NSE_COST"]["L3"][1] = 0.2
+    cost_data["NSE_COST"]["L4"][1] = 0.2
+    cost_data["param_s_solar"] = 0
+    cost_data["param_s_wind"] = 0
+    cost_data["param_s_diesel"] = 0
+    cost_data["param_s_bat"] = 0
+
+
 #check diesel or batteries and at least one generator, for feasibility
 if ('D' in technologies_dict.keys() or 'B' in technologies_dict.keys() and generators_dict != {}):
     #create the initial solution operator

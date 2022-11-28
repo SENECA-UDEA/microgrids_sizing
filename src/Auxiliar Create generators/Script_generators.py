@@ -3,7 +3,7 @@ import requests
 import copy
 
 #set the origin of data
-units_filepath = "../data/San_Andres/json_cost.json"
+units_filepath = "C:/Users/sebas/OneDrive/Documentos/GitHub/microgrids_sizing/data/Oswaldo/pprueba.json"
 
 #load the data
 try:
@@ -74,6 +74,6 @@ total_def["generators"] = generators_def
 total_def["batteries"] = batteries_def
         
 #create the json
-with open('..\\data\\json_generated.json', 'w') as outfile:
+with open('C:\\Users\\sebas\\OneDrive\\Documentos\\GitHub\\microgrids_sizing\\data\\json_generated.json', 'w') as outfile:
     json.dump(total_def, outfile, indent=4)
 
