@@ -80,6 +80,20 @@ demand_df, forecast_df, generators, batteries, instance_data, fisc_data, cost_da
 amax =  instance_data['amax'] 
 N_iterations = instance_data['N_iterations']
 #Calculate salvage, operation and replacement cost with investment cost
+if (place == 'Oswaldo'):
+    cost_data["NSE_COST"]["L1"][1] = 0.2
+    cost_data["NSE_COST"]["L2"][1] = 0.2
+    cost_data["NSE_COST"]["L3"][1] = 0.2
+    cost_data["NSE_COST"]["L4"][1] = 0.2
+    cost_data["param_s_solar"] = 0
+    cost_data["param_s_wind"] = 0
+    cost_data["param_s_diesel"] = 0
+    cost_data["param_s_bat"] = 0
+    cost_data["param_v_bat"] = 0
+    cost_data["param_v_wind"] = 0
+    cost_data["param_v_solar"] = 0
+
+
 generators, batteries = calculate_cost_data(generators, batteries, instance_data, cost_data)
 #Demand to be covered
 demand_df['demand'] = instance_data['demand_covered']  * demand_df['demand'] 
@@ -109,15 +123,6 @@ technologies_dict, renewables_dict = create_technologies (generators_dict,
                                                           batteries_dict)
 
 
-if (place == 'Oswaldo'):
-    cost_data["NSE_COST"]["L1"][1] = 0.2
-    cost_data["NSE_COST"]["L2"][1] = 0.2
-    cost_data["NSE_COST"]["L3"][1] = 0.2
-    cost_data["NSE_COST"]["L4"][1] = 0.2
-    cost_data["param_s_solar"] = 0
-    cost_data["param_s_wind"] = 0
-    cost_data["param_s_diesel"] = 0
-    cost_data["param_s_bat"] = 0
 
 
 #check diesel or batteries and at least one generator, for feasibility
