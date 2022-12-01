@@ -136,13 +136,13 @@ def dies (solution, demand_df, instance_data, cost_data, my_data):
             sminus['s-'][t] = demand_tobe_covered
             lpsp['lpsp'][t] = sminus['s-'][t] / demand_df['demand'][t]
             if (lpsp['lpsp'][t] <= cost_data['NSE_COST']["L1"][0]):
-                costsminus['cost_s-'][t] = cost_data['NSE_COST']["L1"][0] * sminus['s-'][t]
+                costsminus['cost_s-'][t] = cost_data['NSE_COST']["L1"][1] * sminus['s-'][t]
             elif (lpsp['lpsp'][t]  <= cost_data['NSE_COST']["L2"][0]):
-                costsminus['cost_s-'][t] = cost_data['NSE_COST']["L2"][0] * sminus['s-'][t]
+                costsminus['cost_s-'][t] = cost_data['NSE_COST']["L2"][1] * sminus['s-'][t]
             elif (lpsp['lpsp'][t]  <= cost_data['NSE_COST']["L3"][0]):
-                costsminus['cost_s-'][t] = cost_data['NSE_COST']["L3"][0] * sminus['s-'][t]
+                costsminus['cost_s-'][t] = cost_data['NSE_COST']["L3"][1] * sminus['s-'][t]
             elif (lpsp['lpsp'][t]  <= cost_data['NSE_COST']["L4"][0]):
-                costsminus['cost_s-'][t] = cost_data['NSE_COST']["L4"][0] * sminus['s-'][t]
+                costsminus['cost_s-'][t] = cost_data['NSE_COST']["L4"][1] * sminus['s-'][t]
             
             sminustot += costsminus['cost_s-'][t] 
             #costsminus['cost_s-'][t] = sminus['s-'][t] * instance_data["sminus_cost"]           
@@ -319,13 +319,13 @@ def D_plus_S_and_or_W (solution, demand_df, instance_data, cost_data, delta, my_
             sminus['s-'][t] = demand_tobe_covered
             lpsp['lpsp'][t] = sminus['s-'][t]  / demand_df['demand'][t]
             if (lpsp['lpsp'][t] <= cost_data['NSE_COST']["L1"][0]):
-                costsminus['cost_s-'][t] = cost_data['NSE_COST']["L1"][0] * sminus['s-'][t]
+                costsminus['cost_s-'][t] = cost_data['NSE_COST']["L1"][1] * sminus['s-'][t]
             elif (lpsp['lpsp'][t]  <= cost_data['NSE_COST']["L2"][0]):
-                costsminus['cost_s-'][t] = cost_data['NSE_COST']["L2"][0] * sminus['s-'][t]
+                costsminus['cost_s-'][t] = cost_data['NSE_COST']["L2"][1] * sminus['s-'][t]
             elif (lpsp['lpsp'][t]  <= cost_data['NSE_COST']["L3"][0]):
-                costsminus['cost_s-'][t] = cost_data['NSE_COST']["L3"][0] * sminus['s-'][t]
+                costsminus['cost_s-'][t] = cost_data['NSE_COST']["L3"][1] * sminus['s-'][t]
             elif (lpsp['lpsp'][t]  <= cost_data['NSE_COST']["L4"][0]):
-                costsminus['cost_s-'][t] = cost_data['NSE_COST']["L4"][0] * sminus['s-'][t]
+                costsminus['cost_s-'][t] = cost_data['NSE_COST']["L4"][1] * sminus['s-'][t]
             
             sminustot += costsminus['cost_s-'][t] 
             #costsminus['cost_s-'][t] = sminus['s-'][t] * instance_data["sminus_cost"]   
@@ -479,13 +479,13 @@ def B_plus_S_and_or_W  (solution, demand_df, instance_data, cost_data, delta, ra
             sminus['s-'][t] = demand_tobe_covered
             lpsp['lpsp'][t] = sminus['s-'][t]  / demand_df['demand'][t]
             if (lpsp['lpsp'][t] <= cost_data['NSE_COST']["L1"][0]):
-                costsminus['cost_s-'][t] = cost_data['NSE_COST']["L1"][0] * sminus['s-'][t]
+                costsminus['cost_s-'][t] = cost_data['NSE_COST']["L1"][1] * sminus['s-'][t]
             elif (lpsp['lpsp'][t]  <= cost_data['NSE_COST']["L2"][0]):
-                costsminus['cost_s-'][t] = cost_data['NSE_COST']["L2"][0] * sminus['s-'][t]
+                costsminus['cost_s-'][t] = cost_data['NSE_COST']["L2"][1] * sminus['s-'][t]
             elif (lpsp['lpsp'][t]  <= cost_data['NSE_COST']["L3"][0]):
-                costsminus['cost_s-'][t] = cost_data['NSE_COST']["L3"][0] * sminus['s-'][t]
+                costsminus['cost_s-'][t] = cost_data['NSE_COST']["L3"][1] * sminus['s-'][t]
             elif (lpsp['lpsp'][t]  <= cost_data['NSE_COST']["L4"][0]):
-                costsminus['cost_s-'][t] = cost_data['NSE_COST']["L4"][0] * sminus['s-'][t]
+                costsminus['cost_s-'][t] = cost_data['NSE_COST']["L4"][1] * sminus['s-'][t]
             
             sminustot += costsminus['cost_s-'][t] 
             #costsminus['cost_s-'][t] = sminus['s-'][t] * instance_data["sminus_cost"]                 
@@ -783,13 +783,13 @@ def B_plus_D_plus_Ren(solution, demand_df, instance_data, cost_data, delta, rand
             sminus['s-'][t] = demand_tobe_covered
             lpsp['lpsp'][t] = sminus['s-'][t]  / demand_df['demand'][t]
             if (lpsp['lpsp'][t] <= cost_data['NSE_COST']["L1"][0]):
-                costsminus['cost_s-'][t] = cost_data['NSE_COST']["L1"][0] * sminus['s-'][t]
+                costsminus['cost_s-'][t] = cost_data['NSE_COST']["L1"][1] * sminus['s-'][t]
             elif (lpsp['lpsp'][t]  <= cost_data['NSE_COST']["L2"][0]):
-                costsminus['cost_s-'][t] = cost_data['NSE_COST']["L2"][0] * sminus['s-'][t]
+                costsminus['cost_s-'][t] = cost_data['NSE_COST']["L2"][1] * sminus['s-'][t]
             elif (lpsp['lpsp'][t]  <= cost_data['NSE_COST']["L3"][0]):
-                costsminus['cost_s-'][t] = cost_data['NSE_COST']["L3"][0] * sminus['s-'][t]
+                costsminus['cost_s-'][t] = cost_data['NSE_COST']["L3"][1] * sminus['s-'][t]
             elif (lpsp['lpsp'][t]  <= cost_data['NSE_COST']["L4"][0]):
-                costsminus['cost_s-'][t] = cost_data['NSE_COST']["L4"][0] * sminus['s-'][t]
+                costsminus['cost_s-'][t] = cost_data['NSE_COST']["L4"][1] * sminus['s-'][t]
             
             sminustot += costsminus['cost_s-'][t] 
             #costsminus['cost_s-'][t] = sminus['s-'][t] * instance_data["sminus_cost"]                 
