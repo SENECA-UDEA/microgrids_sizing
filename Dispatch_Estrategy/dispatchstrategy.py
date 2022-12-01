@@ -153,7 +153,7 @@ def dies (solution, demand_df, instance_data, cost_data, CRF):
         state = 'optimal'
     #create results
     demand = pd.DataFrame(demand_df['demand'], columns=['demand'])
-    lcoe_cost = (sminustot + splustot + lcoe_inftot + costvopm + inverter)/ptot
+    lcoe_cost = (sminustot + splustot + lcoe_inftot + costvopm + inverter)/(sum(demand_df['demand']) - sum(sminus['s-']))
     generation = pd.DataFrame(p, columns=[*p.keys()])
     soc_df = pd.DataFrame(soc, columns=[*soc.keys()])
     bplus_df = pd.DataFrame(bplus, columns=[*bplus.keys()])
@@ -329,7 +329,7 @@ def D_plus_S_and_or_W (solution, demand_df, instance_data, cost_data, CRF, delta
     else:
         state = 'optimal'
     #create results df
-    lcoe_cost = (sminustot + splustot + lcoe_inftot + costvopm + inverter)/ptot
+    lcoe_cost = (sminustot + splustot + lcoe_inftot + costvopm + inverter)/(sum(demand_df['demand']) - sum(sminus['s-']))
     demand = pd.DataFrame(demand_df['demand'], columns=['demand'])
     generation = pd.DataFrame(p, columns=[*p.keys()])
     soc_df = pd.DataFrame(soc, columns=[*soc.keys()])
@@ -490,7 +490,7 @@ def B_plus_S_and_or_W  (solution, demand_df, instance_data, cost_data, CRF, delt
         state = 'optimal'
     
     #calculate results
-    lcoe_cost = (sminustot + splustot + lcoe_inftot + costvopm + inverter)/ptot
+    lcoe_cost = (sminustot + splustot + lcoe_inftot + costvopm + inverter)/(sum(demand_df['demand']) - sum(sminus['s-']))
     demand = pd.DataFrame(demand_df['demand'], columns=['demand'])
     generation = pd.DataFrame(p, columns=[*p.keys()])
     soc_df = pd.DataFrame(soc, columns=[*soc.keys()])
@@ -780,7 +780,7 @@ def B_plus_D_plus_Ren(solution, demand_df, instance_data, cost_data, CRF, delta,
     solution.feasible = state
 
     #create df results
-    lcoe_cost = (sminustot + splustot + lcoe_inftot + costvopm + inverter)/ptot
+    lcoe_cost = (sminustot + splustot + lcoe_inftot + costvopm + inverter)/(sum(demand_df['demand']) - sum(sminus['s-']))
     demand = pd.DataFrame(demand_df['demand'], columns=['demand'])
     generation = pd.DataFrame(p, columns=[*p.keys()])
     soc_df = pd.DataFrame(soc, columns=[*soc.keys()])
