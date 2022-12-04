@@ -30,7 +30,7 @@ class Solar(Generator):
         self.INOCT = 0
         super(Solar, self).__init__(id_gen, tec, br,area, cost_up,  cost_r, cost_s, cost_fopm)
 
-    def Solargeneration(self, t_amb, gt,G_stc): 
+    def solar_generation(self, t_amb, gt,G_stc): 
     #def Solargeneration(self, t_amb, gt,G_stc,deg): 
             #G_stc: Standar solar radiation
             #Calculate generation over the time
@@ -45,13 +45,13 @@ class Solar(Generator):
                     #self.gen_rule[t] = self.gen_rule[t] * (1- deg)**(year)
             return self.gen_rule
     #calculate operative cost
-    def Solarcost(self):
+    def solar_cost(self):
         aux = self.cost_vopm * sum(self.gen_rule.values())
         self.cost_rule = aux
         return self.cost_rule
                                
     # Temperature model
-    def Get_INOCT(self, caso = 1 , w = 1):
+    def get_inoct(self, caso = 1 , w = 1):
         """caso 1: direct mount
             caso 2: stand-off
             caso 3: rack mount
@@ -93,7 +93,7 @@ class Eolic(Generator):
         self.cost_rule = 0
         super(Eolic, self).__init__(id_gen, tec, br, area, cost_up, cost_r, cost_s, cost_fopm)
     
-    def Windgeneration(self, forecastWt, h2, coef_hel): #Wt = wind speed over the time
+    def eolic_generation(self, forecastWt, h2, coef_hel): #Wt = wind speed over the time
     #def Windgeneration(self, forecastWt, h2, coef_hel,deg): #Wt = wind speed over the time
         #Calculate generation over the time
         Hellmann = (self.h/h2)**coef_hel
@@ -114,7 +114,7 @@ class Eolic(Generator):
               self.gen_rule[t] = 0
         return self.gen_rule
     #calculate operative cost
-    def Windcost(self):
+    def eolic_cost(self):
         aux = self.cost_vopm * sum(self.gen_rule.values())
         self.cost_rule = aux
         return self.cost_rule
@@ -149,7 +149,7 @@ class Battery():
         self.soc_min = 0 #Minimum level of energy that must be in the battery
         self.cost_vopm = cost_vopm #variable cost
         
-    def calculatesoc(self): #Calculate soc_min with soc_max and dod_max
+    def calculate_soc(self): #Calculate soc_min with soc_max and dod_max
         self.soc_min = self.soc_max * (1-self.dod_max)
         return self.soc_min
 
@@ -168,7 +168,7 @@ class Solution():
         self.feasible = False
 
 
-class Random_create():
+class RandomCreate():
     #crrate random numbers with seed
     def __init__(self, seed = None):
         self.seed = seed
@@ -183,18 +183,18 @@ class Random_create():
         selection = 0
         selection = random.choice(list_rand)
         return selection
-    def create_randint(self, inf, sup):
+    def create_rand_int(self, inf, sup):
         selection = 0
         selection = random.randint(inf,sup)
         return selection
-    def create_randomsample(self,list_rand, n):
+    def create_rand_sample(self,list_rand, n):
         selection = 0
         selection = random.sample(list_rand,n)
         return selection
-    def create_randomshuffle(self,list_rand):
+    def create_rand_shuffle(self,list_rand):
         random.shuffle(list_rand)
         return list_rand
-    def create_randomnpnormal(self, means,desv,size):
+    def create_rand_p_normal(self, means,desv,size):
         selection = 0
         selection = np.random.normal(loc=means, scale=desv, size=size)
         return selection

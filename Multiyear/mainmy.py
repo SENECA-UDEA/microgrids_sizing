@@ -4,12 +4,12 @@ Created on Wed Apr 20 11:14:21 2022
 
 """
 from Multiyear.utilitiesmy import read_data, create_objects, create_technologies, calculate_area, calculate_energy, interest_rate
-from Multiyear.utilitiesmy import fiscal_incentive, calculate_cost_data, calculate_multiyear_data, calculate_invertercost
-from Multiyear.classesmy import Random_create
+from Multiyear.utilitiesmy import fiscal_incentive, calculate_cost_data, calculate_multiyear_data, calculate_inverter_cost
+from Multiyear.classesmy import RandomCreate
 import pandas as pd 
-from Multiyear.operatorsmy import Sol_constructor, Search_operator
+from Multiyear.operatorsmy import SolConstructor, SearchOperator
 from plotly.offline import plot
-from Multiyear.dispatchmy import def_strategy, dies, B_plus_D_plus_Ren, D_plus_S_and_or_W, B_plus_S_and_or_W 
+from Multiyear.dispatchmy import select_strategy, ds_diesel, ds_dies_batt_renew, ds_diesel_renewable, ds_battery_renewable 
 from Multiyear.dispatchmy import Results
 import copy
 pd.options.display.max_columns = None
@@ -22,7 +22,7 @@ seed = 42
 '''
 seed = None
 
-rand_ob = Random_create(seed = seed)
+rand_ob = RandomCreate(seed = seed)
 
 #add and remove funtion
 add_function = 'GRASP'
@@ -119,7 +119,7 @@ technologies_dict, renewables_dict = create_technologies (generators_dict,
 #check diesel or batteries and at least one generator, for feasibility
 if ('D' in technologies_dict.keys() or 'B' in technologies_dict.keys() and generators_dict != {}):
     #create the initial solution operator
-    sol_constructor = Sol_constructor(generators_dict, 
+    sol_constructor = SolConstructor(generators_dict, 
                                 batteries_dict,
                                 demand_df,
                                 forecast_df)
@@ -155,7 +155,7 @@ if ('D' in technologies_dict.keys() or 'B' in technologies_dict.keys() and gener
     rows_df = []
     
     # Create search operator
-    search_operator = Search_operator(generators_dict, 
+    search_operator = SearchOperator(generators_dict, 
                                 batteries_dict,
                                 demand_df,
                                 forecast_df)
@@ -173,20 +173,20 @@ if ('D' in technologies_dict.keys() or 'B' in technologies_dict.keys() and gener
                 sol_feasible = copy.deepcopy(sol_current) 
                 # Remove a generator or battery from the current solution
                 if (remove_function == 'GRASP'):
-                    sol_try, remove_report = search_operator.removeobject(sol_current, delta)
+                    sol_try, remove_report = search_operator.remove_object(sol_current, delta)
                 elif (remove_function == 'RANDOM'):
-                    sol_try, remove_report = search_operator.removerandomobject(sol_current, rand_ob)
+                    sol_try, remove_report = search_operator.remove_random_object(sol_current, rand_ob)
     
                 movement = "Remove"
             else:
                 #  Create list of generators that could be added
-                list_available_bat, list_available_gen, list_tec_gen  = search_operator.available(sol_current, amax)
+                list_available_bat, list_available_gen, list_tec_gen  = search_operator.available_items(sol_current, amax)
                 if (list_available_gen != [] or list_available_bat != []):
                     # Add a generator or battery to the current solution
                     if (add_function == 'GRASP'):
-                        sol_try, remove_report = search_operator.addobject(sol_current, list_available_bat, list_available_gen, list_tec_gen, remove_report, instance_data['fuel_cost'], rand_ob, delta)
+                        sol_try, remove_report = search_operator.add_object(sol_current, list_available_bat, list_available_gen, list_tec_gen, remove_report, instance_data['fuel_cost'], rand_ob, delta)
                     elif (add_function == 'RANDOM'):
-                        sol_try = search_operator.addrandomobject(sol_current, list_available_bat, list_available_gen, list_tec_gen,rand_ob)
+                        sol_try = search_operator.add_random_object(sol_current, list_available_bat, list_available_gen, list_tec_gen,rand_ob)
                     movement = "Add"
                 else:
                     # return to the last feasible solution
@@ -194,25 +194,25 @@ if ('D' in technologies_dict.keys() or 'B' in technologies_dict.keys() and gener
                     continue # Skip running the model and go to the begining of the for loop
     
             #review which dispatch strategy to use
-            strategy_def = def_strategy(generators_dict = sol_try.generators_dict_sol,
+            strategy_def = select_strategy(generators_dict = sol_try.generators_dict_sol,
                                         batteries_dict = sol_try.batteries_dict_sol) 
             
             #calculate inverter cost with installed generators
             #val = instance_data['inverter_cost']#first of the functions
-            #instance_data['inverter cost'] = calculate_invertercost(sol_try.generators_dict_sol,sol_try.batteries_dict_sol,val)
+            #instance_data['inverter cost'] = calculate_inverter_cost(sol_try.generators_dict_sol,sol_try.batteries_dict_sol,val)
             
     
             
             print("defined strategy")
             #run the dispatch strategy
             if (strategy_def == "diesel"):
-                lcoe_cost, df_results, state, time_f, nsh  = dies(sol_try, demand_df, instance_data, cost_data, my_data)
+                lcoe_cost, df_results, state, time_f, nsh  = ds_diesel(sol_try, demand_df, instance_data, cost_data, my_data)
             elif (strategy_def == "diesel - solar") or (strategy_def == "diesel - wind") or (strategy_def == "diesel - solar - wind"):
-                lcoe_cost, df_results, state, time_f, nsh   = D_plus_S_and_or_W(sol_try, demand_df, instance_data, cost_data, delta, my_data)
+                lcoe_cost, df_results, state, time_f, nsh   = ds_diesel_renewable(sol_try, demand_df, instance_data, cost_data, delta, my_data)
             elif (strategy_def == "battery - solar") or (strategy_def == "battery - wind") or (strategy_def == "battery - solar - wind"):
-                lcoe_cost, df_results, state, time_f, nsh   = B_plus_S_and_or_W (sol_try, demand_df, instance_data, cost_data, delta, rand_ob, my_data)
+                lcoe_cost, df_results, state, time_f, nsh   = ds_battery_renewable (sol_try, demand_df, instance_data, cost_data, delta, rand_ob, my_data)
             elif (strategy_def == "battery - diesel - wind") or (strategy_def == "battery - diesel - solar") or (strategy_def == "battery - diesel - solar - wind"):
-                lcoe_cost, df_results, state, time_f, nsh   = B_plus_D_plus_Ren(sol_try, demand_df, instance_data, cost_data, delta, rand_ob, my_data)
+                lcoe_cost, df_results, state, time_f, nsh   = ds_dies_batt_renew(sol_try, demand_df, instance_data, cost_data, delta, rand_ob, my_data)
             else:
                 #no feasible combination
                 state = 'no feasible'

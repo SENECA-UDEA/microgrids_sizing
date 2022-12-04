@@ -3,14 +3,14 @@
 Created on Wed May 11 10:23:49 2022
 @author: scastellanos
 """
-from src.utilities import create_technologies, calculate_sizingcost, interest_rate
+from src.utilities import create_technologies, calculate_sizing_cost, interest_rate
 import src.opt as opt
 from src.classes import Solution, Diesel
 import copy
 import math
 import pandas as pd
 
-class Sol_constructor():
+class SolConstructor():
     def __init__(self, generators_dict, batteries_dict, demand_df, forecast_df):
         self.generators_dict = generators_dict
         self.batteries_dict = batteries_dict
@@ -73,7 +73,7 @@ class Sol_constructor():
             else:
                 #shortlist candidates
                 len_candidate = math.ceil(len(sorted_generators)*Alpha_shortlist)
-                position = rand_ob.create_randint(0, len_candidate-1)
+                position = rand_ob.create_rand_int(0, len_candidate-1)
                 f = self.generators_dict[sorted_generators[position]]
                 area_gen = f.area
                 #check the technology set accord to previous calculation
@@ -123,10 +123,10 @@ class Sol_constructor():
         ir = interest_rate(instance_data['i_f'],instance_data['inf'])
         #calculate inverter cost with installed generators
         #val = instance_data['inverter_cost']#first of the functions
-        #instance_data['inverter cost'] = calculate_invertercost(generators_dict_sol,batteries_dict_sol,val)
+        #instance_data['inverter cost'] = calculate_inverter_cost(generators_dict_sol,batteries_dict_sol,val)
         
         
-        tnpccrf_calc = calculate_sizingcost(generators_dict_sol, 
+        tnpccrf_calc = calculate_sizing_cost(generators_dict_sol, 
                                             batteries_dict_sol, 
                                             ir = ir,
                                             years = instance_data['years'],
@@ -177,11 +177,11 @@ class Sol_constructor():
             
             #calculate inverter cost with installed generators
             #val = instance_data['inverter_cost']#first of the functions
-            #instance_data['inverter cost'] = calculate_invertercost(generators_dict_sol,batteries_dict_sol,val)
+            #instance_data['inverter cost'] = calculate_inverter_cost(generators_dict_sol,batteries_dict_sol,val)
             
     
             
-            tnpccrf_calc = calculate_sizingcost(generators_dict_sol, 
+            tnpccrf_calc = calculate_sizing_cost(generators_dict_sol, 
                                                 batteries_dict_sol, 
                                                 ir = ir,
                                                 years = instance_data['years'],
@@ -220,14 +220,14 @@ class Sol_constructor():
         return sol_initial
 
 
-class Search_operator():
+class SearchOperator():
     def __init__(self, generators_dict, batteries_dict, demand_df, forecast_df):
         self.generators_dict = generators_dict
         self.batteries_dict = batteries_dict
         self.demand_df = demand_df
         self.forecast_df = forecast_df
         
-    def removeobject(self, sol_actual, CRF, delta): #remove one generator or battery
+    def remove_object(self, sol_actual, CRF, delta): #remove one generator or battery
         solution = copy.deepcopy(sol_actual)
         dict_actual = {**solution.generators_dict_sol,**solution.batteries_dict_sol}
         min_relation = math.inf
@@ -279,7 +279,7 @@ class Search_operator():
         
         return solution, remove_report
     
-    def addobject(self, sol_actual, available_bat, available_gen, list_tec_gen, remove_report, CRF, fuel_cost, rand_ob, delta): #add generator or battery
+    def add_object(self, sol_actual, available_bat, available_gen, list_tec_gen, remove_report, CRF, fuel_cost, rand_ob, delta): #add generator or battery
         solution = copy.deepcopy(sol_actual)
         #get the maximum generation of removed object
         val_max = max(remove_report.values())
@@ -359,7 +359,7 @@ class Search_operator():
         
         return solution, remove_report
     
-    def addrandomobject(self, sol_actual, available_bat, available_gen, list_tec_gen, rand_ob): #add generator or battery
+    def add_random_object(self, sol_actual, available_bat, available_gen, list_tec_gen, rand_ob): #add generator or battery
         solution = copy.deepcopy(sol_actual)
         dict_total = {**self.generators_dict,**self.batteries_dict}
         #random select battery or generator
@@ -394,7 +394,7 @@ class Search_operator():
         
         return solution
     
-    def removerandomobject(self, sol_actual, rand_ob): #add generator or battery
+    def remove_random_object(self, sol_actual, rand_ob): #add generator or battery
         solution = copy.deepcopy(sol_actual)
         dict_actual = {**solution.generators_dict_sol,**solution.batteries_dict_sol} 
 
@@ -412,7 +412,7 @@ class Search_operator():
         
         return solution, remove_report
 
-    def available(self, sol_actual, amax):
+    def available_items(self, sol_actual, amax):
         #check if exist and available set to run the add function
         solution = copy.deepcopy(sol_actual)
         available_area = amax - sol_actual.results.descriptive['area']

@@ -9,7 +9,7 @@ import plotly.io as pio
 pio.renderers.default='browser'
 
 
-def def_strategy (batteries_dict, generators_dict):
+def select_strategy (batteries_dict, generators_dict):
     
     d=0
     s=0
@@ -47,7 +47,8 @@ def def_strategy (batteries_dict, generators_dict):
     
     return dispatch
 
-def dies (solution, demand_df, instance_data, cost_data, my_data):
+#diesel dispatch strategy
+def ds_diesel (solution, demand_df, instance_data, cost_data, my_data):
     #initial parameters 
     time_i = time.time()
     auxiliar_dict_generator = {}
@@ -173,7 +174,8 @@ def dies (solution, demand_df, instance_data, cost_data, my_data):
     
     
 
-def D_plus_S_and_or_W (solution, demand_df, instance_data, cost_data, delta, my_data):
+#dispatch strategy Diesel plus renewable
+def ds_diesel_renewable(solution, demand_df, instance_data, cost_data, delta, my_data):
     
     #initial parameters 
     time_i = time.time()
@@ -356,8 +358,8 @@ def D_plus_S_and_or_W (solution, demand_df, instance_data, cost_data, delta, my_
 
 
 
-
-def B_plus_S_and_or_W  (solution, demand_df, instance_data, cost_data, delta, rand_ob, my_data):
+#Dispatch strategy battery with renewable
+def ds_battery_renewable  (solution, demand_df, instance_data, cost_data, delta, rand_ob, my_data):
     
     #initial parameters 
     time_i = time.time()
@@ -400,7 +402,7 @@ def B_plus_S_and_or_W  (solution, demand_df, instance_data, cost_data, delta, ra
     
     sorted_batteries = sorted(auxiliar_dict_batteries, key=auxiliar_dict_batteries.get,reverse=False) 
     #random order of generators
-    rand_ob.create_randomshuffle(sorted_batteries)
+    rand_ob.create_rand_shuffle(sorted_batteries)
     
     #simulation
     for t in demand_df['t']:
@@ -518,7 +520,8 @@ def B_plus_S_and_or_W  (solution, demand_df, instance_data, cost_data, delta, ra
 
 
 
-def B_plus_D_plus_Ren(solution, demand_df, instance_data, cost_data, delta, rand_ob, my_data):
+#Dispatch strategy diesel and battery and renewable
+def ds_dies_batt_renew(solution, demand_df, instance_data, cost_data, delta, rand_ob, my_data):
 
 
     #initial parameters 
@@ -587,7 +590,7 @@ def B_plus_D_plus_Ren(solution, demand_df, instance_data, cost_data, delta, rand
     #initial battery alwatys the best lcoe
     sorted_batteries = sorted(auxiliar_dict_batteries, key=auxiliar_dict_batteries.get,reverse=False) 
     #random order of generators
-    rand_ob.create_randomshuffle(sorted_batteries)
+    rand_ob.create_rand_shuffle(sorted_batteries)
 
     
     #simulation

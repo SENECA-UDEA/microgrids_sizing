@@ -13,7 +13,7 @@ from plotly.offline import plot
 pd.options.display.max_columns = None
 import time
 import copy
-from src.classes import Random_create
+from src.classes import RandomCreate
 
 rows_df_time=[]
 
@@ -21,7 +21,7 @@ for iii in range(1, 28):
     #set the same seed for every iteration
     #seed = None
     seed = 42
-    rand_ob = Random_create(seed = seed)
+    rand_ob = RandomCreate(seed = seed)
     #PARAMETROS DE LA CORRIDA - POR DEFECTO
     #lugar, por defecto providencia
     place  = "Providencia"

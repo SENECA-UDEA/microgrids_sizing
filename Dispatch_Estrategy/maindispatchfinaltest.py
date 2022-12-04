@@ -5,12 +5,12 @@ Created on Wed Apr 20 11:14:21 2022
 @author: pmayaduque
 """
 from src.utilities import read_data, create_objects, create_technologies, calculate_area, calculate_energy, interest_rate
-from src.utilities import fiscal_incentive, calculate_cost_data, calculate_sizingcost, calculate_invertercost
-from src.classes import Random_create
+from src.utilities import fiscal_incentive, calculate_cost_data, calculate_sizing_cost, calculate_inverter_cost
+from src.classes import RandomCreate
 import pandas as pd 
-from Dispatch_Estrategy.operatorsdispatch import Sol_constructor, Search_operator
+from Dispatch_Estrategy.operatorsdispatch import SolConstructor, SearchOperator
 from plotly.offline import plot
-from Dispatch_Estrategy.dispatchstrategy import def_strategy, dies, B_plus_D_plus_Ren, D_plus_S_and_or_W, B_plus_S_and_or_W 
+from Dispatch_Estrategy.dispatchstrategy import select_strategy, ds_diesel, ds_dies_batt_renew, ds_diesel_renewable, ds_battery_renewable 
 from Dispatch_Estrategy.dispatchstrategy import Results
 import copy
 pd.options.display.max_columns = None
@@ -32,7 +32,7 @@ for iii in range(18, 73):
         #set the same seed for every iteration
         #seed = None
         seed = 42
-        rand_ob = Random_create(seed = seed)
+        rand_ob = RandomCreate(seed = seed)
         place  = "Providencia"
         #iteraciones
         iteraciones_run = 200
@@ -261,12 +261,12 @@ for iii in range(18, 73):
            
             #empezar a llenar los datos de forecast y demanda
             for i in range(int(len_total_time * (htime_run - 1))):
-                insert_demand = rand_ob.create_randomnpnormal(mean_demand, desvest_demand, 1)
-                insert_wt = rand_ob.create_randomnpnormal(mean_wt, desvest_wt, 1)
-                insert_dni = rand_ob.create_randomnpnormal(mean_dni, desvest_dni, 1)
-                insert_dhi = rand_ob.create_randomnpnormal(mean_dhi, desvest_dhi, 1)
-                insert_ghi = rand_ob.create_randomnpnormal(mean_ghi, desvest_ghi, 1)
-                insert_sf = rand_ob.create_randomnpnormal(mean_sf, desvest_sf, 1)
+                insert_demand = rand_ob.create_rand_p_normal(mean_demand, desvest_demand, 1)
+                insert_wt = rand_ob.create_rand_p_normal(mean_wt, desvest_wt, 1)
+                insert_dni = rand_ob.create_rand_p_normal(mean_dni, desvest_dni, 1)
+                insert_dhi = rand_ob.create_rand_p_normal(mean_dhi, desvest_dhi, 1)
+                insert_ghi = rand_ob.create_rand_p_normal(mean_ghi, desvest_ghi, 1)
+                insert_sf = rand_ob.create_rand_p_normal(mean_sf, desvest_sf, 1)
                 numero_demand = int(insert_demand[0])
                 numero_demand = max(numero_demand,0)
                 numero_wt = int(insert_wt[0])
@@ -375,7 +375,7 @@ for iii in range(18, 73):
        
         time_i_firstsol = time.time()
         #create the initial solution operator
-        sol_constructor = Sol_constructor(generators_dict,
+        sol_constructor = SolConstructor(generators_dict,
                                     batteries_dict,
                                     demand_df,
                                     forecast_df)
@@ -419,7 +419,7 @@ for iii in range(18, 73):
         rows_df = []
        
         # Create search operator
-        search_operator = Search_operator(generators_dict,
+        search_operator = SearchOperator(generators_dict,
                                     batteries_dict,
                                     demand_df,
                                     forecast_df)
@@ -446,15 +446,15 @@ for iii in range(18, 73):
                     # Remove a generator or battery from the current solution
                     time_i_remove = time.time()
                     if (remove_function_run == 'GRASP'):
-                        sol_try, remove_report = search_operator.removeobject(sol_current, CRF, delta)
+                        sol_try, remove_report = search_operator.remove_object(sol_current, CRF, delta)
                     elif (remove_function_run == 'RANDOM'):
-                        sol_try, remove_report = search_operator.removerandomobject(sol_current, rand_ob)
+                        sol_try, remove_report = search_operator.remove_random_object(sol_current, rand_ob)
                     time_f_remove = time.time() - time_i_remove #final time
                     dict_time_remove[i] = time_f_remove
                     movement = "Remove"
                 else:
                     #  Create list of generators that could be added
-                    list_available_bat, list_available_gen, list_tec_gen  = search_operator.available(sol_current, amax)
+                    list_available_bat, list_available_gen, list_tec_gen  = search_operator.available_items(sol_current, amax)
                     if (list_available_gen != [] or list_available_bat != []):
                         # Add a generator or battery to the current solution
                         time_i_add = time.time()
@@ -470,9 +470,9 @@ for iii in range(18, 73):
                            
                         #escoger cuál función usar
                         if (add_function_run == 'GRASP'):
-                            sol_try, remove_report = search_operator.addobject(sol_current, list_available_bat, list_available_gen, list_tec_gen, remove_report,  CRF, instance_data['fuel_cost'], rand_ob, delta)
+                            sol_try, remove_report = search_operator.add_object(sol_current, list_available_bat, list_available_gen, list_tec_gen, remove_report,  CRF, instance_data['fuel_cost'], rand_ob, delta)
                         elif (add_function_run == 'RANDOM'):
-                            sol_try = search_operator.addrandomobject(sol_current, list_available_bat, list_available_gen, list_tec_gen,rand_ob)
+                            sol_try = search_operator.add_random_object(sol_current, list_available_bat, list_available_gen, list_tec_gen,rand_ob)
                         movement = "Add"
                         time_f_add = time.time() - time_i_add #final time
                         dict_time_add[i] = time_f_add
@@ -482,10 +482,10 @@ for iii in range(18, 73):
                         continue # Skip running the model and go to the begining of the for loop
                
                 #calculate inverter cost with installed generators
-                #instance_data['inverter cost'] = calculate_invertercost(sol_try.generators_dict_sol,sol_try.batteries_dict_sol,instance_data['inverter_cost'])
+                #instance_data['inverter cost'] = calculate_inverter_cost(sol_try.generators_dict_sol,sol_try.batteries_dict_sol,instance_data['inverter_cost'])
                 
                 #calculate tnpc
-                tnpccrf_calc = calculate_sizingcost(sol_try.generators_dict_sol,
+                tnpccrf_calc = calculate_sizing_cost(sol_try.generators_dict_sol,
                                                     sol_try.batteries_dict_sol,
                                                     ir = ir,
                                                     years = years_run,
@@ -494,17 +494,17 @@ for iii in range(18, 73):
                 
                 time_i_make = time.time()
                 
-                strategy_def = def_strategy(generators_dict = sol_try.generators_dict_sol,
+                strategy_def = select_strategy(generators_dict = sol_try.generators_dict_sol,
                                 batteries_dict = sol_try.batteries_dict_sol) 
                 print("defined strategy")
                 if (strategy_def == "diesel"):
-                    lcoe_cost, df_results, state, time_f, nsh  = dies(sol_try, demand_df, instance_data, cost_data, CRF)
+                    lcoe_cost, df_results, state, time_f, nsh  = ds_diesel(sol_try, demand_df, instance_data, cost_data, CRF)
                 elif (strategy_def == "diesel - solar") or (strategy_def == "diesel - wind") or (strategy_def == "diesel - solar - wind"):
-                    lcoe_cost, df_results, state, time_f, nsh   = D_plus_S_and_or_W(sol_try, demand_df, instance_data, cost_data,CRF, delta )
+                    lcoe_cost, df_results, state, time_f, nsh   = ds_diesel_renewable(sol_try, demand_df, instance_data, cost_data,CRF, delta )
                 elif (strategy_def == "battery - solar") or (strategy_def == "battery - wind") or (strategy_def == "battery - solar - wind"):
-                    lcoe_cost, df_results, state, time_f, nsh   = B_plus_S_and_or_W (sol_try, demand_df, instance_data, cost_data, CRF, delta, rand_ob)
+                    lcoe_cost, df_results, state, time_f, nsh   = ds_battery_renewable (sol_try, demand_df, instance_data, cost_data, CRF, delta, rand_ob)
                 elif (strategy_def == "battery - diesel - wind") or (strategy_def == "battery - diesel - solar") or (strategy_def == "battery - diesel - solar - wind"):
-                    lcoe_cost, df_results, state, time_f, nsh   = B_plus_D_plus_Ren(sol_try, demand_df, instance_data, cost_data, CRF, delta, rand_ob)
+                    lcoe_cost, df_results, state, time_f, nsh   = ds_dies_batt_renew(sol_try, demand_df, instance_data, cost_data, CRF, delta, rand_ob)
                 else:
                     state = 'no feasible'
                     df_results = []

@@ -68,13 +68,13 @@ def create_objects(generators, batteries, forecast_df, demand_df, instance_data)
       if k['tec'] == 'S':
         obj_aux = Solar(*k.values())
         gt = irradiance_panel (forecast_df, instance_data)
-        obj_aux.Get_INOCT(instance_data["caso"], instance_data["w"])
-        obj_aux.Solargeneration( forecast_df['t_ambt'], gt, instance_data["G_stc"])
-        obj_aux.Solarcost()
+        obj_aux.get_inoct(instance_data["caso"], instance_data["w"])
+        obj_aux.solar_generation( forecast_df['t_ambt'], gt, instance_data["G_stc"])
+        obj_aux.solar_cost()
       elif k['tec'] == 'W':
         obj_aux = Eolic(*k.values())
-        obj_aux.Windgeneration(forecast_df['Wt'],instance_data["h2"],instance_data["coef_hel"] )
-        obj_aux.Windcost()
+        obj_aux.eolic_generation(forecast_df['Wt'],instance_data["h2"],instance_data["coef_hel"] )
+        obj_aux.eolic_cost()
       elif k['tec'] == 'D':
         obj_aux = Diesel(*k.values())   
       generators_dict[k['id_gen']] = obj_aux
@@ -83,7 +83,7 @@ def create_objects(generators, batteries, forecast_df, demand_df, instance_data)
     for l in batteries:
         obj_aux = Battery(*l.values())
         batteries_dict[l['id_bat']] = obj_aux
-        batteries_dict[l['id_bat']].calculatesoc()
+        batteries_dict[l['id_bat']].calculate_soc()
     return generators_dict, batteries_dict
 
 
@@ -117,7 +117,7 @@ def create_technologies(generators_dict, batteries_dict):
  
 
 #calculate inverter cost with the instaled generators and batteries
-def calculate_invertercost(generators_dict, batteries_dict, inverter_cost):
+def calculate_inverter_cost(generators_dict, batteries_dict, inverter_cost):
             expr = 0
             
             for gen in generators_dict.values(): 
@@ -140,7 +140,7 @@ def calculate_invertercost(generators_dict, batteries_dict, inverter_cost):
 
 
 #calculate total cost for two stage approach
-def calculate_sizingcost(generators_dict, batteries_dict, ir, years, delta, inverter):
+def calculate_sizing_cost(generators_dict, batteries_dict, ir, years, delta, inverter):
             expr = 0
             
             for gen in generators_dict.values(): 
@@ -371,9 +371,9 @@ def irradiance_panel (forecast_df, instance_data):
             GHI = forecast_df['GHI'][t] #Global horizontal Irradiance
             day = forecast_df['day'][t] #Day of the year
             
-            Gs = Get_SolarP01(LT,TZ,day,long,latit) #Sum altitude and sum Azimuth   
-            ds = cos_AOI(a_M,A_M,Gs[0],Gs[1]) #COsine incidence angle
-            svf = Get_SVF01(theta_M) #Sky view factor
+            Gs = get_solar_parameters(LT,TZ,day,long,latit) #Sum altitude and sum Azimuth   
+            ds = cos_incidence_angle(a_M,A_M,Gs[0],Gs[1]) #COsine incidence angle
+            svf = get_sky_view_factor(theta_M) #Sky view factor
             G_dr = SF1*DNI*ds
             if G_dr < 0:
                 G_dr = 0 #negative Direct Irradiance on the PV module as zero
@@ -387,7 +387,7 @@ def irradiance_panel (forecast_df, instance_data):
 
 
 
-def min2hms(hm):
+def min_to_hms(hm):
     """conversion min -> (hours, min, sec)
     
     """
@@ -398,7 +398,7 @@ def min2hms(hm):
     s = int(S)
     return H,m,s
 
-def hd2hms(hd):
+def decimal_hour_to_hms(hd):
     """decimal time conversion ->
        (hours,minutes,seconds)
     """
@@ -409,7 +409,7 @@ def hd2hms(hd):
     S = int(s*60)
     return H,M,S
 
-def Get_SolarP01(LT,TZ,dia,Long,Latit):
+def get_solar_parameters(LT,TZ,dia,Long,Latit):
     """LT: local time(hour)
        TZ: time zone
        dia: counted from January 1
@@ -441,14 +441,14 @@ def Get_SolarP01(LT,TZ,dia,Long,Latit):
     # print(k_total)
 
     Azimuth = np.arccos(k_total)
-    if min2hms(LST)[0]>=12:#Correction after noon
+    if min_to_hms(LST)[0]>=12:#Correction after noon
         Azimuth = 2*np.pi - Azimuth
 
     return Elevation*ka, Azimuth*ka 
             #a_s: Sun altitude (grados)//Elevation
             #A_s: Sun Azimuth (grados)
 
-def cos_AOI(a_M,A_M,a_s,A_s):
+def cos_incidence_angle(a_M,A_M,a_s,A_s):
     """AOI: angle of incidence
         a_M: Module altitude (grados)
         A_M: Module Azimuth (grados)
@@ -463,7 +463,7 @@ def cos_AOI(a_M,A_M,a_s,A_s):
 
 
 
-def Get_SVF01(t_M):
+def get_sky_view_factor(t_M):
     """t_M: tilted angle of Module (grados)
         Free Horizont model
     """

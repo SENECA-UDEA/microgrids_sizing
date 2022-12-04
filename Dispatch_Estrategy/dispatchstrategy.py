@@ -9,7 +9,7 @@ import plotly.io as pio
 pio.renderers.default='browser'
 
 
-def def_strategy (batteries_dict, generators_dict):
+def select_strategy (batteries_dict, generators_dict):
     
     d=0
     s=0
@@ -47,7 +47,8 @@ def def_strategy (batteries_dict, generators_dict):
     
     return dispatch
 
-def dies (solution, demand_df, instance_data, cost_data, CRF):
+#diesel dispatch strategy
+def ds_diesel (solution, demand_df, instance_data, cost_data, CRF):
     #initial parameters 
     time_i = time.time()
     auxiliar_dict_generator = {}
@@ -166,8 +167,8 @@ def dies (solution, demand_df, instance_data, cost_data, CRF):
     return lcoe_cost, df_results, state, time_f, nsh
     
     
-
-def D_plus_S_and_or_W (solution, demand_df, instance_data, cost_data, CRF, delta):
+#dispatch strategy Diesel plus renewable
+def ds_diesel_renewable (solution, demand_df, instance_data, cost_data, CRF, delta):
     
     #initial parameters 
     time_i = time.time()
@@ -344,8 +345,8 @@ def D_plus_S_and_or_W (solution, demand_df, instance_data, cost_data, CRF, delta
 
 
 
-
-def B_plus_S_and_or_W  (solution, demand_df, instance_data, cost_data, CRF, delta, rand_ob):
+#Dispatch strategy battery with renewable
+def ds_battery_renewable  (solution, demand_df, instance_data, cost_data, CRF, delta, rand_ob):
     
     #initial parameters 
     time_i = time.time()
@@ -504,8 +505,8 @@ def B_plus_S_and_or_W  (solution, demand_df, instance_data, cost_data, CRF, delt
     return lcoe_cost, df_results, state, time_f, nsh
 
 
-
-def B_plus_D_plus_Ren(solution, demand_df, instance_data, cost_data, CRF, delta, rand_ob):
+#Dispatch strategy diesel and battery and renewable
+def ds_dies_batt_renew(solution, demand_df, instance_data, cost_data, CRF, delta, rand_ob):
 
 
     #initial parameters 

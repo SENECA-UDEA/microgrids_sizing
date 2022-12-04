@@ -4,12 +4,12 @@ Created on Wed Apr 20 11:14:21 2022
 
 @author: scastellanos
 """
-from src.utilities import read_data, create_objects, calculate_sizingcost, create_technologies, calculate_area, calculate_energy, interest_rate
-from src.utilities import fiscal_incentive, calculate_cost_data, calculate_invertercost
+from src.utilities import read_data, create_objects, calculate_sizing_cost, create_technologies, calculate_area, calculate_energy, interest_rate
+from src.utilities import fiscal_incentive, calculate_cost_data, calculate_inverter_cost
 import src.opt as opt
-from src.classes import Random_create
+from src.classes import RandomCreate
 import pandas as pd 
-from src.operators import Sol_constructor, Search_operator
+from src.operators import SolConstructor, SearchOperator
 from plotly.offline import plot
 import copy
 pd.options.display.max_columns = None
@@ -22,7 +22,7 @@ pd.options.display.max_columns = None
 seed = 42
 '''
 seed = None
-rand_ob = Random_create(seed = seed)
+rand_ob = RandomCreate(seed = seed)
 
 #Set solver settings
 Solver_data = {"MIP_GAP":0.01,"TEE_SOLVER":True,"OPT_SOLVER":"gurobi"}
@@ -110,7 +110,7 @@ technologies_dict, renewables_dict = create_technologies (generators_dict,
                                                           batteries_dict)
 
 #create the initial solution operator
-sol_constructor = Sol_constructor(generators_dict, 
+sol_constructor = SolConstructor(generators_dict, 
                             batteries_dict,
                             demand_df,
                             forecast_df)
@@ -143,7 +143,7 @@ sol_current = copy.deepcopy(sol_feasible)
 rows_df = []
 
 # Create search operator
-search_operator = Search_operator(generators_dict, 
+search_operator = SearchOperator(generators_dict, 
                             batteries_dict,
                             demand_df,
                             forecast_df)
@@ -162,20 +162,20 @@ if (sol_best.results != None):
             sol_feasible = copy.deepcopy(sol_current) 
             # Remove a generator or battery from the current solution - grasp or random
             if (remove_function == 'GRASP'):
-                sol_try, remove_report = search_operator.removeobject(sol_current, CRF, delta)
+                sol_try, remove_report = search_operator.remove_object(sol_current, CRF, delta)
             elif (remove_function == 'RANDOM'):
-                sol_try, remove_report = search_operator.removerandomobject(sol_current, rand_ob)
+                sol_try, remove_report = search_operator.remove_random_object(sol_current, rand_ob)
 
             movement = "Remove"
         else:
             #  Create list of generators that could be added
-            list_available_bat, list_available_gen, list_tec_gen  = search_operator.available(sol_current, amax)
+            list_available_bat, list_available_gen, list_tec_gen  = search_operator.available_items(sol_current, amax)
             if (list_available_gen != [] or list_available_bat != []):
                 # Add a generator or battery to the current solution - grasp or random
                 if (add_function == 'GRASP'):
-                    sol_try, remove_report = search_operator.addobject(sol_current, list_available_bat, list_available_gen, list_tec_gen, remove_report,  CRF, instance_data['fuel_cost'], rand_ob, delta)
+                    sol_try, remove_report = search_operator.add_object(sol_current, list_available_bat, list_available_gen, list_tec_gen, remove_report,  CRF, instance_data['fuel_cost'], rand_ob, delta)
                 elif (add_function == 'RANDOM'):
-                    sol_try = search_operator.addrandomobject(sol_current, list_available_bat, list_available_gen, list_tec_gen,rand_ob)
+                    sol_try = search_operator.add_random_object(sol_current, list_available_bat, list_available_gen, list_tec_gen,rand_ob)
                 movement = "Add"
             else:
                 # return to the last feasible solution
@@ -184,12 +184,12 @@ if (sol_best.results != None):
         
         #calculate inverter cost with installed generators
         #val = instance_data['inverter_cost']#first of the functions
-        #instance_data['inverter cost'] = calculate_invertercost(sol_try.generators_dict_sol,sol_try.batteries_dict_sol,val)
+        #instance_data['inverter cost'] = calculate_inverter_cost(sol_try.generators_dict_sol,sol_try.batteries_dict_sol,val)
         
 
         
         #Calculate strategic cost
-        tnpccrf_calc = calculate_sizingcost(sol_try.generators_dict_sol, 
+        tnpccrf_calc = calculate_sizing_cost(sol_try.generators_dict_sol, 
                                             sol_try.batteries_dict_sol, 
                                             ir = ir,
                                             years = instance_data['years'],

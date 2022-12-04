@@ -4,12 +4,12 @@ Created on Wed Apr 20 11:14:21 2022
 
 @author: pmayaduque
 """
-from src.utilities import read_data, create_objects, calculate_sizingcost, create_technologies, calculate_area, calculate_energy, interest_rate
-from src.utilities import fiscal_incentive, calculate_cost_data, calculate_invertercost
+from src.utilities import read_data, create_objects, calculate_sizing_cost, create_technologies, calculate_area, calculate_energy, interest_rate
+from src.utilities import fiscal_incentive, calculate_cost_data, calculate_inverter_cost
 import src.opt as opt
-from src.classes import Random_create
+from src.classes import RandomCreate
 import pandas as pd 
-from src.operators import Sol_constructor, Search_operator
+from src.operators import SolConstructor, SearchOperator
 from plotly.offline import plot
 import copy
 pd.options.display.max_columns = None
@@ -27,7 +27,7 @@ for iii in range(1, 865):
     #set the same seed for every iteration
     #seed = None
     seed = 42
-    rand_ob = Random_create(seed = seed)
+    rand_ob = RandomCreate(seed = seed)
     place  = "Providencia"
     #iteraciones
     iteraciones_run = 30
@@ -200,12 +200,12 @@ for iii in range(1, 865):
        
         #empezar a llenar los datos de forecast y demanda
         for i in range(int(len_total_time * (htime_run - 1))):
-            insert_demand = rand_ob.create_randomnpnormal(mean_demand, desvest_demand, 1)
-            insert_wt = rand_ob.create_randomnpnormal(mean_wt, desvest_wt, 1)
-            insert_dni = rand_ob.create_randomnpnormal(mean_dni, desvest_dni, 1)
-            insert_dhi = rand_ob.create_randomnpnormal(mean_dhi, desvest_dhi, 1)
-            insert_ghi = rand_ob.create_randomnpnormal(mean_ghi, desvest_ghi, 1)
-            insert_sf = rand_ob.create_randomnpnormal(mean_sf, desvest_sf, 1)
+            insert_demand = rand_ob.create_rand_p_normal(mean_demand, desvest_demand, 1)
+            insert_wt = rand_ob.create_rand_p_normal(mean_wt, desvest_wt, 1)
+            insert_dni = rand_ob.create_rand_p_normal(mean_dni, desvest_dni, 1)
+            insert_dhi = rand_ob.create_rand_p_normal(mean_dhi, desvest_dhi, 1)
+            insert_ghi = rand_ob.create_rand_p_normal(mean_ghi, desvest_ghi, 1)
+            insert_sf = rand_ob.create_rand_p_normal(mean_sf, desvest_sf, 1)
             numero_demand = int(insert_demand[0])
             numero_wt = int(insert_wt[0])
             numero_dni = int(insert_dni[0])
@@ -296,7 +296,7 @@ for iii in range(1, 865):
    
     time_i_firstsol = time.time()
     #create the initial solution operator
-    sol_constructor = Sol_constructor(generators_dict,
+    sol_constructor = SolConstructor(generators_dict,
                                 batteries_dict,
                                 demand_df,
                                 forecast_df)
@@ -313,7 +313,7 @@ for iii in range(1, 865):
       
                 #empezar a llenar los datos de forecast y demanda
                 for h in range(int(len_total_time * (htime_run - 1))):
-                    insert_gen = rand_ob.create_randomnpnormal(mean_gen, desvest_gen, 1)
+                    insert_gen = rand_ob.create_rand_p_normal(mean_gen, desvest_gen, 1)
                     numero_gen = int(insert_gen[0])
                     aux_gen[j.id_gen].gen_rule[count] = numero_gen
                     count = count + 1
@@ -348,7 +348,7 @@ for iii in range(1, 865):
         generators_dict['aux_diesel'] = sol_feasible.generators_dict_sol['aux_diesel']
         generators_dict['aux_diesel'].area = 10000000
     
-    tnpccrf_calc_best = calculate_sizingcost(sol_feasible.generators_dict_sol, 
+    tnpccrf_calc_best = calculate_sizing_cost(sol_feasible.generators_dict_sol, 
                                             sol_feasible.batteries_dict_sol, 
                                             ir = ir,
                                             years = aux_instance_data['years'],
@@ -372,7 +372,7 @@ for iii in range(1, 865):
     rows_df = []
    
     # Create search operator
-    search_operator = Search_operator(generators_dict,
+    search_operator = SearchOperator(generators_dict,
                                 batteries_dict,
                                 demand_df,
                                 forecast_df)
@@ -400,15 +400,15 @@ for iii in range(1, 865):
                 # Remove a generator or battery from the current solution
                 time_i_remove = time.time()
                 if (remove_function_run == 'GRASP'):
-                    sol_try, remove_report = search_operator.removeobject(sol_current, CRF, delta)
+                    sol_try, remove_report = search_operator.remove_object(sol_current, CRF, delta)
                 elif (remove_function_run == 'RANDOM'):
-                    sol_try, remove_report = search_operator.removerandomobject(sol_current, rand_ob)
+                    sol_try, remove_report = search_operator.remove_random_object(sol_current, rand_ob)
                 time_f_remove = time.time() - time_i_remove #final time
                 dict_time_remove[i] = time_f_remove
                 movement = "Remove"
             else:
                 #  Create list of generators that could be added
-                list_available_bat, list_available_gen, list_tec_gen  = search_operator.available(sol_current, amax)
+                list_available_bat, list_available_gen, list_tec_gen  = search_operator.available_items(sol_current, amax)
                 if (list_available_gen != [] or list_available_bat != []):
                     # Add a generator or battery to the current solution
                     time_i_add = time.time()
@@ -424,9 +424,9 @@ for iii in range(1, 865):
                        
                     #escoger cuál función usar
                     if (add_function_run == 'GRASP'):
-                        sol_try, remove_report = search_operator.addobject(sol_current, list_available_bat, list_available_gen, list_tec_gen, remove_report,  CRF, instance_data['fuel_cost'], rand_ob, delta)
+                        sol_try, remove_report = search_operator.add_object(sol_current, list_available_bat, list_available_gen, list_tec_gen, remove_report,  CRF, instance_data['fuel_cost'], rand_ob, delta)
                     elif (add_function_run == 'RANDOM'):
-                        sol_try = search_operator.addrandomobject(sol_current, list_available_bat, list_available_gen, list_tec_gen,rand_ob)
+                        sol_try = search_operator.add_random_object(sol_current, list_available_bat, list_available_gen, list_tec_gen,rand_ob)
                     movement = "Add"
                     time_f_add = time.time() - time_i_add #final time
                     dict_time_add[i] = time_f_add
@@ -442,11 +442,11 @@ for iii in range(1, 865):
              
             #calculate inverter cost with installed generators
             #val = instance_data['inverter_cost']#first of the functions
-            #instance_data['inverter cost'] = calculate_invertercost(sol_try.generators_dict_sol,sol_try.batteries_dict_sol,val)
+            #instance_data['inverter cost'] = calculate_inverter_cost(sol_try.generators_dict_sol,sol_try.batteries_dict_sol,val)
             
     
                 
-            tnpccrf_calc = calculate_sizingcost(sol_try.generators_dict_sol,
+            tnpccrf_calc = calculate_sizing_cost(sol_try.generators_dict_sol,
                                                 sol_try.batteries_dict_sol,
                                                 ir = ir,
                                                 years = years_run,
