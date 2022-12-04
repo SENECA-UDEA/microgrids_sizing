@@ -7,7 +7,6 @@ import math
 import scipy.stats as sc 
 
 class Generator(): #Superclass generators
-
     def __init__(self, id_gen, tec, br,  area, cost_up, cost_r, cost_s, cost_fopm):
         self.id_gen = id_gen #id of the generator
         self.tec = tec #technology associated to the generator
@@ -17,6 +16,7 @@ class Generator(): #Superclass generators
         self.cost_r = cost_r #Replacement cost
         self.cost_s = cost_s # Salvament cost 
         self.cost_fopm = cost_fopm #Fixed Operation & Maintenance cost 
+
 
 class Solar(Generator):
     def __init__(self, id_gen, tec, br, area, cost_up, cost_r, cost_s, cost_fopm, cost_vopm, n, T_noct, G_noct, Ppv_stc, fpv, kt): 
@@ -37,6 +37,7 @@ class Solar(Generator):
             #Calculate generation over the time
             for t in list(gt.index.values):
                 Irad_panel = gt['gt'][t] #irradiance in module W/m2
+                
                 if Irad_panel<=0:
                    self.gen_rule[t] = 0
                 else:
@@ -45,7 +46,9 @@ class Solar(Generator):
                     year = math.floor(gt['t'][t]/8760) 
                     #degradarion rate
                     self.gen_rule[t] = self.gen_rule[t] * (1- deg)**(year)
+            
             return self.gen_rule
+
     #calculate operative cost
     def solar_cost(self):
         aux = self.cost_vopm * sum(self.gen_rule.values())
@@ -64,7 +67,6 @@ class Solar(Generator):
         """
         if caso == 1:
             inoct = self.T_noct + 18.0
-    
         if caso == 2:
             if w <=1:
                 inoct = self.T_noct + 11.0
@@ -72,14 +74,11 @@ class Solar(Generator):
                 inoct = self.T_noct + 3.0
             else:
                 inoct = self.T_noct - 1.0
-    
         if caso == 3:
             inoct = self.T_noct - 3.0
         
         self.INOCT = inoct
-        
-        return self.INOCT
-        
+        return self.INOCT        
   
 
 class Eolic(Generator):
@@ -101,6 +100,7 @@ class Eolic(Generator):
         for t in list(forecastWt.index.values):
             #Calculate Hellmann coefficient
             i = forecastWt[t] * Hellmann
+            
             if i <= self.s_in:
               self.gen_rule[t] = 0
             elif i < self.s_rate:
@@ -114,13 +114,16 @@ class Eolic(Generator):
               self.gen_rule[t] = self.gen_rule[t] * (1- deg)**(year)
             else:
               self.gen_rule[t] = 0
+        
         return self.gen_rule
+   
     #calculate operative cost
     def eolic_cost(self):
         aux = self.cost_vopm * sum(self.gen_rule.values())
         self.cost_rule = aux
         return self.cost_rule
-                               
+    
+                           
 class Diesel(Generator):
     def __init__(self, id_gen, tec, br, area, cost_up, cost_r, cost_s, cost_fopm, DG_min, DG_max, f0, f1):
         self.DG_min = DG_min #Minimun generation to active the Diesel
@@ -130,10 +133,8 @@ class Diesel(Generator):
         super(Diesel, self).__init__(id_gen, tec, br, area, cost_up, cost_r,  cost_s, cost_fopm)
 
 
-
 class Battery():
     def __init__(self, id_bat, tec, br, efc, efd, eb_zero, soc_max, dod_max, alpha, area, cost_up, cost_fopm, cost_r, cost_s, cost_vopm):
-  
         self.id_bat = id_bat #Battery id
         self.tec = tec #Technology associated to the battery, only allowed: "B"
         self.br = br #Brand battery
@@ -154,6 +155,7 @@ class Battery():
     def calculate_soc(self): #Calculate soc_min with soc_max and dod_max
         self.soc_min = self.soc_max * (1-self.dod_max)
         return self.soc_min
+
 
 #solution class to save a solution for two stage approach
 class Solution():
@@ -185,81 +187,101 @@ class RandomCreate():
         selection = 0
         selection = random.choice(list_rand)
         return selection
+
     def create_rand_int(self, inf, sup):
         selection = 0
         selection = random.randint(inf,sup)
         return selection
+
     def create_rand_sample(self,list_rand, n):
         selection = 0
         selection = random.sample(list_rand,n)
         return selection
+
     def create_rand_shuffle(self,list_rand):
         random.shuffle(list_rand)
         return list_rand
+
     def create_rand_p_normal(self, means,desv,size):
         selection = 0
         selection = np.random.normal(loc=means, scale=desv, size=size)
         return selection
+
     def dist_triang(self,a,b,c):
         s = sc.triang.rvs(a,loc=b,scale=c,size=1,random_state=self.seed)
         number = max(0,s[0])
         return number
+
     def dist_uniform(self,a,b):
         s = sc.uniform.rvs(loc=a,scale=b,size=1,random_state=self.seed)
         number = max(0,s[0])
         return number
+
     def dist_norm(self,a,b):
         s = sc.norm.rvs(loc=a,scale=b,size=1,random_state=self.seed)
         number = max(0,s[0])
         return number
+
     def dist_exponweib(self,a,b,c,d):
         s = sc.exponweib.rvs(a,b,loc=c,scale=d,size=1,random_state=self.seed)
         number = max(0,s[0])
         return number
+
     def dist_weibull_max(self,a,b,c):
         s = sc.weibull_max.rvs(a,loc=b,scale=c,size=1,random_state=self.seed)
         number = max(0,s[0])
         return number
+
     def dist_weibull_min(self,a,b,c):
         s = sc.weibull_min.rvs(a,loc=b,scale=c,size=1,random_state=self.seed)
         number = max(0,s[0])
         return number
+
     def dist_pareto(self,a,b,c):
         s = sc.pareto.rvs(a,loc=b,scale=c,size=1,random_state=self.seed)
         number = max(0,s[0])
         return number
+
     def dist_genextreme(self,a,b,c):
         s = sc.genextreme.rvs(a,loc=b,scale=c,size=1,random_state=self.seed)
         number = max(0,s[0])
         return number
+
     def dist_gamma(self,a,b,c):
         s = sc.gamma.rvs(a,loc=b,scale=c,size=1,random_state=self.seed)
         number = max(0,s[0])
         return number
+
     def dist_beta(self,a,b,c,d):
         s = sc.beta.rvs(a,b,loc=c,scale=d,size=1,random_state=self.seed)
         number = max(0,s[0])
         return number
+
     def dist_rayleigh(self,a,b):
         s = sc.rayleigh.rvs(loc=a,scale=b,size=1,random_state=self.seed)
         number = max(0,s[0])
         return number
+
     def dist_invgauss(self,a,b,c):
         s = sc.triang.rvs(a,loc=b,scale=c,size=1,random_state=self.seed)
         number = max(0,s[0])
         return number
+
     def dist_expon(self,a,b):
         s = sc.expon.rvs(loc=a,scale=b,size=1,random_state=self.seed)
         number = max(0,s[0])
         return number
+
     def dist_lognorm(self,a,b,c):
         s = sc.lognorm.rvs(a,loc=b,scale=c,size=1,random_state=self.seed)
         number = max(0,s[0])
         return number
+
     def dist_pearson3(self,a,b,c):
         s = sc.pearson3.rvs(a,loc=b,scale=c,size=1,random_state=self.seed)
         number = max(0,s[0])
         return number
+
     #triangular distribution for parameters
     def dist_triangular(self,a,b,c):
         s = np.random.triangular(a, b, c, 1)

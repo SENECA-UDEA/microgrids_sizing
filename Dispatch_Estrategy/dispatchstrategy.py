@@ -47,6 +47,7 @@ def select_strategy (batteries_dict, generators_dict):
     
     return dispatch
 
+
 #diesel dispatch strategy
 def ds_diesel (solution, demand_df, instance_data, cost_data, CRF):
     #initial parameters 
@@ -80,13 +81,11 @@ def ds_diesel (solution, demand_df, instance_data, cost_data, CRF):
         lcoe_inf = (g.cost_up   + g.cost_r - g.cost_s+ g.cost_fopm)* CRF 
         #lcoe_inf = g.cost_up + g.cost_r - g.cost_s + g.cost_fopm
         lcoe_inftot += lcoe_inf
-
         #assume it produces around the average
         prod = min (average_demand, g.DG_max)
         lcoe_op = (g.f0 * g.DG_max + g.f1 * prod)*fuel_cost * len_data
         auxiliar_dict_generator[g.id_gen] = (prod * len_data) / (lcoe_inf*CRF + lcoe_op)
 
-    
     #sort to initialize always with the best lcoe diesel generator
     sorted_generators = sorted(auxiliar_dict_generator, key=auxiliar_dict_generator.get,reverse=False) 
     
@@ -125,6 +124,7 @@ def ds_diesel (solution, demand_df, instance_data, cost_data, CRF):
                 cost[i+'_cost'][t] = (gen.f0 + gen.f1)* gen.DG_max * fuel_cost
                 costvopm += cost[i+'_cost'][t]
                 demand_tobe_covered = demand_tobe_covered - gen.DG_max
+
         #the generators finish, if there is still nse, lpsp is calculated
         if (demand_tobe_covered > 0):
             nsh += 1
@@ -152,6 +152,7 @@ def ds_diesel (solution, demand_df, instance_data, cost_data, CRF):
         state = 'no feasible'
     else:
         state = 'optimal'
+
     #create results
     demand = pd.DataFrame(demand_df['demand'], columns=['demand'])
     lcoe_cost = (sminustot + splustot + lcoe_inftot + costvopm + inverter)/(sum(demand_df['demand']) - sum(sminus['s-']))
@@ -168,8 +169,7 @@ def ds_diesel (solution, demand_df, instance_data, cost_data, CRF):
     
     
 #dispatch strategy Diesel plus renewable
-def ds_diesel_renewable (solution, demand_df, instance_data, cost_data, CRF, delta):
-    
+def ds_diesel_renewable (solution, demand_df, instance_data, cost_data, CRF, delta):    
     #initial parameters 
     time_i = time.time()
     auxiliar_dict_generator = {}
@@ -199,15 +199,12 @@ def ds_diesel_renewable (solution, demand_df, instance_data, cost_data, CRF, del
     average_demand = np.mean(demand_df['demand'])
     nsh = 0 #count not server hours
  
-
-
     #calculate investment cost    
     for g in solution.generators_dict_sol.values():
         if (g.tec == 'D'):
             lcoe_inf = (g.cost_up + g.cost_r - g.cost_s+ g.cost_fopm) * CRF 
             lcoe_inftot += lcoe_inf   
             #lcoe_inf = g.cost_up + g.cost_r - g.cost_s + g.cost_fopm
-
             #assume it produces around the average
             prod = min (average_demand, g.DG_max)
             lcoe_op = (g.f0 * g.DG_max + g.f1 * prod)*fuel_cost * len_data
@@ -216,6 +213,7 @@ def ds_diesel_renewable (solution, demand_df, instance_data, cost_data, CRF, del
             #get the lowest reference
             if g.DG_min <= min_ref:
                  min_ref = g.DG_min
+
         else:
             lcoe_inf = (g.cost_up  * delta  + g.cost_r * delta - g.cost_s+ g.cost_fopm)* CRF 
             #lcoe_inf = (g.cost_up + g.cost_r - g.cost_s)*delta + g.cost_fopm
@@ -224,7 +222,6 @@ def ds_diesel_renewable (solution, demand_df, instance_data, cost_data, CRF, del
 
     #sorted diesel initial the best lcoe generator
     sorted_generators = sorted(auxiliar_dict_generator, key=auxiliar_dict_generator.get,reverse=False) 
-
     
     #reference is the generator diesel in the first position, it is necessary for the renewable objets
     ref = solution.generators_dict_sol[sorted_generators[0]].DG_min
@@ -242,6 +239,7 @@ def ds_diesel_renewable (solution, demand_df, instance_data, cost_data, CRF, del
                 #calculate cost
                 cost[ren+'_cost'][t] = p[ren][t] * renew.cost_vopm
                 costvopm += cost[ren+'_cost'][t]
+
             #total renewable generation
             generation_ren = sum(solution.generators_dict_sol[i].gen_rule[t] for i in list_ren)
             ptot += generation_ren
@@ -263,8 +261,7 @@ def ds_diesel_renewable (solution, demand_df, instance_data, cost_data, CRF, del
                 ptot += p[n][t]
                 cost[n+'_cost'][t] = (gen.f0 * gen.DG_max + gen.f1 * p[n][t])*fuel_cost
                 costvopm += cost[n+'_cost'][t]
-                demand_tobe_covered = demand_tobe_covered - ref
-                
+                demand_tobe_covered = demand_tobe_covered - ref                
             else:
                 #supply the demand with diesel
                 for i in sorted_generators:
@@ -288,6 +285,7 @@ def ds_diesel_renewable (solution, demand_df, instance_data, cost_data, CRF, del
                         costvopm += cost[i+'_cost'][t]
                         #update demand to be covered
                         demand_tobe_covered = demand_tobe_covered - gen.DG_max
+
         else:
         #use one diesel
             i = sorted_generators[0]
@@ -300,8 +298,7 @@ def ds_diesel_renewable (solution, demand_df, instance_data, cost_data, CRF, del
             demand_tobe_covered = 0
             costsplus['cost_s+'][t] = splus['s+'][t] * instance_data["splus_cost"]
             splustot += costsplus['cost_s+'][t]
-                      
-            
+                                  
         #the generators finish, if there is still nse, lpsp is calculated
         if (demand_tobe_covered > 0):
             nsh += 1
@@ -330,6 +327,7 @@ def ds_diesel_renewable (solution, demand_df, instance_data, cost_data, CRF, del
     else:
         state = 'optimal'
     #create results df
+
     lcoe_cost = (sminustot + splustot + lcoe_inftot + costvopm + inverter)/(sum(demand_df['demand']) - sum(sminus['s-']))
     demand = pd.DataFrame(demand_df['demand'], columns=['demand'])
     generation = pd.DataFrame(p, columns=[*p.keys()])
@@ -346,8 +344,7 @@ def ds_diesel_renewable (solution, demand_df, instance_data, cost_data, CRF, del
 
 
 #Dispatch strategy battery with renewable
-def ds_battery_renewable  (solution, demand_df, instance_data, cost_data, CRF, delta, rand_ob):
-    
+def ds_battery_renewable  (solution, demand_df, instance_data, cost_data, CRF, delta, rand_ob):    
     #initial parameters 
     time_i = time.time()
     auxiliar_dict_batteries = {}
@@ -402,11 +399,13 @@ def ds_battery_renewable  (solution, demand_df, instance_data, cost_data, CRF, d
             for bat in sorted_batteries:
                 b = solution.batteries_dict_sol[bat]
                 soc[bat+'_soc'][t] = max(b.eb_zero * (1-b.alpha),0)
+
         #calculate soc batteries
         else:
             for bat in sorted_batteries:
                 b = solution.batteries_dict_sol[bat]
                 soc[bat+'_soc'][t] = soc[bat+'_soc'][t-1] * (1-b.alpha)            
+
         #calculate renewable generation
         for ren in list_ren:
             renew = solution.generators_dict_sol[ren]
@@ -414,6 +413,7 @@ def ds_battery_renewable  (solution, demand_df, instance_data, cost_data, CRF, d
             #calculate cost
             cost[ren+'_cost'][t] = p[ren][t] * renew.cost_vopm
             costvopm += cost[ren+'_cost'][t]
+
         #sum all generation
         generation_ren = sum(solution.generators_dict_sol[i].gen_rule[t] for i in list_ren)
         ptot += generation_ren
@@ -424,17 +424,18 @@ def ds_battery_renewable  (solution, demand_df, instance_data, cost_data, CRF, d
             #charge batteries until generation extra finish
             for bat in sorted_batteries:
                 b = solution.batteries_dict_sol[bat]
+
                 if extra_generation > 0:
                     bplus[bat+'_b+'][t] = min(extra_generation,(b.soc_max - soc[bat+'_soc'][t])/b.efc)
                     #update soc
                     soc[bat+'_soc'][t] += bplus[bat+'_b+'][t] * b.efc
                     extra_generation = extra_generation - bplus[bat+'_b+'][t]
+
             #if still extra gen is wasted energy   
             splus['s+'][t] = extra_generation
             costsplus['cost_s+'][t] = splus['s+'][t] * instance_data["splus_cost"]
             demand_tobe_covered = 0
-            splustot += costsplus['cost_s+'][t]
-                    
+            splustot += costsplus['cost_s+'][t]                    
         else:
             #update demand to be covered
             demand_tobe_covered = demand_tobe_covered - generation_ren    
@@ -461,6 +462,7 @@ def ds_battery_renewable  (solution, demand_df, instance_data, cost_data, CRF, d
                         ptot += bminus[i+'_b-'][t]
                         soc[i+'_soc'][t] -= bminus[i+'_b-'][t]/bat.efd
                         demand_tobe_covered = demand_tobe_covered - bminus[i+'_b-'][t]
+ 
         #the generators finish, if there is still nse, lpsp is calculated
         if (demand_tobe_covered > 0):
             nsh += 1
@@ -477,7 +479,6 @@ def ds_battery_renewable  (solution, demand_df, instance_data, cost_data, CRF, d
             
             sminustot += costsminus['cost_s-'][t] 
             #costsminus['cost_s-'][t] = sminus['s-'][t] * instance_data["sminus_cost"]                 
-                
                 
     #movil average lpsp        
     lpsp_df = pd.DataFrame(lpsp['lpsp'], columns = ['lpsp'])
@@ -507,8 +508,6 @@ def ds_battery_renewable  (solution, demand_df, instance_data, cost_data, CRF, d
 
 #Dispatch strategy diesel and battery and renewable
 def ds_dies_batt_renew(solution, demand_df, instance_data, cost_data, CRF, delta, rand_ob):
-
-
     #initial parameters 
     time_i = time.time()
     auxiliar_dict_batteries = {}
@@ -541,25 +540,22 @@ def ds_dies_batt_renew(solution, demand_df, instance_data, cost_data, CRF, delta
     average_demand = np.mean(demand_df['demand'])
     nsh = 0 #count not server hours
 
-  
-    
     #calculate investment cost
     for g in solution.generators_dict_sol.values():
         if (g.tec == 'D'):
             lcoe_inf = (g.cost_up   + g.cost_r - g.cost_s+ g.cost_fopm)* CRF 
             lcoe_inftot += lcoe_inf  
-
             #assume it produces around the average
             prod = min (average_demand, g.DG_max)
             lcoe_op = (g.f0 * g.DG_max + g.f1 * prod)*fuel_cost * len_data
             auxiliar_dict_generator[g.id_gen] = (prod * len_data) / (lcoe_inf*CRF + lcoe_op)
             #lcoe_inf = g.cost_up + g.cost_r - g.cost_s + g.cost_fopm
-                           
         else:
             lcoe_inf = (g.cost_up  * delta  + g.cost_r * delta - g.cost_s+ g.cost_fopm)* CRF 
             #lcoe_inf = (g.cost_up + g.cost_r - g.cost_s)*delta + g.cost_fopm
             lcoe_inftot += lcoe_inf    
             list_ren.append(g.id_gen)
+ 
     #initial generator always the best lcoe
     sorted_generators = sorted(auxiliar_dict_generator, key=auxiliar_dict_generator.get,reverse=False) 
     
@@ -572,13 +568,11 @@ def ds_dies_batt_renew(solution, demand_df, instance_data, cost_data, CRF, delta
         #lcoe_inf = (b.cost_up + b.cost_r - b.cost_s)*delta + b.cost_fopm
         lcoe_inftot += lcoe_inf   
         auxiliar_dict_batteries[b.id_bat] = lcoe_inf
-        
-    
+            
     #initial battery alwatys the best lcoe
     sorted_batteries = sorted(auxiliar_dict_batteries, key=auxiliar_dict_batteries.get,reverse=False) 
     #random order of generators
     rand_ob.create_randomshuffle(sorted_batteries)
-
     
     #simulation
     for t in demand_df['t']:
@@ -590,17 +584,20 @@ def ds_dies_batt_renew(solution, demand_df, instance_data, cost_data, CRF, delta
             for bat in sorted_batteries:
                 b = solution.batteries_dict_sol[bat]
                 soc[bat+'_soc'][t] = max(b.eb_zero * (1-b.alpha),0)
+
         #state of charge of each battery
         else:
             for bat in sorted_batteries:
                 b = solution.batteries_dict_sol[bat]
                 soc[bat+'_soc'][t] = soc[bat+'_soc'][t-1] * (1-b.alpha)            
+
         #calculate all renewable generation
         for ren in list_ren:
             renew = solution.generators_dict_sol[ren]
             p[ren][t] = renew.gen_rule[t]
             cost[ren+'_cost'][t] = p[ren][t] * renew.cost_vopm
             costvopm += cost[ren+'_cost'][t]
+
         generation_ren = sum(solution.generators_dict_sol[i].gen_rule[t] for i in list_ren)
         ptot += generation_ren
         #surplus enery
@@ -609,12 +606,14 @@ def ds_dies_batt_renew(solution, demand_df, instance_data, cost_data, CRF, delta
             extra_generation = generation_ren - demand_tobe_covered
             for bat in sorted_batteries:
                 b = solution.batteries_dict_sol[bat]
+
                 if extra_generation > 0:
                     bplus[bat+'_b+'][t] = min(extra_generation,(b.soc_max - soc[bat+'_soc'][t])/b.efc)
                     #update soc
                     soc[bat+'_soc'][t] += bplus[bat+'_b+'][t] * b.efc
                     #update extra generation
                     extra_generation = extra_generation - bplus[bat+'_b+'][t]
+
             #still extra generation, so surplus energy
             splus['s+'][t] = extra_generation
             costsplus['cost_s+'][t] = splus['s+'][t] * instance_data["splus_cost"]
@@ -648,6 +647,7 @@ def ds_dies_batt_renew(solution, demand_df, instance_data, cost_data, CRF, delta
                         ptot += bminus[i+'_b-'][t]
                         soc[i+'_soc'][t] -= bminus[i+'_b-'][t]/bat.efd
                         demand_tobe_covered = demand_tobe_covered - bminus[i+'_b-'][t]
+
             #batteries supplies all demand            
             if demand_tobe_covered == 0:
                 #use one diesel, the reference and calculate suplus if apply
@@ -688,12 +688,14 @@ def ds_dies_batt_renew(solution, demand_df, instance_data, cost_data, CRF, delta
                         costvopm += cost[j+'_cost'][t]
                         #update demand to be covered
                         demand_tobe_covered = demand_tobe_covered - gen.DG_max
+
         #not enough renewable energy
         else:
             #check if the demand can supply all the demand
             for i in sorted_batteries:
                 bat = solution.batteries_dict_sol[i]
                 aux_demand += (soc[i+'_soc'][t] - bat.soc_min)*bat.efd
+
             #if batteries can supply the load use renewable generator to supply the load, else first charge battery
             if (aux_demand >= demand_tobe_covered):
                 demand_tobe_covered = demand_tobe_covered - generation_ren
@@ -718,6 +720,7 @@ def ds_dies_batt_renew(solution, demand_df, instance_data, cost_data, CRF, delta
                         ptot += bminus[i+'_b-'][t]
                         soc[i+'_soc'][t] -= bminus[i+'_b-'][t]/bat.efd
                         demand_tobe_covered = demand_tobe_covered - bminus[i+'_b-'][t]            
+
             else:
                 #charge the bateries
                 for bat in sorted_batteries:
@@ -727,6 +730,7 @@ def ds_dies_batt_renew(solution, demand_df, instance_data, cost_data, CRF, delta
                         soc[bat+'_soc'][t] += bplus[bat+'_b+'][t] * b.efc
                         #update generation ren
                         generation_ren = generation_ren - bplus[bat+'_b+'][t]                
+
                 #if there is enough, suppply part of the demand
                 demand_tobe_covered = demand_tobe_covered - generation_ren
                 #activate diesel generators
@@ -796,29 +800,30 @@ def ds_dies_batt_renew(solution, demand_df, instance_data, cost_data, CRF, delta
    
 
 class Results():
-    def __init__(self, solution, df_results, lcoe):
-        
+    def __init__(self, solution, df_results, lcoe):        
         self.df_results = df_results 
-        
         # general descriptives of the solution
         self.descriptive = {}
-        
         # generators 
         generators = {}
         try:
             for k in solution.generators_dict_sol.values():
                generators[k.id_gen] = 1
             self.descriptive['generators'] = generators
+ 
         except:
             for k in solution.generators_dict_sol.values():
                 if df_results[k.id_gen].sum() > 0:
                     generators[k.id_gen] = 1
+
             self.descriptive['generators'] = generators
         # technologies
+
         tecno_data = {}
         try:
             for i in solution.techonologies_dict_sol:
                tecno_data[i] = 1
+
             self.descriptive['technologies'] = tecno_data
         except: #TODO
               a=1 
@@ -828,19 +833,18 @@ class Results():
             for l in solution.batteries_dict_sol.values():
                bat_data[l.id_bat] = 1
             self.descriptive['batteries'] = bat_data
+
         except:
             for l in solution.batteries_dict_sol.values():
                 if df_results[l.id_bat+'_b-'].sum() + df_results[l.id_bat+'_b+'].sum() > 0:
                     bat_data[l.id_bat] = 1
+
             self.descriptive['batteries'] = bat_data 
                   
-
         self.descriptive['area'] = 0
             
         # objective function
         self.descriptive['LCOE'] = lcoe
-        
-        
         
     def generation_graph(self,ini,fin):
         df_results = copy.deepcopy(self.df_results.iloc[int(ini):int(fin)])
@@ -848,16 +852,14 @@ class Results():
         for key, value in self.descriptive['generators'].items():
             if value==1:
                 bars.append(go.Bar(name=key, x=df_results.index, y=df_results[key]))
+
         for key, value in self.descriptive['batteries'].items():
             if value==1:
                 column_name = key+'_b-'
                 bars.append(go.Bar(name=key, x=df_results.index, y=df_results[column_name]))
   
         bars.append(go.Bar(name='Unsupplied Demand',x=df_results.index, y=df_results['S-']))
-                
         plot = go.Figure(data=bars)
-        
-        
         plot.add_trace(go.Scatter(x=df_results.index, y=df_results['demand'],
                     mode='lines',
                     name='Demand',
@@ -868,6 +870,7 @@ class Results():
             if value==1:
                 column_name = key+'_b+'
                 df_results['b+'] += df_results[column_name]
+
         #self.df_results['Battery1_b+']+self.df_results['Battery2_b+']
         plot.add_trace(go.Bar(x=df_results.index, y=df_results['b+'],
                               base=-1*df_results['b+'],
