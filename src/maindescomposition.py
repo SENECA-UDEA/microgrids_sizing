@@ -4,8 +4,10 @@ Created on Wed Apr 20 11:14:21 2022
 
 @author: scastellanos
 """
-from src.utilities import read_data, create_objects, calculate_sizing_cost, create_technologies, calculate_area, calculate_energy, interest_rate
-from src.utilities import fiscal_incentive, calculate_cost_data, calculate_inverter_cost
+from src.utilities import read_data, create_objects, calculate_sizing_cost
+from src.utilities import create_technologies, calculate_area, calculate_energy
+from src.utilities import interest_rate, calculate_inverter_cost
+from src.utilities import fiscal_incentive, calculate_cost_data
 import src.opt as opt
 from src.classes import RandomCreate
 import pandas as pd 
@@ -13,7 +15,6 @@ from src.operators import SolConstructor, SearchOperator
 from plotly.offline import plot
 import copy
 pd.options.display.max_columns = None
-
 
 #Algorythm data
 
@@ -30,8 +31,6 @@ Solver_data = {"MIP_GAP":0.01,"TEE_SOLVER":True,"OPT_SOLVER":"gurobi"}
 add_function = 'GRASP'
 remove_function = 'RANDOM'
 
-
-
 #Model data
 place = 'Providencia'
 place = 'Test'
@@ -44,7 +43,8 @@ place = 'Leticia'
 place = 'Test'
 place = 'Oswaldo'
 '''
-github_rute = 'https://raw.githubusercontent.com/SENECA-UDEA/microgrids_sizing/development/data/'
+rute_file = '/SENECA-UDEA/microgrids_sizing/development/data/'
+github_rute = 'https://raw.githubusercontent.com'+rute_file
 # file paths github
 demand_filepath = github_rute + place+'/demand_'+place+'.csv' 
 forecast_filepath = github_rute + place+'/forecast_'+place+'.csv' 
@@ -64,7 +64,6 @@ fiscalData_filepath = "../data/Cost/fiscal_incentive.json"
 #cost Data
 costData_filepath = "../data/Cost/parameters_cost.json"
 
-
 # read data
 demand_df, forecast_df, generators, batteries, instance_data, fisc_data, cost_data = read_data(demand_filepath,
                                                                                                 forecast_filepath,
@@ -73,23 +72,21 @@ demand_df, forecast_df, generators, batteries, instance_data, fisc_data, cost_da
                                                                                                 fiscalData_filepath,
                                                                                                 costData_filepath)
 
-
 #nputs for the model
 amax =  instance_data['amax']
 N_iterations = instance_data['N_iterations']
 
-
 #Calculate salvage, operation and replacement cost with investment cost
-generators, batteries = calculate_cost_data(generators, batteries, instance_data, cost_data)
+generators, batteries = calculate_cost_data(generators, 
+                                            batteries, instance_data, cost_data)
 #Demand to be covered
 demand_df['demand'] = instance_data['demand_covered']  * demand_df['demand'] 
 
 #Calculate interest rate
 ir = interest_rate(instance_data['i_f'],instance_data['inf'])
 #Calculate CRF
-CRF = (ir * (1 + ir)**(instance_data['years']))/((1 + ir)**(instance_data['years'])-1)  
-
-
+CRF = (ir * (1 + ir)**(instance_data['years']))/((1 + ir)
+                                                 **(instance_data['years'])-1)  
 
 #Calculate fiscal incentives
 delta = fiscal_incentive(fisc_data['credit'], 
@@ -129,15 +126,11 @@ if ('aux_diesel' in sol_feasible.generators_dict_sol.keys()):
     generators_dict['aux_diesel'] = sol_feasible.generators_dict_sol['aux_diesel']
     generators_dict['aux_diesel'].area = 10000000
 
-
-
-
 # set the initial solution as the best so far
 sol_best = copy.deepcopy(sol_feasible)
 
 # create the actual solution with the initial soluion
 sol_current = copy.deepcopy(sol_feasible)
-
 
 #df of solutions
 rows_df = []
@@ -162,20 +155,30 @@ if (sol_best.results != None):
             sol_feasible = copy.deepcopy(sol_current) 
             # Remove a generator or battery from the current solution - grasp or random
             if (remove_function == 'GRASP'):
-                sol_try, remove_report = search_operator.remove_object(sol_current, CRF, delta)
+                sol_try, remove_report = search_operator.remove_object(sol_current, 
+                                                                       CRF, delta)
+                
             elif (remove_function == 'RANDOM'):
-                sol_try, remove_report = search_operator.remove_random_object(sol_current, rand_ob)
+                sol_try, remove_report = search_operator.remove_random_object(sol_current, 
+                                                                              rand_ob)
 
             movement = "Remove"
         else:
             #  Create list of generators that could be added
-            list_available_bat, list_available_gen, list_tec_gen  = search_operator.available_items(sol_current, amax)
+            list_available_bat, list_available_gen, list_tec_gen  = search_operator.available_items(sol_current,
+                                                                                                    amax)
+            
             if (list_available_gen != [] or list_available_bat != []):
                 # Add a generator or battery to the current solution - grasp or random
                 if (add_function == 'GRASP'):
-                    sol_try, remove_report = search_operator.add_object(sol_current, list_available_bat, list_available_gen, list_tec_gen, remove_report,  CRF, instance_data['fuel_cost'], rand_ob, delta)
+                    sol_try, remove_report = search_operator.add_object(sol_current, 
+                                                                        list_available_bat, list_available_gen, list_tec_gen, remove_report,  
+                                                                        CRF, instance_data['fuel_cost'], rand_ob, delta)
+               
                 elif (add_function == 'RANDOM'):
-                    sol_try = search_operator.add_random_object(sol_current, list_available_bat, list_available_gen, list_tec_gen,rand_ob)
+                    sol_try = search_operator.add_random_object(sol_current, 
+                                                                list_available_bat, list_available_gen, list_tec_gen,rand_ob)
+                
                 movement = "Add"
             else:
                 # return to the last feasible solution
@@ -185,8 +188,6 @@ if (sol_best.results != None):
         #calculate inverter cost with installed generators
         #val = instance_data['inverter_cost']#first of the functions
         #instance_data['inverter cost'] = calculate_inverter_cost(sol_try.generators_dict_sol,sol_try.batteries_dict_sol,val)
-        
-
         
         #Calculate strategic cost
         tnpccrf_calc = calculate_sizing_cost(sol_try.generators_dict_sol, 
@@ -209,7 +210,6 @@ if (sol_best.results != None):
                                            tlpsp = instance_data['tlpsp'],
                                            nse_cost = cost_data['NSE_COST']) 
         
-
         #Solve the model
         results, termination = opt.solve_model(model, 
                                                Solver_data)
@@ -217,7 +217,9 @@ if (sol_best.results != None):
         #Create results
         if termination['Temination Condition'] == 'optimal':
             sol_try.results.descriptive['LCOE'] = model.LCOE_value.expr()
-            sol_try.results = opt.Results(model, sol_try.generators_dict_sol, sol_try.batteries_dict_sol )
+            sol_try.results = opt.Results(model, sol_try.generators_dict_sol,
+                                          sol_try.batteries_dict_sol )
+            
             sol_try.feasible = True
             sol_current = copy.deepcopy(sol_try)
             #Search the best solution
@@ -225,10 +227,12 @@ if (sol_best.results != None):
                 sol_best = copy.deepcopy(sol_try)
                 #calculate area best solution
                 sol_best.results.descriptive['area'] = calculate_area(sol_best)
+                
         else:
             sol_try.feasible = False
             sol_try.results.descriptive['LCOE'] = None
             sol_current = copy.deepcopy(sol_try)
+        
         #avoid to overwrite an iteration
         del results            
         del termination
@@ -240,7 +244,8 @@ if (sol_best.results != None):
         print('Not Feasible solutions')
     else:
         #df with the feasible solutions
-        df_iterations = pd.DataFrame(rows_df, columns=["i", "feasible", "area", "LCOE_actual", "LCOE_Best","Movement"])
+        df_iterations = pd.DataFrame(rows_df, columns=["i", "feasible", 
+                                                       "area", "LCOE_actual", "LCOE_Best","Movement"])
         #print results best solution
         print(sol_best.results.descriptive)
         print(sol_best.results.df_results)
@@ -248,7 +253,8 @@ if (sol_best.results != None):
         plot(generation_graph)
         try:
             #calculate stats
-            percent_df, energy_df, renew_df, total_df, brand_df = calculate_energy(sol_best.batteries_dict_sol, sol_best.generators_dict_sol, sol_best.results, demand_df)
+            percent_df, energy_df, renew_df, total_df, brand_df = calculate_energy(sol_best.batteries_dict_sol,
+                                                                                   sol_best.generators_dict_sol, sol_best.results, demand_df)
         except KeyError:
             pass
         #calculate current COP   

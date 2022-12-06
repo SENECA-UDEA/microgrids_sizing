@@ -8,8 +8,30 @@ from src.classes import Solution, Diesel
 import copy
 import math
 import pandas as pd
-from Dispatch_Estrategy.dispatchstrategy import select_strategy, ds_diesel, ds_dies_batt_renew, ds_diesel_renewable, ds_battery_renewable 
+
+from Dispatch_Estrategy.dispatchstrategy import select_strategy
+from Dispatch_Estrategy.dispatchstrategy import ds_diesel
+from Dispatch_Estrategy.dispatchstrategy import ds_dies_batt_renew
+from Dispatch_Estrategy.dispatchstrategy import ds_diesel_renewable
+from Dispatch_Estrategy.dispatchstrategy import ds_battery_renewable 
 from Dispatch_Estrategy.dispatchstrategy import Results 
+
+#Strategy list for select
+list_ds_diesel = ["diesel"]
+list_ds_diesel_renewable = [
+    "diesel - solar", "diesel - wind", 
+    "diesel - solar - wind"
+    ]
+
+list_ds_battery_renewable = [
+    "battery - solar","battery - wind",
+    "battery - solar - wind"
+    ]
+
+list_ds_dies_batt_renew = [
+    "battery - diesel - wind","battery - diesel - solar", 
+    "battery - diesel - solar - wind"
+    ]
 
 class SolConstructor():
     def __init__(self, generators_dict, batteries_dict, demand_df, forecast_df):
@@ -56,7 +78,8 @@ class SolConstructor():
                 auxiliar_dict_bat[b.id_bat] = b.soc_max
 
             if (auxiliar_dict_bat != {}):
-                sorted_batteries = sorted(auxiliar_dict_bat, key=auxiliar_dict_bat.get,reverse=True) 
+                sorted_batteries = sorted(auxiliar_dict_bat, 
+                                          key=auxiliar_dict_bat.get,reverse=True) 
                 rev2 = 'B'
 
             for g in self.generators_dict.values(): 
@@ -72,7 +95,8 @@ class SolConstructor():
                 rev = 'W'
 
         #sorted generator max to min capacity
-        sorted_generators = sorted(auxiliar_dict_generator, key=auxiliar_dict_generator.get,reverse=True) 
+        sorted_generators = sorted(auxiliar_dict_generator, 
+                                   key=auxiliar_dict_generator.get,reverse=True) 
         
         available_generators = True
         while available_generators == True:
@@ -143,13 +167,17 @@ class SolConstructor():
                            sol_results) 
         #run dispatch strategy
         if (strategy_def == "diesel"):
-            lcoe_cost, df_results, state, time_f, nsh = ds_diesel(sol_try, self.demand_df, instance_data, cost_data, CRF)
-        elif (strategy_def == "diesel - solar") or (strategy_def == "diesel - wind") or (strategy_def == "diesel - solar - wind"):
-            lcoe_cost, df_results, state, time_f, nsh  = ds_diesel_renewable(sol_try, self.demand_df, instance_data, cost_data,CRF,delta)
-        elif (strategy_def == "battery - solar") or (strategy_def == "battery - wind") or (strategy_def == "battery - solar - wind"):
-            lcoe_cost, df_results, state, time_f, nsh  = ds_battery_renewable (sol_try, self.demand_df, instance_data, cost_data, CRF, delta, rand_ob)
-        elif (strategy_def == "battery - diesel - wind") or (strategy_def == "battery - diesel - solar") or (strategy_def == "battery - diesel - solar - wind"):
-            lcoe_cost, df_results, state, time_f, nsh  = ds_dies_batt_renew(sol_try, self.demand_df, instance_data, cost_data, CRF, delta, rand_ob)
+            lcoe_cost, df_results, state, time_f, nsh = ds_diesel(sol_try, self.demand_df, 
+                                                                  instance_data, cost_data, CRF)
+        elif (strategy_def in list_ds_diesel_renewable):
+            lcoe_cost, df_results, state, time_f, nsh  = ds_diesel_renewable(sol_try, 
+                                                                             self.demand_df, instance_data, cost_data,CRF,delta)
+        elif (strategy_def in list_ds_battery_renewable):
+            lcoe_cost, df_results, state, time_f, nsh  = ds_battery_renewable (sol_try, 
+                                                                               self.demand_df, instance_data, cost_data, CRF, delta, rand_ob)
+        elif (strategy_def in ds_dies_batt_renew):
+            lcoe_cost, df_results, state, time_f, nsh  = ds_dies_batt_renew(sol_try, 
+                                                                            self.demand_df, instance_data, cost_data, CRF, delta, rand_ob)
         else:
             #no feasible combination
             state = 'no feasible'
@@ -188,8 +216,9 @@ class SolConstructor():
                    sol_results) 
             #run dispatch strategy with false diesel
 
-            if (strategy_def == "diesel"):
-                lcoe_cost, df_results, state, time_f, nsh = ds_diesel(sol_try, self.demand_df, instance_data, cost_data, CRF)
+            if (strategy_def in list_ds_diesel):
+                lcoe_cost, df_results, state, time_f, nsh = ds_diesel(sol_try, 
+                                                                      self.demand_df, instance_data, cost_data, CRF)
             else:
                 state = 'no feasible'
 
@@ -213,8 +242,9 @@ class SearchOperator():
         self.batteries_dict = batteries_dict
         self.demand_df = demand_df
         self.forecast_df = forecast_df
-        
-    def remove_object(self, sol_actual, CRF, delta): #remove one generator or battery
+    
+    #remove one generator or battery
+    def remove_object(self, sol_actual, CRF, delta): 
         solution = copy.deepcopy(sol_actual)
         dict_actual = {**solution.generators_dict_sol,**solution.batteries_dict_sol}
         min_relation = math.inf
@@ -227,11 +257,14 @@ class SearchOperator():
                 inv_cost = dic.cost_up * delta + dic.cost_r * delta - dic.cost_s + dic.cost_fopm
                 #inv_cost = (d.cost_up * delta + d.cost_r - d.cost_s)*(1+i) 
                 #inv_cost2 = d.cost_fopm * ((((inf)**t_years)-1)/inf)
-                sum_generation = solution.results.df_results[dic.id_bat+'_b-'].sum(axis = 0, skipna = True)          
+                sum_generation = solution.results.df_results[dic.id_bat+'_b-'].sum(axis = 0
+                                                                                   , skipna = True)          
             else:
                 if dic.tec == 'D':
-                    sum_generation = solution.results.df_results[dic.id_gen].sum(axis = 0, skipna = True)
-                    op_cost = solution.results.df_results[dic.id_gen+'_cost'].sum(axis = 0, skipna = True)
+                    sum_generation = solution.results.df_results[dic.id_gen].sum(axis = 0
+                                                                                 , skipna = True)
+                    op_cost = solution.results.df_results[dic.id_gen+'_cost'].sum(axis = 0
+                                                                                  , skipna = True)
                     #op_cost *= ((((inf + txfc)**t_years)-1)/(inf+txfc))
                     inv_cost = dic.cost_up + dic.cost_r - dic.cost_s + dic.cost_fopm 
                     #inv_cost = (d.cost_up * delta + d.cost_r - d.cost_s)*(1+i) 
@@ -255,10 +288,12 @@ class SearchOperator():
                     select_ob = dic.id_gen
                 
         if dict_actual[select_ob].tec == 'B':
-            remove_report =  pd.Series(solution.results.df_results[select_ob+'_b-'].values,index=solution.results.df_results[select_ob+'_b-'].keys()).to_dict()
+            remove_report =  pd.Series(solution.results.df_results[select_ob+'_b-'].values,
+                                       index=solution.results.df_results[select_ob+'_b-'].keys()).to_dict()
             solution.batteries_dict_sol.pop(select_ob)
         else:
-            remove_report =  pd.Series(solution.results.df_results[select_ob].values,index=solution.results.df_results[select_ob].keys()).to_dict()
+            remove_report =  pd.Series(solution.results.df_results[select_ob].values,
+                                       index=solution.results.df_results[select_ob].keys()).to_dict()
             solution.generators_dict_sol.pop(select_ob)
         
         solution.technologies_dict_sol, solution.renewables_dict_sol = create_technologies (solution.generators_dict_sol
@@ -267,7 +302,9 @@ class SearchOperator():
         
         return solution, remove_report
     
-    def add_object(self, sol_actual, available_bat, available_gen, list_tec_gen, remove_report, CRF, fuel_cost, rand_ob, delta): #add generator or battery
+    def add_object(self, sol_actual, available_bat, available_gen, list_tec_gen,
+                   remove_report, CRF, fuel_cost, rand_ob, delta): #add generator or battery
+        
         solution = copy.deepcopy(sol_actual)
         #get the maximum generation of removed object
         val_max = max(remove_report.values())
@@ -319,7 +356,8 @@ class SearchOperator():
                             #Operation cost with generation rule
                             generation_total = sum(dic.gen_rule.values())
                             lcoe_op =  dic.cost_vopm * generation_total
-                            lcoe_inf = (dic.cost_up * delta + dic.cost_r * delta - dic.cost_s + dic.cost_fopm) * CRF
+                            lcoe_inf = (dic.cost_up * delta + dic.cost_r * delta - 
+                                        dic.cost_s + dic.cost_fopm) * CRF
 
                         total_lcoe = (lcoe_inf + lcoe_op)/generation_total
                         if total_lcoe <= best_cost:
@@ -345,7 +383,9 @@ class SearchOperator():
         
         return solution, remove_report
     
-    def add_random_object(self, sol_actual, available_bat, available_gen, list_tec_gen, rand_ob): #add generator or battery
+    def add_random_object(self, sol_actual, available_bat, available_gen, 
+                          list_tec_gen, rand_ob): #add generator or battery
+        
         solution = copy.deepcopy(sol_actual)
         dict_total = {**self.generators_dict,**self.batteries_dict}
         #random select battery or generator
@@ -384,10 +424,12 @@ class SearchOperator():
         select_ob = rand_ob.create_rand_list(list(dict_actual.keys()))
         #delete select object
         if dict_actual[select_ob].tec == 'B':
-            remove_report =  pd.Series(solution.results.df_results[select_ob+'_b-'].values,index=solution.results.df_results[select_ob+'_b-'].keys()).to_dict()
+            remove_report =  pd.Series(solution.results.df_results[select_ob+'_b-'].values,
+                                       index=solution.results.df_results[select_ob+'_b-'].keys()).to_dict()
             solution.batteries_dict_sol.pop(select_ob)
         else:
-            remove_report =  pd.Series(solution.results.df_results[select_ob].values,index=solution.results.df_results[select_ob].keys()).to_dict()
+            remove_report =  pd.Series(solution.results.df_results[select_ob].values,
+                                       index=solution.results.df_results[select_ob].keys()).to_dict()
             solution.generators_dict_sol.pop(select_ob)
         
         solution.technologies_dict_sol, solution.renewables_dict_sol = create_technologies (solution.generators_dict_sol

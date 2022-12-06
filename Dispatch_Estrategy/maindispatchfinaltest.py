@@ -4,19 +4,42 @@ Created on Wed Apr 20 11:14:21 2022
 
 @author: pmayaduque
 """
-from src.utilities import read_data, create_objects, create_technologies, calculate_area, calculate_energy, interest_rate
-from src.utilities import fiscal_incentive, calculate_cost_data, calculate_sizing_cost, calculate_inverter_cost
+from src.utilities import read_data, create_objects, create_technologies
+from src.utilities import calculate_area, calculate_energy, interest_rate
+from src.utilities import fiscal_incentive, calculate_cost_data
+from src.utilities import calculate_sizing_cost, calculate_inverter_cost
 from src.classes import RandomCreate
 import pandas as pd 
 from Dispatch_Estrategy.operatorsdispatch import SolConstructor, SearchOperator
 from plotly.offline import plot
-from Dispatch_Estrategy.dispatchstrategy import select_strategy, ds_diesel, ds_dies_batt_renew, ds_diesel_renewable, ds_battery_renewable 
+from Dispatch_Estrategy.dispatchstrategy import select_strategy
+from Dispatch_Estrategy.dispatchstrategy import ds_diesel
+from Dispatch_Estrategy.dispatchstrategy import ds_dies_batt_renew
+from Dispatch_Estrategy.dispatchstrategy import ds_diesel_renewable
+from Dispatch_Estrategy.dispatchstrategy import ds_battery_renewable 
 from Dispatch_Estrategy.dispatchstrategy import Results
+
 import copy
 pd.options.display.max_columns = None
 import time
 import numpy as np
 
+#Strategy list for select
+list_ds_diesel = ["diesel"]
+list_ds_diesel_renewable = [
+    "diesel - solar", "diesel - wind", 
+    "diesel - solar - wind"
+    ]
+
+list_ds_battery_renewable = [
+    "battery - solar","battery - wind",
+    "battery - solar - wind"
+    ]
+
+list_ds_dies_batt_renew = [
+    "battery - diesel - wind","battery - diesel - solar", 
+    "battery - diesel - solar - wind"
+    ]
 
 rows_df_time = []
 
@@ -25,6 +48,7 @@ for iii in range(18, 73):
         ini = 154
     else:
         ini = 1
+
     for jjj in range(ini,193):
     
         #PARAMETROS DE LA CORRIDA - POR DEFECTO
@@ -111,9 +135,6 @@ for iii in range(18, 73):
             iadd_name2 = '168tlpsp'
         else:
             iadd_name2 = '1tlpsp'
-
-
- 
 
         #instancias cambio tamaño horizonte temporal
         if (iii >= (9 + (12 * ((iii-1)//12))) and (iii <= (12 + (12 * ((iii-1)//12))))):

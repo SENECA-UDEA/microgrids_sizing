@@ -22,6 +22,7 @@ batteries_def = []
 generators_transformed = copy.deepcopy(generators)
 batteries_transformed = copy.deepcopy(batteries)
 total_transformed = generators_transformed + batteries_transformed
+
 for i in total_transformed:
     if (i['tec'] == 'S'):
         #max number of cells to be created
@@ -38,6 +39,7 @@ for i in total_transformed:
         cost_fopm = i['cost_fopm']
         cost_vopm = i['cost_vopm']
         #create all generators with max, min and step
+
         for j in range(min_cell, max_cell + 1, step_cell):
             aux_generators = []
             aux_generators = i
@@ -51,6 +53,7 @@ for i in total_transformed:
             aux_generators['cost_fopm'] = j * cost_fopm
             aux_generators['cost_vopm'] = j * cost_vopm            
             generators_def.append(copy.deepcopy(aux_generators))
+
     elif (i['tec'] == 'W' or i['tec'] == 'D'):
         #Option of create equal generators
         num_gen = int(input(f"Number of equals generators, {i['id_gen']}: "))
@@ -60,6 +63,7 @@ for i in total_transformed:
             aux_generators = i
             aux_generators['id_gen'] = name + ' ' + str(j)
             generators_def.append(copy.deepcopy(aux_generators))
+
     else:
         #Option of create equals batteries
         num_bat = int(input(f"Number of equals batteries, {i['id_bat']}: "))
@@ -69,11 +73,14 @@ for i in total_transformed:
             aux_batteries = i
             aux_batteries['id_bat'] = name + ' ' + str(j)
             batteries_def.append(copy.deepcopy(aux_batteries))
+
 total_def = {}
 total_def["generators"] = generators_def 
 total_def["batteries"] = batteries_def
         
 #create the json
-with open('C:\\Users\\sebas\\OneDrive\\Documentos\\GitHub\\microgrids_sizing\\data\\json_generated.json', 'w') as outfile:
+with open('C:\\Users\\sebas\\OneDrive\\Documentos\\GitHub\\microgrids_sizing\\data\\json_generated.json',
+          'w') as outfile:
+    
     json.dump(total_def, outfile, indent=4)
 

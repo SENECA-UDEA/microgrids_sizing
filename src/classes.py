@@ -17,7 +17,9 @@ class Generator(): #Superclass generators
 
 
 class Solar(Generator):
-    def __init__(self, id_gen, tec, br, area, cost_up, cost_r, cost_s, cost_fopm, cost_vopm, n, T_noct, G_noct, Ppv_stc, fpv, kt): 
+    def __init__(self, id_gen, tec, br, area, cost_up, cost_r, cost_s, cost_fopm,
+                 cost_vopm, n, T_noct, G_noct, Ppv_stc, fpv, kt): 
+        
         self.cost_vopm = cost_vopm #Variable Operation & Maintenance cost 
         self.n = n #Number of panels
         self.T_noct = T_noct #Nominal Operating cell Tmperature
@@ -28,7 +30,8 @@ class Solar(Generator):
         self.gen_rule = {}
         self.cost_rule = 0
         self.INOCT = 0
-        super(Solar, self).__init__(id_gen, tec, br,area, cost_up,  cost_r, cost_s, cost_fopm)
+        super(Solar, self).__init__(id_gen, tec, br,area, cost_up,  
+                                    cost_r, cost_s, cost_fopm)
 
     def solar_generation(self, t_amb, gt,G_stc): 
     #def Solargeneration(self, t_amb, gt,G_stc,deg): 
@@ -80,7 +83,8 @@ class Solar(Generator):
         
   
 class Eolic(Generator):
-    def __init__(self, id_gen, tec, br, area, cost_up, cost_r, cost_s, cost_fopm, cost_vopm, s_in, s_rate, s_out, P_y, n_eq, h):
+    def __init__(self, id_gen, tec, br, area, cost_up, cost_r, cost_s, cost_fopm,
+                 cost_vopm, s_in, s_rate, s_out, P_y, n_eq, h):
         self.cost_vopm = cost_vopm #Variable Operation & Maintenance cost 
         self.s_in = s_in #Turbine Minimum Generating Speed (Input Speed)
         self.s_rate = s_rate #Rated speed of the wind turbine
@@ -90,10 +94,12 @@ class Eolic(Generator):
         self.h = h #height
         self.gen_rule = {}
         self.cost_rule = 0
-        super(Eolic, self).__init__(id_gen, tec, br, area, cost_up, cost_r, cost_s, cost_fopm)
+        super(Eolic, self).__init__(id_gen, tec, br, area, cost_up,
+                                    cost_r, cost_s, cost_fopm)
     
-    def eolic_generation(self, forecastWt, h2, coef_hel): #Wt = wind speed over the time
-    #def Windgeneration(self, forecastWt, h2, coef_hel,deg): #Wt = wind speed over the time
+    def eolic_generation(self, forecastWt, h2, coef_hel): 
+        #Wt = wind speed over the time
+        #def Windgeneration(self, forecastWt, h2, coef_hel,deg): #Wt = wind speed over the time
         #Calculate generation over the time
         Hellmann = (self.h/h2)**coef_hel
         for t in list(forecastWt.index.values):
@@ -103,7 +109,8 @@ class Eolic(Generator):
             if i <= self.s_in:
               self.gen_rule[t] = 0
             elif i < self.s_rate:
-              self.gen_rule[t] = self.P_y*((i**self.n_eq-self.s_in**self.n_eq)/(self.s_rate**self.n_eq-self.s_in**self.n_eq))
+              self.gen_rule[t] = self.P_y*((i**self.n_eq-self.s_in**self.n_eq)
+                                           /(self.s_rate**self.n_eq-self.s_in**self.n_eq))
               #year = math.floor(forecastWt['t'][t]/8760) 
               #self.gen_rule[t] = self.gen_rule[t] * (1- deg)**(year)
             elif i <= self.s_out:                  
@@ -123,16 +130,20 @@ class Eolic(Generator):
     
                            
 class Diesel(Generator):
-    def __init__(self, id_gen, tec, br, area, cost_up, cost_r, cost_s, cost_fopm, DG_min, DG_max, f0, f1):
+    def __init__(self, id_gen, tec, br, area, cost_up, cost_r, cost_s, 
+                 cost_fopm, DG_min, DG_max, f0, f1):
         self.DG_min = DG_min #Minimun generation to active the Diesel
         self.DG_max = DG_max #Rated power, maximum generation
         self.f0 = f0 #fuel consumption curve coefficient
         self.f1 = f1 #fuel consumption curve coefficient
-        super(Diesel, self).__init__(id_gen, tec, br, area, cost_up, cost_r,  cost_s, cost_fopm)
+        super(Diesel, self).__init__(id_gen, tec, br, area, cost_up,
+                                     cost_r, cost_s, cost_fopm)
 
 
 class Battery():
-    def __init__(self, id_bat, tec, br, efc, efd, eb_zero, soc_max, dod_max, alpha, area, cost_up, cost_fopm, cost_r, cost_s, cost_vopm):  
+    def __init__(self, id_bat, tec, br, efc, efd, eb_zero, soc_max, dod_max, alpha, 
+                 area, cost_up, cost_fopm, cost_r, cost_s, cost_vopm):  
+        
         self.id_bat = id_bat #Battery id
         self.tec = tec #Technology associated to the battery, only allowed: "B"
         self.br = br #Brand battery
@@ -280,6 +291,7 @@ class RandomCreate():
         s = sc.pearson3.rvs(a,loc=b,scale=c,size=1,random_state=self.seed)
         number = max(0,s[0])
         return number
+    
     #triangular distribution for parameters
     def dist_triangular(self,a,b,c):
         s = np.random.triangular(a, b, c, 1)

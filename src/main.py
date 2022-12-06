@@ -4,19 +4,17 @@ Created on Wed Apr 20 11:14:21 2022
 
 """
 
-from src.utilities import read_data, create_objects, create_technologies, calculate_energy, interest_rate
+from src.utilities import read_data, create_objects, create_technologies
+from src.utilities import calculate_energy, interest_rate
 from src.utilities import fiscal_incentive, calculate_cost_data
 import src.opt as opt
 import pandas as pd 
 from plotly.offline import plot
 pd.options.display.max_columns = None
 
-
 #Algortyhm data
 #Set GAP
 Solver_data = {"MIP_GAP":0.01,"TEE_SOLVER":True,"OPT_SOLVER":"gurobi"}
-
-
 
 #Instance Data
 place = 'Providencia'
@@ -29,7 +27,8 @@ place = 'Leticia'
 place = 'Test'
 place = 'Oswaldo'
 '''
-github_rute = 'https://raw.githubusercontent.com/SENECA-UDEA/microgrids_sizing/development/data/'
+rute_file = 'SENECA-UDEA/microgrids_sizing/development/data/'
+github_rute = 'https://raw.githubusercontent.com/'+rute_file
 # file paths github
 demand_filepath = github_rute + place+'/demand_'+place+'.csv' 
 forecast_filepath = github_rute + place+'/forecast_'+place+'.csv' 
@@ -58,7 +57,9 @@ demand_df, forecast_df, generators, batteries, instance_data, fisc_data, cost_da
                                                                                                 costData_filepath)
 
 #Calculate salvage, operation and replacement cost with investment cost
-generators, batteries = calculate_cost_data(generators, batteries, instance_data, cost_data)
+generators, batteries = calculate_cost_data(generators, batteries, 
+                                            instance_data, cost_data)
+
 # Create objects and generation rule
 generators_dict, batteries_dict = create_objects(generators,
                                                  batteries, 
@@ -75,8 +76,6 @@ demand_df['demand'] = instance_data['demand_covered']  * demand_df['demand']
 
 #Calculate interest rate
 ir = interest_rate(instance_data['i_f'],instance_data['inf'])
-
-
 
 #Calculate fiscal incentives
 delta = fiscal_incentive(fisc_data['credit'], 
@@ -104,14 +103,11 @@ model = opt.make_model(generators_dict,
                        inverter = instance_data['inverter_cost'],
                        nse_cost = cost_data['NSE_COST'])    
 
-
 print("Model generated")
 # solve model 
 results, termination = opt.solve_model(model, 
                                         Solver_data)
 print("Model optimized")
-
-
 
 if termination['Temination Condition'] == 'optimal': 
    #create results
@@ -122,7 +118,8 @@ if termination['Temination Condition'] == 'optimal':
    plot(generation_graph)
    try:
        #create stats
-       percent_df, energy_df, renew_df, total_df, brand_df = calculate_energy(batteries_dict, generators_dict, model_results, demand_df)
+       percent_df, energy_df, renew_df, total_df, brand_df = calculate_energy(batteries_dict, 
+                                                                              generators_dict, model_results, demand_df)
    except KeyError:
        pass
 
