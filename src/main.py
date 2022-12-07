@@ -27,26 +27,28 @@ place = 'Leticia'
 place = 'Test'
 place = 'Oswaldo'
 '''
-rute_file = 'SENECA-UDEA/microgrids_sizing/development/data/'
-github_rute = 'https://raw.githubusercontent.com/'+rute_file
+loc_file = '/SENECA-UDEA/microgrids_sizing/development/data/'
+github_rute = 'https://raw.githubusercontent.com' + loc_file
+
 # file paths github
-demand_filepath = github_rute + place+'/demand_'+place+'.csv' 
-forecast_filepath = github_rute + place+'/forecast_'+place+'.csv' 
-units_filepath = github_rute + place+'/parameters_'+place+'.json' 
-instanceData_filepath = github_rute + place+'/instance_data_'+place+'.json' 
+demand_filepath = github_rute + place + '/demand_' + place + '.csv' 
+forecast_filepath = github_rute + place + '/forecast_' + place + '.csv' 
+units_filepath = github_rute + place + '/parameters_' + place + '.json' 
+instanceData_filepath = github_rute + place + '/instance_data_' + place + '.json' 
 fiscalData_filepath = github_rute +'fiscal_incentive.json'
  
 # file paths local
-demand_filepath = "../data/"+place+"/demand_"+place+".csv"
-forecast_filepath = "../data/"+place+"/forecast_"+place+".csv"
-units_filepath = "../data/"+place+"/parameters_"+place+".json"
-instanceData_filepath = "../data/"+place+"/instance_data_"+place+".json"
+demand_filepath = "../data/" + place + "/demand_" + place+".csv"
+forecast_filepath = "../data/"+place+"/forecast_" + place + ".csv"
+units_filepath = "../data/" + place + "/parameters_" + place + ".json"
+instanceData_filepath = "../data/" + place + "/instance_data_" + place + ".json"
 
 #fiscal Data
 fiscalData_filepath = "../data/Cost/fiscal_incentive.json"
 
 #cost Data
 costData_filepath = "../data/Cost/parameters_cost.json"
+
 
 # read data
 demand_df, forecast_df, generators, batteries, instance_data, fisc_data, cost_data = read_data(demand_filepath,
@@ -72,10 +74,10 @@ technologies_dict, renewables_dict = create_technologies (generators_dict,
                                                           batteries_dict)
 
 #Demand to be covered
-demand_df['demand'] = instance_data['demand_covered']  * demand_df['demand'] 
+demand_df['demand'] = instance_data['demand_covered'] * demand_df['demand'] 
 
 #Calculate interest rate
-ir = interest_rate(instance_data['i_f'],instance_data['inf'])
+ir = interest_rate(instance_data['i_f'], instance_data['inf'])
 
 #Calculate fiscal incentives
 delta = fiscal_incentive(fisc_data['credit'], 
@@ -92,7 +94,7 @@ model = opt.make_model(generators_dict,
                        technologies_dict, 
                        renewables_dict, 
                        amax = instance_data['amax'], 
-                       fuel_cost =  instance_data['fuel_cost'],
+                       fuel_cost = instance_data['fuel_cost'],
                        ir = ir, 
                        nse = instance_data['nse'], 
                        years = instance_data['years'],
@@ -114,7 +116,7 @@ if termination['Temination Condition'] == 'optimal':
    model_results = opt.Results(model, generators_dict, batteries_dict)
    print(model_results.descriptive)
    print(model_results.df_results)
-   generation_graph = model_results.generation_graph(0,len(demand_df))
+   generation_graph = model_results.generation_graph(0, len(demand_df))
    plot(generation_graph)
    try:
        #create stats

@@ -23,7 +23,7 @@ def read_data(demand_filepath,
     forecast_df = pd.read_csv(forecast_filepath)
     demand_df = pd.read_csv(demand_filepath)
     try:
-        generators_data =  requests.get(units_filepath)
+        generators_data = requests.get(units_filepath)
         generators_data = json.loads(generators_data.text)
     except:
         f = open(units_filepath)
@@ -40,7 +40,7 @@ def read_data(demand_filepath,
         batteries = {}
         
     try:
-        instance_data =  requests.get(instance_filepath)
+        instance_data = requests.get(instance_filepath)
         instance_data = json.loads(instance_data.text)
     except:
         f = open(instance_filepath)
@@ -76,7 +76,7 @@ def create_objects(generators, batteries, forecast_df,
         obj_aux.solar_cost()
       elif k['tec'] == 'W':
         obj_aux = Eolic(*k.values())
-        obj_aux.eolic_generation(forecast_df['Wt'],instance_data["h2"],
+        obj_aux.eolic_generation(forecast_df['Wt'], instance_data["h2"],
                                  instance_data["coef_hel"] )
         obj_aux.eolic_cost()
       elif k['tec'] == 'D':
@@ -162,25 +162,22 @@ def calculate_sizing_cost(generators_dict, batteries_dict, ir, years,
                 
                 expr -= gen.cost_s 
                 expr += gen.cost_fopm 
-                #expr2 += gen.cost_fopm  
             
             for bat in batteries_dict.values(): 
                 expr += bat.cost_up * delta
                 expr += bat.cost_r * delta
                 expr -= bat.cost_s
                 expr += bat.cost_fopm
-                #expr2 += gen.cost_fopm 
-             
-            CRF = (ir * (1 + ir)**(years))/((1 + ir)**(years)-1)    
+
+            CRF = (ir * (1 + ir) ** (years)) / ((1 + ir) ** (years) - 1)    
             #Operative cost doesn't take into account the crf
-            TNPCCRF = (expr + inverter)*CRF 
-            #TNCCCRF = expr * (1+ir) + expr2 * ((((inf)**t_years)-1)/inf)
+            TNPCCRF = (expr + inverter) * CRF 
             return TNPCCRF
 
 
 def calculate_area (sol_actual):
     solution = copy.deepcopy(sol_actual)
-    dict_actual = {**solution.generators_dict_sol,**solution.batteries_dict_sol}
+    dict_actual = {**solution.generators_dict_sol, **solution.batteries_dict_sol}
     area = 0
     for i in dict_actual.values():
         area += i.area 
@@ -196,45 +193,45 @@ def calculate_energy(batteries_dict, generators_dict, model_results, demand_df):
    aux_energy_data = []
    renew_data = {}
    aux_renew_data = []
-   total_data = [0]*len(demand_df)
+   total_data = [0] * len(demand_df)
    aux_total_data = []
    brand_data = {}
    aux_brand_data = []
    for bat in batteries_dict.values(): 
        #check that the battery is installed
        if (model_results.descriptive['batteries'][bat.id_bat] == 1):
-           column_data[bat.id_bat+'_%'] =  (model_results.df_results[bat.id_bat+'_b-']
-                                            / model_results.df_results['demand'])
-           column_data[bat.id_bat+'_%charge'] = ( model_results.df_results[bat.id_bat+'_b+']
-                                                 / model_results.df_results['demand'])
-           aux_total_data = model_results.df_results[bat.id_bat+'_b-']
+           column_data[bat.id_bat + '_%'] = (model_results.df_results[bat.id_bat + '_b-']
+                                             / model_results.df_results['demand'])
+           column_data[bat.id_bat + '_%charge'] = (model_results.df_results[bat.id_bat + '_b+']
+                                                   / model_results.df_results['demand'])
+           aux_total_data = model_results.df_results[bat.id_bat + '_b-']
            #sum all generation
            total_data += aux_total_data
            #check the key for create or continue in the same dict
-           key_energy_total = bat.tec+ 'total'
+           key_energy_total = bat.tec + 'total'
            key_brand_total = bat.br + 'total'
            if key_energy_total in energy_data:
                aux_energy_data = []
                aux_energy_data = (energy_data[key_energy_total] 
-                                  +  model_results.df_results[bat.id_bat+'_b-'])
+                                  + model_results.df_results[bat.id_bat + '_b-'])
                #fill the dictionary
                energy_data[key_energy_total] = aux_energy_data
            else:
-               energy_data[key_energy_total] =  model_results.df_results[bat.id_bat+'_b-']           
+               energy_data[key_energy_total] = model_results.df_results[bat.id_bat + '_b-']           
     
            if key_brand_total in brand_data:
                aux_brand_data = []
                aux_brand_data = (brand_data[key_brand_total] 
-                                 +  model_results.df_results[bat.id_bat+'_b-'])
+                                 + model_results.df_results[bat.id_bat + '_b-'])
                #fill the dictionary
                brand_data[key_brand_total] = aux_brand_data
            else:
-               brand_data[key_brand_total] =  model_results.df_results[bat.id_bat+'_b-']           
+               brand_data[key_brand_total] = model_results.df_results[bat.id_bat + '_b-']           
       
    for gen in generators_dict.values():
        #check that the generator is installed
        if (model_results.descriptive['generators'][gen.id_gen] == 1):
-           column_data[gen.id_gen+'_%'] =  (model_results.df_results[gen.id_gen] 
+           column_data[gen.id_gen + '_%'] = (model_results.df_results[gen.id_gen] 
                                             / model_results.df_results['demand'])
            #check the key for create or continue in the same dict
            key_energy_total = gen.tec + 'total'
@@ -245,20 +242,20 @@ def calculate_energy(batteries_dict, generators_dict, model_results, demand_df):
            if key_energy_total in energy_data:
                aux_energy_data = []
                aux_energy_data = (energy_data[key_energy_total] 
-                                  +  model_results.df_results[gen.id_gen])
+                                  + model_results.df_results[gen.id_gen])
                #fill the dictionary
                energy_data[key_energy_total] = aux_energy_data
            else:
-               energy_data[key_energy_total] =  model_results.df_results[gen.id_gen]           
+               energy_data[key_energy_total] = model_results.df_results[gen.id_gen]           
            
            if key_brand_total in brand_data:
                aux_brand_data = []
                aux_brand_data = (brand_data[key_brand_total] 
-                                 +  model_results.df_results[gen.id_gen])
+                                 + model_results.df_results[gen.id_gen])
                #fill the dictionary
                brand_data[key_brand_total] = aux_brand_data
            else:
-               brand_data[key_brand_total] =  model_results.df_results[gen.id_gen]           
+               brand_data[key_brand_total] = model_results.df_results[gen.id_gen]           
            
            if (gen.tec == 'S' or gen.tec == 'W'):
                if key_renew_total in renew_data:
@@ -271,12 +268,12 @@ def calculate_energy(batteries_dict, generators_dict, model_results, demand_df):
                    renew_data[key_renew_total] =  model_results.df_results[gen.id_gen]           
 
    #Create dataframes
-   percent_df = pd.DataFrame(column_data, columns=[*column_data.keys()])
-   energy_df = pd.DataFrame(energy_data, columns=[*energy_data.keys()])
-   renew_df = pd.DataFrame(renew_data, columns=[*renew_data.keys()])
+   percent_df = pd.DataFrame(column_data, columns = [*column_data.keys()])
+   energy_df = pd.DataFrame(energy_data, columns = [*energy_data.keys()])
+   renew_df = pd.DataFrame(renew_data, columns = [*renew_data.keys()])
    arraydf = np.array(total_data)
-   total_df = pd.DataFrame(arraydf, columns=['Total energy'])
-   brand_df = pd.DataFrame(brand_data, columns=[*brand_data.keys()])
+   total_df = pd.DataFrame(arraydf, columns = ['Total energy'])
+   brand_df = pd.DataFrame(brand_data, columns = [*brand_data.keys()])
    
    return percent_df, energy_df, renew_df, total_df, brand_df
 
@@ -284,7 +281,7 @@ def calculate_energy(batteries_dict, generators_dict, model_results, demand_df):
 def interest_rate (i_f, inf):
     #inf = inflation
     #i_f = nominal rate
-    ir = (i_f - inf)/(1 + inf)
+    ir = (i_f - inf) / (1 + inf)
     return ir
 
 
@@ -293,17 +290,17 @@ def calculate_cost_data(generators, batteries, instance_data,
     #inflation
     inf = instance_data['inf']
     #nominal rate
-    i_f= instance_data['i_f']
+    i_f = instance_data['i_f']
     years = instance_data['years']
-    ir = interest_rate(i_f,inf)
+    ir = interest_rate(i_f, inf)
     #defaul useful life Diesel and batteries = 10
     life_cicle = parameters_cost['life_cicle']
-    ran = years/life_cicle
+    ran = years / life_cicle
     
     #Calculate tax for remplacement
     tax = 0
-    for h in range(1,int(ran)+1):
-        tax += 1/((1+ir)**(h*life_cicle))
+    for h in range(1, int(ran) + 1):
+        tax += 1 / ((1 + ir)**(h * life_cicle))
         
     aux_generators = []
     generators_def = []
@@ -317,26 +314,26 @@ def calculate_cost_data(generators, batteries, instance_data,
             aux_generators = i
             aux_generators['cost_r'] = parameters_cost['param_r_solar']
             aux_generators['cost_s'] = (cost_up * parameters_cost['param_s_solar'] 
-                                        * (((1 + inf)/(1 + ir))**years))
+                                        * (((1 + inf) / (1 + ir)) ** years))
             aux_generators['cost_fopm'] = cost_up * parameters_cost['param_f_solar'] 
-            aux_generators['cost_vopm'] =  cost_up * parameters_cost['param_v_solar']      
+            aux_generators['cost_vopm'] = cost_up * parameters_cost['param_v_solar']      
         elif (i['tec'] == 'W'):
             cost_up = i['cost_up']
             aux_generators = []
             aux_generators = i
             aux_generators['cost_r'] = parameters_cost['param_r_wind']  
             aux_generators['cost_s'] = (cost_up * parameters_cost['param_s_wind'] 
-                                        * (((1 + inf)/(1 + ir))**years))
-            aux_generators['cost_fopm'] =  cost_up * parameters_cost['param_f_wind']  
-            aux_generators['cost_vopm'] =  cost_up * parameters_cost['param_v_wind']              
+                                        * (((1 + inf) / (1 + ir))**years))
+            aux_generators['cost_fopm'] = cost_up * parameters_cost['param_f_wind']  
+            aux_generators['cost_vopm'] = cost_up * parameters_cost['param_v_wind']              
         elif (i['tec'] == 'D'):
             cost_up = i['cost_up']
             aux_generators = []
             aux_generators = i
-            aux_generators['cost_r'] = cost_up * parameters_cost['param_r_diesel']   * tax
+            aux_generators['cost_r'] = cost_up * parameters_cost['param_r_diesel'] * tax
             aux_generators['cost_s'] = (cost_up * parameters_cost['param_s_diesel']   
-                                        * (((1 + inf)/(1 + ir))**years))
-            aux_generators['cost_fopm'] =  cost_up * parameters_cost['param_f_diesel']
+                                        * (((1 + inf) / (1 + ir))**years))
+            aux_generators['cost_fopm'] = cost_up * parameters_cost['param_f_diesel']
         generators_def.append(copy.deepcopy(aux_generators))  
         
     for i in batteries:
@@ -346,8 +343,8 @@ def calculate_cost_data(generators, batteries, instance_data,
         aux_batteries['cost_r'] = cost_up * parameters_cost['param_r_bat'] * tax
         aux_batteries['cost_s'] = (cost_up * parameters_cost['param_s_bat']
                                    * (((1 + inf)/(1 + ir))**years))
-        aux_batteries['cost_fopm'] =  cost_up * parameters_cost['param_f_bat']
-        aux_batteries['cost_vopm'] =  cost_up * parameters_cost['param_v_bat']
+        aux_batteries['cost_fopm'] = cost_up * parameters_cost['param_f_bat']
+        aux_batteries['cost_vopm'] = cost_up * parameters_cost['param_v_bat']
         batteries_def.append(copy.deepcopy(aux_batteries))
 
     return generators_def, batteries_def
@@ -362,13 +359,13 @@ def fiscal_incentive (credit, depreciation, corporate_tax, ir, T1, T2):
     #T2 = useful life (year) of the power generating facility - depreciation
     delta = 0
     expr = 0
-    for j in range(1,int(T1) + 1):
-        expr += credit/((1 + ir)**j)
+    for j in range(1, int(T1) + 1):
+        expr += credit / ((1 + ir)**j)
 
-    for j in range(1,int(T2) + 1):
-        expr += depreciation/((1 + ir)**j)
+    for j in range(1, int(T2) + 1):
+        expr += depreciation / ((1 + ir)**j)
     
-    delta = (1/(1-corporate_tax))*(1-corporate_tax*expr)
+    delta = (1 / (1 - corporate_tax)) * (1 - corporate_tax * expr)
     
     return delta
 
@@ -388,22 +385,21 @@ def irradiance_panel (forecast_df, instance_data):
         alpha = instance_data["alpha_albedo"]
         SF1 = instance_data['shading factor']
         gt_data = {}
-
         for t in list(forecast_df['t'].index.values):
             LT = forecast_df['t'][t]
             DNI = forecast_df['DNI'][t] #Direct normal Irradiance
             DHI = forecast_df['DHI'][t] #Diffuse Horizontal Irradiance
             GHI = forecast_df['GHI'][t] #Global horizontal Irradiance
-            day = forecast_df['day'][t] #Day of the year            
-            Gs = get_solar_parameters(LT,TZ,day,long,latit) #Sum altitude and sum Azimuth   
-            ds = cos_incidence_angle(a_M,A_M,Gs[0],Gs[1]) #COsine incidence angle
+            day = forecast_df['day'][t] #Day of the year
+            Gs = get_solar_parameters(LT, TZ, day, long, latit) #Sum altitude and sum Azimuth   
+            ds = cos_incidence_angle(a_M, A_M, Gs[0], Gs[1]) #COsine incidence angle
             svf = get_sky_view_factor(theta_M) #Sky view factor
-            G_dr = SF1*DNI*ds
+            G_dr = SF1 * DNI * ds
             if G_dr < 0:
                 G_dr = 0 #negative Direct Irradiance on the PV module as zero
 
             G_df = svf * DHI #Diffuse irradiancia
-            G_alb = alpha*(1 - svf)*GHI #Groud irradiance
+            G_alb = alpha*(1 - svf) * GHI #Groud irradiance
             gt_data[t] = G_dr + G_df + G_alb #Total irradiance
     
     gt =  pd.DataFrame(gt_data.items(), columns = ['t','gt']) 
@@ -413,14 +409,13 @@ def irradiance_panel (forecast_df, instance_data):
 
 def min_to_hms(hm):
     """conversion min -> (hours, min, sec)
-    
     """
-    H = int(hm/60)
-    M = ((hm/60)-H)*60
+    H = int(hm / 60)
+    M = ((hm / 60) - H) * 60
     m = int(M)
-    S = (M-m)*60
+    S = (M - m) * 60
     s = int(S)
-    return H,m,s
+    return H, m, s
 
 
 def decimal_hour_to_hms(hd):
@@ -428,14 +423,14 @@ def decimal_hour_to_hms(hd):
        (hours,minutes,seconds)
     """
     H = int(hd)
-    m = (hd - H)*60
+    m = (hd - H) * 60
     M = int(m)
-    s = m-M
-    S = int(s*60)
-    return H,M,S
+    s = m - M
+    S = int(s * 60)
+    return H, M, S
 
 
-def get_solar_parameters(LT,TZ,dia,Long,Latit):
+def get_solar_parameters(LT, TZ, dia, Long, Latit):
     """LT: local time(hour)
        TZ: time zone
        dia: counted from January 1
@@ -446,46 +441,46 @@ def get_solar_parameters(LT,TZ,dia,Long,Latit):
        version: 2019-02-05
        ref:https://www.pveducation.org/pvcdrom/2-properties-sunlight/suns-position
     """
-    ka = 180/np.pi
-    LSTM = 15*(TZ)#Local Standard Time Meridian(LSTM)
-    EoT = lambda x:9.87*np.sin(2*x)-7.53*np.cos(x)-1.5*np.sin(x)#x in radians
-    B = lambda d:((360/365)*d - 81)*(np.pi/180)
-    LT1 = LT*60 #conversion to minutes
-    TC = 4*(Long - LSTM) + EoT(B(dia))#Time Correction Factor (TC)
-    LST = LT1 + (TC/60)#The Local Solar Time (LST)
-    HRA = 15*((LST/60)-12)#Hour Angle (HRA)
-    delta = 23.45*np.sin(B(dia))#declination angle (delta)
-    Elevation = (np.arcsin(np.sin(delta*np.pi/180)*np.sin(Latit*np.pi/180)
-                           +np.cos(delta*np.pi/180)*np.cos(Latit*np.pi/180)*np.cos(HRA*np.pi/180)))   
+    ka = 180 / np.pi
+    LSTM = 15 * TZ#Local Standard Time Meridian(LSTM)
+    EoT = lambda x:9.87 * np.sin(2 * x) - 7.53 * np.cos(x) - 1.5 * np.sin(x)#x in radians
+    B = lambda d:((360 / 365) * d - 81)*(np.pi / 180)
+    LT1 = LT * 60 #conversion to minutes
+    TC = 4 * (Long - LSTM) + EoT(B(dia))#Time Correction Factor (TC)
+    LST = LT1 + (TC / 60)#The Local Solar Time (LST)
+    HRA = 15 * ((LST / 60) - 12)#Hour Angle (HRA)
+    delta = 23.45 * np.sin(B(dia))#declination angle (delta)
+    Elevation = (np.arcsin(np.sin(delta * np.pi / 180) * np.sin(Latit * np.pi / 180)
+                           + np.cos(delta * np.pi / 180) * np.cos(Latit * np.pi / 180) * np.cos(HRA * np.pi / 180)))    
     ##calculate Azimuth 
     ## asumes teta:latitude
-    k_num = (np.sin(delta*np.pi/180)*np.cos(Latit*np.pi/180)
-             +np.cos(delta*np.pi/180)*np.sin(Latit*np.pi/180)*np.cos(HRA*np.pi/180))
-    k_total = k_num/np.cos(Elevation)
+    k_num = (np.sin(delta * np.pi / 180)*np.cos(Latit * np.pi / 180) + np.cos(delta * np.pi / 180)
+             *np.sin(Latit * np.pi / 180) * np.cos(HRA * np.pi / 180))
+    k_total = k_num / np.cos(Elevation)
 
-    if abs(k_total)>1.0:## vancouver essay
-        k_total = k_total/abs(k_total)
+    if abs(k_total) > 1.0:## vancouver essay
+        k_total = k_total / abs(k_total)
     # print(k_total)
 
     Azimuth = np.arccos(k_total)
-    if min_to_hms(LST)[0]>=12:#Correction after noon
-        Azimuth = 2*np.pi - Azimuth
+    if min_to_hms(LST)[0] >= 12:#Correction after noon
+        Azimuth = 2 * np.pi - Azimuth
 
-    return Elevation*ka, Azimuth*ka 
+    return Elevation * ka, Azimuth * ka 
 
 
 #a_s: Sun altitude (grados)//Elevation
 #A_s: Sun Azimuth (grados)
-def cos_incidence_angle(a_M,A_M,a_s,A_s):
+def cos_incidence_angle(a_M, A_M, a_s, A_s):
     """AOI: angle of incidence
-        a_M: Module altitude (grados)
-        A_M: Module Azimuth (grados)
-        a_s: Sun altitude (grados)
-        A_s: Sun Azimuth (grados)
+        a_M: Module altitude (degrees)
+        A_M: Module Azimuth (degrees)
+        a_s: Sun altitude (degrees)
+        A_s: Sun Azimuth (degrees)
         """
     Ar = A_M - A_s
-    c1 = np.cos(a_M*np.pi/180)*np.cos(a_s*np.pi/180)*np.cos(Ar*np.pi/180)
-    c2 = np.sin(a_M*np.pi/180)*np.sin(a_s*np.pi/180)
+    c1 = np.cos(a_M * np.pi / 180) * np.cos(a_s * np.pi / 180) * np.cos(Ar * np.pi / 180)
+    c2 = np.sin(a_M * np.pi / 180) * np.sin(a_s * np.pi / 180)
     ct = c1 + c2
     return ct
 
@@ -494,20 +489,20 @@ def get_sky_view_factor(t_M):
     """t_M: tilted angle of Module (grados)
         Free Horizont model
     """
-    svf = (1 + np.cos(t_M*np.pi/180))/2
+    svf = (1 + np.cos(t_M * np.pi / 180)) / 2
     return svf
 
 
 #create the hourly dataframe
 def hour_data(data):
-    hours_size = len(data)/24
-    vec = {k : [0]*int(hours_size) for k in range(int(24))}
+    hours_size = len(data) / 24
+    vec = {k : [0] * int(hours_size) for k in range(int(24))}
     
     for t in data.index.tolist():
         #get the hour
-        l = t%24
+        l = t % 24
         #get the day
-        k = math.floor(t/24)
+        k = math.floor(t / 24)
         #create data
         vec[l][k] = data[t]
         
@@ -530,15 +525,14 @@ def get_best_distribution(vec):
 def best_distribution(data):
     #available distributions
     dist_names = [
-        "exponweib","norm", "weibull_max", "weibull_min", "pareto",
-        "genextreme", "gamma", "beta", "rayleigh", "invgauss",
-        "uniform","expon","lognorm","pearson3","triang"
+        "exponweib","norm","weibull_max","weibull_min","pareto", 
+        "genextreme","gamma","beta","rayleigh","invgauss",
+        "uniform","expon", "lognorm","pearson3","triang"
         ]
-    
     dist_results = []
     params = {}
     #if 0 no distribution, 0 value, example solar generator at night
-    if (sum(data) == 0 and np.std(data)== 0):
+    if (sum(data) == 0 and np.std(data) == 0):
         best_dist = 'No distribution'
         best_p = None
         params[best_dist] = 0
@@ -546,14 +540,14 @@ def best_distribution(data):
         #fit each distribution
         for dist_name in dist_names:
             dist = getattr(st, dist_name)
-            param = dist.fit(data)    
+            param = dist.fit(data)
             params[dist_name] = param
             # Applying the Kolmogorov-Smirnov test and get p-value
-            D, p = st.kstest(data, dist_name, args=param)
+            D, p = st.kstest(data, dist_name, args = param)
             dist_results.append((dist_name, p))
     
         # select the best fitted distribution
-        best_dist, best_p = (max(dist_results, key=lambda item: item[1]))
+        best_dist, best_p = (max(dist_results, key = lambda item: item[1]))
         # store the name of the best fit and its p value
 
     return best_dist, best_p, params[best_dist]
@@ -563,19 +557,20 @@ def best_distribution(data):
 def calculate_stochasticity_demand(rand_ob, demand_df, dem_dist):
     for t in demand_df['t']:
         #get the hour for the distribution
-        l = t%24
+        l = t % 24
         #generate one random number for each hour (demand and forecast)
         n_d = generate_random(rand_ob, dem_dist[l])
-        demand_df.loc[t] = [t,n_d]
+        demand_df.loc[t] = [t, n_d]
         
     return demand_df
-
     
+
 def calculate_stochasticity_forecast(rand_ob, forecast_df, wind_dist,
                                      sol_distdni, sol_distdhi, sol_distghi):
+    
     for t in forecast_df['t']:
         #get the hour for the distribution
-        l = t%24
+        l = t % 24
         #generate one random number for each hour (demand and forecast)
         nf_w = generate_random(rand_ob, wind_dist[l])
         nf_dni = generate_random(rand_ob, sol_distdni[l])
@@ -585,10 +580,10 @@ def calculate_stochasticity_forecast(rand_ob, forecast_df, wind_dist,
         Qt = forecast_df['Qt'][t]
         day = forecast_df['day'][t]
         SF = forecast_df['SF'][t]
-        forecast_df.loc[t] = [t,nf_dni,t_ambt,nf_w,Qt,nf_ghi,day,SF,nf_dhi]
-                       
+        forecast_df.loc[t] = [t, nf_dni, t_ambt, nf_w, Qt, nf_ghi, day, SF, nf_dhi]
+               
     return forecast_df
-
+    
 
 #generate one random number with distribution
 def generate_random(rand_ob, dist):

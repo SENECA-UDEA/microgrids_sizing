@@ -38,8 +38,8 @@ for i in total_transformed:
         cost_s = i['cost_s']
         cost_fopm = i['cost_fopm']
         cost_vopm = i['cost_vopm']
-        #create all generators with max, min and step
 
+        #create all generators with max, min and step
         for j in range(min_cell, max_cell + 1, step_cell):
             aux_generators = []
             aux_generators = i
@@ -82,5 +82,5 @@ total_def["batteries"] = batteries_def
 with open('C:\\Users\\sebas\\OneDrive\\Documentos\\GitHub\\microgrids_sizing\\data\\json_generated.json',
           'w') as outfile:
     
-    json.dump(total_def, outfile, indent=4)
+    json.dump(total_def, outfile, indent = 4)
 

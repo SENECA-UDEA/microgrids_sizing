@@ -35,20 +35,21 @@ class Solar(Generator):
         super(Solar, self).__init__(id_gen, tec, br,area, cost_up,
                                     cost_r, cost_s, cost_fopm)
 
-    def solar_generation(self, t_amb, gt,G_stc,deg): 
+    def solar_generation(self, t_amb, gt, G_stc, deg):
+            '''Calculate solar generation at each period'''
             #G_stc: Standar solar radiation
             #Calculate generation over the time
             for t in list(gt.index.values):
                 Irad_panel = gt['gt'][t] #irradiance in module W/m2
                 
-                if Irad_panel<=0:
+                if Irad_panel <= 0:
                    self.gen_rule[t] = 0
                 else:
-                    TM = t_amb[t] + (self.INOCT - 20)*(Irad_panel/self.G_noct)
-                    self.gen_rule[t] = self.Ppv_stc*(Irad_panel/G_stc)*(1 + self.kt*(TM-25))*self.fpv
-                    year = math.floor(gt['t'][t]/8760) 
+                    TM = t_amb[t] + (self.INOCT - 20) * (Irad_panel / self.G_noct)
+                    self.gen_rule[t] = self.Ppv_stc * (Irad_panel/G_stc) * (1 + self.kt * (TM - 25)) * self.fpv
+                    year = math.floor(gt['t'][t] / 8760) 
                     #degradarion rate
-                    self.gen_rule[t] = self.gen_rule[t] * (1- deg)**(year)
+                    self.gen_rule[t] = self.gen_rule[t] * (1 - deg)**(year)
             
             return self.gen_rule
 
@@ -59,7 +60,7 @@ class Solar(Generator):
         return self.cost_rule
                                
     # Temperature model
-    def get_inoct(self, caso = 1 , w = 1):
+    def get_inoct(self, caso = 1, w = 1):
         """caso 1: direct mount
             caso 2: stand-off
             caso 3: rack mount
@@ -71,9 +72,9 @@ class Solar(Generator):
         if caso == 1:
             inoct = self.T_noct + 18.0
         if caso == 2:
-            if w <=1:
+            if w <= 1:
                 inoct = self.T_noct + 11.0
-            elif w <=3:
+            elif w <= 3:
                 inoct = self.T_noct + 3.0
             else:
                 inoct = self.T_noct - 1.0
@@ -100,11 +101,11 @@ class Eolic(Generator):
         super(Eolic, self).__init__(id_gen, tec, br, area, cost_up, 
                                     cost_r, cost_s, cost_fopm)
     
-    def eolic_generation(self, forecastWt, h2, coef_hel,deg):
+    def eolic_generation(self, forecastWt, h2, coef_hel, deg):
         #Wt = wind speed over the time
         
         #Calculate generation over the time
-        Hellmann = (self.h/h2)**coef_hel
+        Hellmann = (self.h / h2) ** coef_hel
         for t in list(forecastWt.index.values):
             #Calculate Hellmann coefficient
             i = forecastWt[t] * Hellmann
@@ -112,16 +113,16 @@ class Eolic(Generator):
             if i <= self.s_in:
               self.gen_rule[t] = 0
             elif i < self.s_rate:
-              self.gen_rule[t] = self.P_y*((i**self.n_eq-self.s_in**self.n_eq)/(self.s_rate
-                                                                                **self.n_eq-self.s_in**self.n_eq))
+              self.gen_rule[t] = self.P_y * ((i**self.n_eq - self.s_in**self.n_eq) / (self.s_rate
+                                                                                      **self.n_eq - self.s_in**self.n_eq))
               
-              year = math.floor(forecastWt[t]/8760) 
-              self.gen_rule[t] = self.gen_rule[t] * (1- deg)**(year)
+              year = math.floor(forecastWt[t] / 8760) 
+              self.gen_rule[t] = self.gen_rule[t] * (1 - deg)**(year)
             elif i <= self.s_out:                  
               self.gen_rule[t] =  self.P_y
-              year = math.floor(forecastWt[t]/8760) 
+              year = math.floor(forecastWt[t] / 8760) 
               #degradarion rate
-              self.gen_rule[t] = self.gen_rule[t] * (1- deg)**(year)
+              self.gen_rule[t] = self.gen_rule[t] * (1 - deg)**(year)
             else:
               self.gen_rule[t] = 0
         
@@ -142,7 +143,7 @@ class Diesel(Generator):
         self.f0 = f0 #fuel consumption curve coefficient
         self.f1 = f1 #fuel consumption curve coefficient
         super(Diesel, self).__init__(id_gen, tec, br, area, 
-                                     cost_up, cost_r,  cost_s, cost_fopm)
+                                     cost_up, cost_r, cost_s, cost_fopm)
 
 
 class Battery():
@@ -167,7 +168,7 @@ class Battery():
         self.soc_min = 0 #Minimum level of energy that must be in the battery
         
     def calculate_soc(self): #Calculate soc_min with soc_max and dod_max
-        self.soc_min = self.soc_max * (1-self.dod_max)
+        self.soc_min = self.soc_max * (1 - self.dod_max)
         return self.soc_min
 
 
@@ -204,100 +205,100 @@ class RandomCreate():
 
     def create_rand_int(self, inf, sup):
         selection = 0
-        selection = random.randint(inf,sup)
+        selection = random.randint(inf, sup)
         return selection
 
-    def create_rand_sample(self,list_rand, n):
+    def create_rand_sample(self, list_rand, n):
         selection = 0
-        selection = random.sample(list_rand,n)
+        selection = random.sample(list_rand, n)
         return selection
 
-    def create_rand_shuffle(self,list_rand):
+    def create_rand_shuffle(self, list_rand):
         random.shuffle(list_rand)
         return list_rand
 
-    def create_rand_p_normal(self, means,desv,size):
+    def create_rand_p_normal(self, means, desv, size):
         selection = 0
-        selection = np.random.normal(loc=means, scale=desv, size=size)
+        selection = np.random.normal(loc = means, scale = desv, size = size)
         return selection
 
-    def dist_triang(self,a,b,c):
-        s = sc.triang.rvs(a,loc=b,scale=c,size=1,random_state=self.seed)
-        number = max(0,s[0])
+    def dist_triang(self, a, b, c):
+        s = sc.triang.rvs(a, loc = b, scale = c, size = 1, random_state = self.seed)
+        number = max(0, s[0])
         return number
 
-    def dist_uniform(self,a,b):
-        s = sc.uniform.rvs(loc=a,scale=b,size=1,random_state=self.seed)
-        number = max(0,s[0])
+    def dist_uniform(self, a, b):
+        s = sc.uniform.rvs(loc = a, scale = b, size = 1,random_state = self.seed)
+        number = max(0, s[0])
         return number
 
-    def dist_norm(self,a,b):
-        s = sc.norm.rvs(loc=a,scale=b,size=1,random_state=self.seed)
-        number = max(0,s[0])
+    def dist_norm(self, a, b):
+        s = sc.norm.rvs(loc = a, scale = b, size = 1,random_state = self.seed)
+        number = max(0, s[0])
         return number
 
-    def dist_exponweib(self,a,b,c,d):
-        s = sc.exponweib.rvs(a,b,loc=c,scale=d,size=1,random_state=self.seed)
-        number = max(0,s[0])
+    def dist_exponweib(self,a, b, c, d):
+        s = sc.exponweib.rvs(a, b, loc = c, scale = d, size = 1, random_state = self.seed)
+        number = max(0, s[0])
         return number
 
-    def dist_weibull_max(self,a,b,c):
-        s = sc.weibull_max.rvs(a,loc=b,scale=c,size=1,random_state=self.seed)
-        number = max(0,s[0])
+    def dist_weibull_max(self, a, b, c):
+        s = sc.weibull_max.rvs(a, loc = b, scale = c, size = 1, random_state = self.seed)
+        number = max(0, s[0])
         return number
 
-    def dist_weibull_min(self,a,b,c):
-        s = sc.weibull_min.rvs(a,loc=b,scale=c,size=1,random_state=self.seed)
-        number = max(0,s[0])
+    def dist_weibull_min(self, a, b, c):
+        s = sc.weibull_min.rvs(a, loc = b, scale = c, size = 1, random_state = self.seed)
+        number = max(0, s[0])
         return number
 
-    def dist_pareto(self,a,b,c):
-        s = sc.pareto.rvs(a,loc=b,scale=c,size=1,random_state=self.seed)
-        number = max(0,s[0])
+    def dist_pareto(self, a, b, c):
+        s = sc.pareto.rvs(a, loc = b, scale = c, size = 1, random_state = self.seed)
+        number = max(0, s[0])
         return number
 
-    def dist_genextreme(self,a,b,c):
-        s = sc.genextreme.rvs(a,loc=b,scale=c,size=1,random_state=self.seed)
-        number = max(0,s[0])
+    def dist_genextreme(self, a, b, c):
+        s = sc.genextreme.rvs(a, loc = b, scale = c, size = 1, random_state = self.seed)
+        number = max(0, s[0])
         return number
 
-    def dist_gamma(self,a,b,c):
-        s = sc.gamma.rvs(a,loc=b,scale=c,size=1,random_state=self.seed)
-        number = max(0,s[0])
+    def dist_gamma(self, a, b, c):
+        s = sc.gamma.rvs(a, loc = b, scale = c, size = 1, random_state = self.seed)
+        number = max(0, s[0])
         return number
 
-    def dist_beta(self,a,b,c,d):
-        s = sc.beta.rvs(a,b,loc=c,scale=d,size=1,random_state=self.seed)
-        number = max(0,s[0])
+    def dist_beta(self, a, b, c, d):
+        s = sc.beta.rvs(a, b, loc = c, scale = d, size = 1, random_state = self.seed)
+        number = max(0, s[0])
         return number
 
-    def dist_rayleigh(self,a,b):
-        s = sc.rayleigh.rvs(loc=a,scale=b,size=1,random_state=self.seed)
-        number = max(0,s[0])
+    def dist_rayleigh(self, a, b):
+        s = sc.rayleigh.rvs(loc = a, scale = b, size = 1,random_state = self.seed)
+        number = max(0, s[0])
         return number
 
-    def dist_invgauss(self,a,b,c):
-        s = sc.triang.rvs(a,loc=b,scale=c,size=1,random_state=self.seed)
-        number = max(0,s[0])
+    def dist_invgauss(self, a, b, c):
+        s = sc.triang.rvs(a, loc = b, scale = c, size = 1, random_state = self.seed)
+        number = max(0, s[0])
         return number
 
-    def dist_expon(self,a,b):
-        s = sc.expon.rvs(loc=a,scale=b,size=1,random_state=self.seed)
-        number = max(0,s[0])
+    def dist_expon(self, a, b):
+        s = sc.expon.rvs(loc = a, scale = b, size = 1,random_state = self.seed)
+        number = max(0, s[0])
         return number
 
-    def dist_lognorm(self,a,b,c):
-        s = sc.lognorm.rvs(a,loc=b,scale=c,size=1,random_state=self.seed)
-        number = max(0,s[0])
+    def dist_lognorm(self, a, b, c):
+        s = sc.lognorm.rvs(a, loc = b, scale = c, size = 1, random_state = self.seed)
+        number = max(0, s[0])
         return number
 
-    def dist_pearson3(self,a,b,c):
-        s = sc.pearson3.rvs(a,loc=b,scale=c,size=1,random_state=self.seed)
-        number = max(0,s[0])
+    def dist_pearson3(self, a, b, c):
+        s = sc.pearson3.rvs(a, loc = b, scale = c, size = 1, random_state = self.seed)
+        number = max(0, s[0])
         return number
 
     #triangular distribution for parameters
-    def dist_triangular(self,a,b,c):
+    def dist_triangular(self, a, b, c):
         s = np.random.triangular(a, b, c, 1)
-        number = max(0,s[0])
+        number = max(0, s[0])
         return number

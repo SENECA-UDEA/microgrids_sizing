@@ -19,12 +19,10 @@ from Dispatch_Estrategy.dispatchstrategy import Results
 import copy
 pd.options.display.max_columns = None
 
-
-
 #Set the seed for random
-'''
-seed = 42
-'''
+
+#seed = 42
+
 seed = None
 
 rand_ob = RandomCreate(seed = seed)
@@ -32,7 +30,6 @@ rand_ob = RandomCreate(seed = seed)
 #add and remove funtion
 add_function = 'GRASP'
 remove_function = 'RANDOM'
-
 
 #data place
 place = 'Providencia'
@@ -48,7 +45,7 @@ place = 'Oswaldo'
 #Strategy list for select
 list_ds_diesel = ["diesel"]
 list_ds_diesel_renewable = [
-    "diesel - solar", "diesel - wind", 
+    "diesel - solar","diesel - wind", 
     "diesel - solar - wind"
     ]
 
@@ -62,28 +59,26 @@ list_ds_dies_batt_renew = [
     "battery - diesel - solar - wind"
     ]
 
-                
-
 #trm to current COP
 TRM = 3910
 #time not served best solution
 best_nsh = 0
 
 loc_file = '/SENECA-UDEA/microgrids_sizing/development/data/'
-github_rute = 'https://raw.githubusercontent.com'+loc_file
+github_rute = 'https://raw.githubusercontent.com' + loc_file
 
 # file paths github
-demand_filepath = github_rute + place+'/demand_'+place+'.csv' 
-forecast_filepath = github_rute + place+'/forecast_'+place+'.csv' 
-units_filepath = github_rute + place+'/parameters_'+place+'.json' 
-instanceData_filepath = github_rute + place+'/instance_data_'+place+'.json' 
+demand_filepath = github_rute + place + '/demand_' + place + '.csv' 
+forecast_filepath = github_rute + place + '/forecast_' + place + '.csv' 
+units_filepath = github_rute + place + '/parameters_' + place + '.json' 
+instanceData_filepath = github_rute + place + '/instance_data_' + place + '.json' 
 fiscalData_filepath = github_rute +'fiscal_incentive.json'
  
 # file paths local
-demand_filepath = "../data/"+place+"/demand_"+place+".csv"
-forecast_filepath = "../data/"+place+"/forecast_"+place+".csv"
-units_filepath = "../data/"+place+"/parameters_"+place+".json"
-instanceData_filepath = "../data/"+place+"/instance_data_"+place+".json"
+demand_filepath = "../data/" + place + "/demand_" + place+".csv"
+forecast_filepath = "../data/"+place+"/forecast_" + place + ".csv"
+units_filepath = "../data/" + place + "/parameters_" + place + ".json"
+instanceData_filepath = "../data/" + place + "/instance_data_" + place + ".json"
 
 #fiscal Data
 fiscalData_filepath = "../data/Cost/fiscal_incentive.json"
@@ -102,9 +97,10 @@ demand_df, forecast_df, generators, batteries, instance_data, fisc_data, cost_da
                                                                                                 costData_filepath)
 
 #calulate parameters
-amax =  instance_data['amax'] 
+amax = instance_data['amax'] 
 N_iterations = instance_data['N_iterations']
-#Calculate salvage, operation and replacement cost with investment cost
+
+#Special Oswaldo data
 if (place == 'Oswaldo'):
     cost_data["NSE_COST"]["L1"][1] = 0.2
     cost_data["NSE_COST"]["L2"][1] = 0.2
@@ -118,18 +114,17 @@ if (place == 'Oswaldo'):
     cost_data["param_v_wind"] = 0
     cost_data["param_v_solar"] = 0
 
-
+#Calculate salvage, operation and replacement cost with investment cost
 generators, batteries = calculate_cost_data(generators, batteries, 
                                             instance_data, cost_data)
 #Demand to be covered
-demand_df['demand'] = instance_data['demand_covered']  * demand_df['demand'] 
+demand_df['demand'] = instance_data['demand_covered'] * demand_df['demand'] 
 
 #Calculate interest rate
-ir = interest_rate(instance_data['i_f'],instance_data['inf'])
+ir = interest_rate(instance_data['i_f'], instance_data['inf'])
 #Calculate CRF
-CRF = (ir * (1 + ir)**(instance_data['years']))/((1 + ir)**
-                                                 (instance_data['years'])-1)  
-
+CRF = (ir * (1 + ir)**(instance_data['years'])) / ((1 + ir)**
+                                                  (instance_data['years']) - 1)  
 
 #Calculate fiscal incentives
 delta = fiscal_incentive(fisc_data['credit'], 
@@ -140,11 +135,11 @@ delta = fiscal_incentive(fisc_data['credit'],
                          fisc_data['T2'])
 
 # Create objects and generation rule
-generators_dict, batteries_dict,  = create_objects(generators,
-                                                   batteries,  
-                                                   forecast_df,
-                                                   demand_df,
-                                                   instance_data)
+generators_dict, batteries_dict = create_objects(generators,
+                                                 batteries,  
+                                                 forecast_df,
+                                                 demand_df,
+                                                 instance_data)
 #create technologies
 technologies_dict, renewables_dict = create_technologies (generators_dict,
                                                           batteries_dict)
@@ -155,9 +150,9 @@ if ('D' in technologies_dict.keys() or 'B' in technologies_dict.keys()
     and generators_dict != {}):
     #create the initial solution operator
     sol_constructor = SolConstructor(generators_dict, 
-                                batteries_dict,
-                                demand_df,
-                                forecast_df)
+                                     batteries_dict,
+                                     demand_df,
+                                     forecast_df)
     
     #create a default solution
     sol_feasible = sol_constructor.initial_solution(instance_data,
@@ -189,20 +184,23 @@ if ('D' in technologies_dict.keys() or 'B' in technologies_dict.keys()
     
     # Create search operator
     search_operator = SearchOperator(generators_dict, 
-                                batteries_dict,
-                                demand_df,
-                                forecast_df)
+                                     batteries_dict,
+                                     demand_df,
+                                     forecast_df)
     
     #check that first solution is feasible
     if (sol_best.results != None):
         for i in range(instance_data['N_iterations']):
+            '''
+            ILS Procedure
+            '''
             #create df to export results
             rows_df.append([i, sol_current.feasible, 
                             sol_current.results.descriptive['area'], 
                             sol_current.results.descriptive['LCOE'], 
                             sol_best.results.descriptive['LCOE'], movement])
 
-            if sol_current.feasible == True:     
+            if sol_current.feasible:     
                 # save copy as the last solution feasible seen
                 sol_feasible = copy.deepcopy(sol_current) 
                 # Remove a generator or battery from the current solution
@@ -219,8 +217,7 @@ if ('D' in technologies_dict.keys() or 'B' in technologies_dict.keys()
                 list_available_bat, list_available_gen, list_tec_gen  = search_operator.available_items(sol_current, amax)
                 if (list_available_gen != [] or list_available_bat != []):
                     # Add a generator or battery to the current solution
-                    if (add_function == 'GRASP'):
-                        
+                    if (add_function == 'GRASP'):                        
                         sol_try, remove_report = search_operator.add_object(sol_current, 
                                                                             list_available_bat, list_available_gen, list_tec_gen, remove_report,  
                                                                             CRF, instance_data['fuel_cost'], rand_ob, delta)
@@ -236,7 +233,7 @@ if ('D' in technologies_dict.keys() or 'B' in technologies_dict.keys()
     
             #review which dispatch strategy to use
             strategy_def = select_strategy(generators_dict = sol_try.generators_dict_sol,
-                                        batteries_dict = sol_try.batteries_dict_sol) 
+                                           batteries_dict = sol_try.batteries_dict_sol) 
             
             print("defined strategy")
             #run the dispatch strategy
@@ -244,14 +241,14 @@ if ('D' in technologies_dict.keys() or 'B' in technologies_dict.keys()
                 lcoe_cost, df_results, state, time_f, nsh = ds_diesel(sol_try, 
                                                                       demand_df, instance_data, cost_data, CRF)
             elif (strategy_def in list_ds_diesel_renewable):
-                lcoe_cost, df_results, state, time_f, nsh  = ds_diesel_renewable(sol_try,
-                                                                                 demand_df, instance_data, cost_data,CRF, delta)
+                lcoe_cost, df_results, state, time_f, nsh = ds_diesel_renewable(sol_try,
+                                                                                demand_df, instance_data, cost_data,CRF, delta)
             elif (strategy_def in list_ds_battery_renewable):
-                lcoe_cost, df_results, state, time_f, nsh  = ds_battery_renewable (sol_try, 
-                                                                                   demand_df, instance_data, cost_data, CRF, delta, rand_ob)
+                lcoe_cost, df_results, state, time_f, nsh = ds_battery_renewable (sol_try, 
+                                                                                  demand_df, instance_data, cost_data, CRF, delta, rand_ob)
             elif (strategy_def in ds_dies_batt_renew):
-                lcoe_cost, df_results, state, time_f, nsh  = ds_dies_batt_renew(sol_try, 
-                                                                                demand_df, instance_data, cost_data, CRF, delta, rand_ob)
+                lcoe_cost, df_results, state, time_f, nsh = ds_dies_batt_renew(sol_try, 
+                                                                               demand_df, instance_data, cost_data, CRF, delta, rand_ob)
             else:
                 #no feasible combination
                 state = 'no feasible'
@@ -289,13 +286,13 @@ if ('D' in technologies_dict.keys() or 'B' in technologies_dict.keys()
             print('Not Feasible solutions')
         else:
             #df with the feasible solutions
-            df_iterations = pd.DataFrame(rows_df, columns=["i", "feasible", "area", 
-                                                           "LCOE_actual", "LCOE_Best","Movement"])
+            df_iterations = pd.DataFrame(rows_df, columns=["i","feasible","area", 
+                                                           "LCOE_actual","LCOE_Best","Movement"])
             #print results best solution
             print(sol_best.results.descriptive)
             print(sol_best.results.df_results)
             print('best solution number of not served hours: ' + str(best_nsh))
-            generation_graph = sol_best.results.generation_graph(0,len(demand_df))
+            generation_graph = sol_best.results.generation_graph(0, len(demand_df))
             plot(generation_graph)
             try:
                 #stats
@@ -325,7 +322,6 @@ if ('D' in technologies_dict.keys() or 'B' in technologies_dict.keys()
             renew_df.to_excel("renewresults.xlsx")
             total_df.to_excel("totalresults.xlsx")
             brand_df.to_excel("brandresults.xlsx")
-            
     
             '''
     else:

@@ -19,9 +19,9 @@ pd.options.display.max_columns = None
 #Algorythm data
 
 #Set the seed for random
-'''
-seed = 42
-'''
+
+#seed = 42
+
 seed = None
 rand_ob = RandomCreate(seed = seed)
 
@@ -43,26 +43,28 @@ place = 'Leticia'
 place = 'Test'
 place = 'Oswaldo'
 '''
-rute_file = '/SENECA-UDEA/microgrids_sizing/development/data/'
-github_rute = 'https://raw.githubusercontent.com'+rute_file
+loc_file = '/SENECA-UDEA/microgrids_sizing/development/data/'
+github_rute = 'https://raw.githubusercontent.com' + loc_file
+
 # file paths github
-demand_filepath = github_rute + place+'/demand_'+place+'.csv' 
-forecast_filepath = github_rute + place+'/forecast_'+place+'.csv' 
-units_filepath = github_rute + place+'/parameters_'+place+'.json' 
-instanceData_filepath = github_rute + place+'/instance_data_'+place+'.json' 
+demand_filepath = github_rute + place + '/demand_' + place + '.csv' 
+forecast_filepath = github_rute + place + '/forecast_' + place + '.csv' 
+units_filepath = github_rute + place + '/parameters_' + place + '.json' 
+instanceData_filepath = github_rute + place + '/instance_data_' + place + '.json' 
 fiscalData_filepath = github_rute +'fiscal_incentive.json'
  
 # file paths local
-demand_filepath = "../data/"+place+"/demand_"+place+".csv"
-forecast_filepath = "../data/"+place+"/forecast_"+place+".csv"
-units_filepath = "../data/"+place+"/parameters_"+place+".json"
-instanceData_filepath = "../data/"+place+"/instance_data_"+place+".json"
+demand_filepath = "../data/" + place + "/demand_" + place+".csv"
+forecast_filepath = "../data/"+place+"/forecast_" + place + ".csv"
+units_filepath = "../data/" + place + "/parameters_" + place + ".json"
+instanceData_filepath = "../data/" + place + "/instance_data_" + place + ".json"
 
 #fiscal Data
 fiscalData_filepath = "../data/Cost/fiscal_incentive.json"
 
 #cost Data
 costData_filepath = "../data/Cost/parameters_cost.json"
+
 
 # read data
 demand_df, forecast_df, generators, batteries, instance_data, fisc_data, cost_data = read_data(demand_filepath,
@@ -73,20 +75,20 @@ demand_df, forecast_df, generators, batteries, instance_data, fisc_data, cost_da
                                                                                                 costData_filepath)
 
 #nputs for the model
-amax =  instance_data['amax']
+amax = instance_data['amax']
 N_iterations = instance_data['N_iterations']
 
 #Calculate salvage, operation and replacement cost with investment cost
 generators, batteries = calculate_cost_data(generators, 
                                             batteries, instance_data, cost_data)
 #Demand to be covered
-demand_df['demand'] = instance_data['demand_covered']  * demand_df['demand'] 
+demand_df['demand'] = instance_data['demand_covered'] * demand_df['demand'] 
 
 #Calculate interest rate
-ir = interest_rate(instance_data['i_f'],instance_data['inf'])
+ir = interest_rate(instance_data['i_f'], instance_data['inf'])
 #Calculate CRF
-CRF = (ir * (1 + ir)**(instance_data['years']))/((1 + ir)
-                                                 **(instance_data['years'])-1)  
+CRF = (ir * (1 + ir)**(instance_data['years'])) / ((1 + ir)
+                                                   **(instance_data['years']) - 1)  
 
 #Calculate fiscal incentives
 delta = fiscal_incentive(fisc_data['credit'], 
@@ -97,20 +99,20 @@ delta = fiscal_incentive(fisc_data['credit'],
                          fisc_data['T2'])
 
 # Create objects and generation rule
-generators_dict, batteries_dict,  = create_objects(generators,
-                                                   batteries,  
-                                                   forecast_df,
-                                                   demand_df,
-                                                   instance_data)
+generators_dict, batteries_dict = create_objects(generators,
+                                                 batteries,  
+                                                 forecast_df,
+                                                 demand_df,
+                                                 instance_data)
 #create technologies
 technologies_dict, renewables_dict = create_technologies (generators_dict,
                                                           batteries_dict)
 
 #create the initial solution operator
 sol_constructor = SolConstructor(generators_dict, 
-                            batteries_dict,
-                            demand_df,
-                            forecast_df)
+                                 batteries_dict,
+                                 demand_df,
+                                 forecast_df)
 
 #create a default solution
 sol_feasible = sol_constructor.initial_solution(instance_data,
@@ -137,9 +139,9 @@ rows_df = []
 
 # Create search operator
 search_operator = SearchOperator(generators_dict, 
-                            batteries_dict,
-                            demand_df,
-                            forecast_df)
+                                 batteries_dict,
+                                 demand_df,
+                                 forecast_df)
 
 #check initial solution feasible
 if (sol_best.results != None):
@@ -150,7 +152,7 @@ if (sol_best.results != None):
                         sol_current.results.descriptive['area'], 
                         sol_current.results.descriptive['LCOE'], 
                         sol_best.results.descriptive['LCOE'], movement])
-        if sol_current.feasible == True:     
+        if sol_current.feasible:     
             # save copy as the last solution feasible seen
             sol_feasible = copy.deepcopy(sol_current) 
             # Remove a generator or battery from the current solution - grasp or random
@@ -177,7 +179,7 @@ if (sol_best.results != None):
                
                 elif (add_function == 'RANDOM'):
                     sol_try = search_operator.add_random_object(sol_current, 
-                                                                list_available_bat, list_available_gen, list_tec_gen,rand_ob)
+                                                                list_available_bat, list_available_gen, list_tec_gen, rand_ob)
                 
                 movement = "Add"
             else:
@@ -199,11 +201,11 @@ if (sol_best.results != None):
         #Make model
         model = opt.make_model_operational(generators_dict = sol_try.generators_dict_sol,
                                            batteries_dict = sol_try.batteries_dict_sol,  
-                                           demand_df=dict(zip(demand_df.t, demand_df.demand)), 
+                                           demand_df = dict(zip(demand_df.t, demand_df.demand)), 
                                            technologies_dict = sol_try.technologies_dict_sol,  
                                            renewables_dict = sol_try.renewables_dict_sol,
-                                           fuel_cost =  instance_data['fuel_cost'],
-                                           nse =  instance_data['nse'], 
+                                           fuel_cost = instance_data['fuel_cost'],
+                                           nse = instance_data['nse'], 
                                            TNPCCRF = tnpccrf_calc,
                                            splus_cost = instance_data['splus_cost'],
                                            sminus_cost = instance_data['sminus_cost'],
@@ -218,7 +220,7 @@ if (sol_best.results != None):
         if termination['Temination Condition'] == 'optimal':
             sol_try.results.descriptive['LCOE'] = model.LCOE_value.expr()
             sol_try.results = opt.Results(model, sol_try.generators_dict_sol,
-                                          sol_try.batteries_dict_sol )
+                                          sol_try.batteries_dict_sol)
             
             sol_try.feasible = True
             sol_current = copy.deepcopy(sol_try)
@@ -244,12 +246,12 @@ if (sol_best.results != None):
         print('Not Feasible solutions')
     else:
         #df with the feasible solutions
-        df_iterations = pd.DataFrame(rows_df, columns=["i", "feasible", 
-                                                       "area", "LCOE_actual", "LCOE_Best","Movement"])
+        df_iterations = pd.DataFrame(rows_df, columns=["i","feasible", 
+                                                       "area", "LCOE_actual","LCOE_Best","Movement"])
         #print results best solution
         print(sol_best.results.descriptive)
         print(sol_best.results.df_results)
-        generation_graph = sol_best.results.generation_graph(0,len(demand_df))
+        generation_graph = sol_best.results.generation_graph(0, len(demand_df))
         plot(generation_graph)
         try:
             #calculate stats
