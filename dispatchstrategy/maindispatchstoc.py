@@ -12,49 +12,49 @@ from src.utilities import generate_number_distribution
 from src.utilities import calculate_stochasticity_demand
 from src.classes import RandomCreate
 import pandas as pd 
-from Dispatch_Estrategy.operatorsdispatch import SolConstructor, SearchOperator
+from dispatchstrategy.operatorsdispatch import SolConstructor, SearchOperator
 from plotly.offline import plot
-from Dispatch_Estrategy.dispatchstrategy import select_strategy
-from Dispatch_Estrategy.dispatchstrategy import ds_diesel
-from Dispatch_Estrategy.dispatchstrategy import ds_dies_batt_renew
-from Dispatch_Estrategy.dispatchstrategy import ds_diesel_renewable
-from Dispatch_Estrategy.dispatchstrategy import ds_battery_renewable 
-from Dispatch_Estrategy.dispatchstrategy import Results
+from dispatchstrategy.strategies import select_strategy
+from dispatchstrategy.strategies import ds_diesel
+from dispatchstrategy.strategies import ds_dies_batt_renew
+from dispatchstrategy.strategies import ds_diesel_renewable
+from dispatchstrategy.strategies import ds_battery_renewable 
+from dispatchstrategy.strategies import Results
 import copy
 import math
 pd.options.display.max_columns = None
 
 #Set the seed for random
 
-#seed = 42
+#SEED = 42
 
-seed = None
+SEED = None
 
-rand_ob = RandomCreate(seed = seed)
+rand_ob = RandomCreate(seed = SEED)
 
 #add and remove funtion
-add_function = 'GRASP'
-remove_function = 'RANDOM'
+ADD_FUNCTION = 'GRASP'
+REMOVE_FUNCTION = 'RANDOM'
 
 #time not served best solution
 best_nsh = 0
 
-#data place
-place = 'Providencia'
+#data PLACE
+PLACE = 'Providencia'
 
 '''
-place = 'San_Andres'
-place = 'Puerto_Nar'
-place = 'Leticia'
-place = 'Test'
-place = 'Oswaldo'
+PLACE = 'San_Andres'
+PLACE = 'Puerto_Nar'
+PLACE = 'Leticia'
+PLACE = 'Test'
+PLACE = 'Oswaldo'
 '''
 
 #trm to current COP
 TRM = 3910
 
 #number of scenarios
-N_estoc = 10
+N_SCENARIOS = 10
 
 #range for triangular distribution fuel cost
 limit = 0.1
@@ -80,17 +80,17 @@ loc_file = '/SENECA-UDEA/microgrids_sizing/development/data/'
 github_rute = 'https://raw.githubusercontent.com' + loc_file
 
 # file paths github
-demand_filepath = github_rute + place + '/demand_' + place + '.csv' 
-forecast_filepath = github_rute + place + '/forecast_' + place + '.csv' 
-units_filepath = github_rute + place + '/parameters_' + place + '.json' 
-instanceData_filepath = github_rute + place + '/instance_data_' + place + '.json' 
+demand_filepath = github_rute + PLACE + '/demand_' + PLACE + '.csv' 
+forecast_filepath = github_rute + PLACE + '/forecast_' + PLACE + '.csv' 
+units_filepath = github_rute + PLACE + '/parameters_' + PLACE + '.json' 
+instanceData_filepath = github_rute + PLACE + '/instance_data_' + PLACE + '.json' 
 fiscalData_filepath = github_rute +'fiscal_incentive.json'
  
 # file paths local
-demand_filepath = "../data/" + place + "/demand_" + place+".csv"
-forecast_filepath = "../data/"+place+"/forecast_" + place + ".csv"
-units_filepath = "../data/" + place + "/parameters_" + place + ".json"
-instanceData_filepath = "../data/" + place + "/instance_data_" + place + ".json"
+demand_filepath = "../data/" + PLACE + "/demand_" + PLACE+".csv"
+forecast_filepath = "../data/"+PLACE+"/forecast_" + PLACE + ".csv"
+units_filepath = "../data/" + PLACE + "/parameters_" + PLACE + ".json"
+instanceData_filepath = "../data/" + PLACE + "/instance_data_" + PLACE + ".json"
 
 #fiscal Data
 fiscalData_filepath = "../data/Cost/fiscal_incentive.json"
@@ -108,9 +108,9 @@ demand_df_i, forecast_df_i, generators, batteries, instance_data, fisc_data, cos
                                                                                                 costData_filepath)
 
 #calulate parameters
-amax = instance_data['amax'] 
-N_iterations = instance_data['N_iterations']
-#Calculate salvage, operation and replacement cost with investment cost
+AMAX = instance_data['amax'] 
+N_ITERATIONS = instance_data['N_iterations']
+#Calculate salvage, operation and rePLACEment cost with investment cost
 generators, batteries = calculate_cost_data(generators, batteries, 
                                             instance_data, cost_data)
 #Demand to be covered
@@ -139,6 +139,7 @@ forecast_w = forecast_df_i['Wt']
 forecast_d = forecast_df_i['DNI']
 forecast_h = forecast_df_i['DHI']
 forecast_g = forecast_df_i['GHI']
+#Get the vector df od each hour
 dem_vec = hour_data(demand_d)
 wind_vec = hour_data(forecast_w)
 sol_vecdni = hour_data(forecast_d)
@@ -154,15 +155,15 @@ sol_distghi = get_best_distribution(sol_vecghi)
 param = instance_data['fuel_cost']
 
 solutions = {}
-#scenarios
-for ppp in range(N_iterations):
+#scenarios       
+for scn in range(N_SCENARIOS):
     '''
     Simulation by scenarios
     '''
     demand_p = copy.deepcopy(demand_df_i)
     forecast_p = copy.deepcopy(forecast_df_i)
     #initial run is the original data
-    if (ppp == 0):
+    if (scn == 0):
         demand_df = demand_df_i
         forecast_df = forecast_df_i
     else:
@@ -181,9 +182,9 @@ for ppp in range(N_iterations):
     #create technologies
     technologies_dict, renewables_dict = create_technologies (generators_dict,
                                                               batteries_dict)
-    if (ppp >= 1):
+    if (scn >= 1):
         #calculate triangular to fuel cost
-        #if ppp = 1 use original data
+        #if scn = 1 use original data
         instance_data['fuel_cost'] = generate_number_distribution(rand_ob, param, limit)
     #check diesel or batteries and at least one generator, for feasibility
     if ('D' in technologies_dict.keys() or 'B' 
@@ -231,7 +232,7 @@ for ppp in range(N_iterations):
         
         #check that first solution is feasible
         if (sol_best.results != None):
-            for i in range(instance_data['N_iterations']):
+            for i in range(N_ITERATIONS):
                 '''
                 ILS Procedure
                 '''
@@ -244,22 +245,22 @@ for ppp in range(N_iterations):
                     # save copy as the last solution feasible seen
                     sol_feasible = copy.deepcopy(sol_current) 
                     # Remove a generator or battery from the current solution
-                    if (remove_function == 'GRASP'):
+                    if (REMOVE_FUNCTION == 'GRASP'):
                         sol_try, remove_report = search_operator.remove_object(sol_current, CRF, delta)
-                    elif (remove_function == 'RANDOM'):
+                    elif (REMOVE_FUNCTION == 'RANDOM'):
                         sol_try, remove_report = search_operator.remove_random_object(sol_current, rand_ob)
         
                     movement = "Remove"
                 else:
                     #  Create list of generators that could be added
-                    list_available_bat, list_available_gen, list_tec_gen  = search_operator.available_items(sol_current, amax)
+                    list_available_bat, list_available_gen, list_tec_gen  = search_operator.available_items(sol_current, AMAX)
                     if (list_available_gen != [] or list_available_bat != []):
                         # Add a generator or battery to the current solution
-                        if (add_function == 'GRASP'):
+                        if (ADD_FUNCTION == 'GRASP'):
                             sol_try, remove_report = search_operator.add_object(sol_current, 
                                                                                 list_available_bat, list_available_gen, list_tec_gen, remove_report,  CRF, 
                                                                                 instance_data['fuel_cost'], rand_ob, delta)
-                        elif (add_function == 'RANDOM'):
+                        elif (ADD_FUNCTION == 'RANDOM'):
                             sol_try = search_operator.add_random_object(sol_current, 
                                                                         list_available_bat, list_available_gen, list_tec_gen, rand_ob)
                         movement = "Add"
@@ -273,7 +274,7 @@ for ppp in range(N_iterations):
                 #instance_data['inverter cost'] = calculate_inverter_cost(sol_try.generators_dict_sol,
                 #sol_try.batteries_dict_sol,val)
             
-                #review which dispatch strategy to use
+                #defines which dispatch strategy to use
                 strategy_def = select_strategy(generators_dict = sol_try.generators_dict_sol,
                                                batteries_dict = sol_try.batteries_dict_sol) 
                 
@@ -327,7 +328,7 @@ for ppp in range(N_iterations):
             if ('aux_diesel' in sol_best.generators_dict_sol.keys()):
                 print('Not Feasible solutions')
                 #save the solution
-                solutions[ppp] = 'No Feasible solutions'
+                solutions[scn] = 'No Feasible solutions'
             else:
                 #df with the feasible solutions
                 df_iterations = pd.DataFrame(rows_df, columns=["i","feasible","area", 
@@ -339,7 +340,7 @@ for ppp in range(N_iterations):
                 print('best solution number of not served hours: ' + str(best_nsh))
                 #plot(generation_graph)
                 #save the solution
-                solutions[ppp] = sol_best
+                solutions[scn] = sol_best
                 try:
                     #stats
                     percent_df, energy_df, renew_df, total_df, brand_df = calculate_energy(sol_best.batteries_dict_sol, 
@@ -348,7 +349,7 @@ for ppp in range(N_iterations):
                     pass
                 
                 #calculate current COP   
-                LCOE_COP = TRM * sol_best.results.descriptive['LCOE']
+                lcoe_cop = TRM * sol_best.results.descriptive['LCOE']
                 #create Excel
                 '''
                 sol_best.results.df_results.to_excel("resultsolarbat.xlsx")         
@@ -366,9 +367,9 @@ best_sol = None
 
 #the fist feasible solution is going to be the best
 #by default the solution with the original data
-for iii in solutions.keys():
-    if (solutions[iii] != 'No Feasible solutions'):
-        best_sol = solutions[iii]
+for j in solutions.keys():
+    if (solutions[j] != 'No Feasible solutions'):
+        best_sol = solutions[j]
         break
 
 #any feasible solution in all scenarios
@@ -376,51 +377,51 @@ if (best_sol == None):
     print('No Feasible solutions')
 #get the feasible solutions
 else:
-    tot = {}
-    cont = {}
-    lcoe_cont = {}
+    total_data = {}
+    count = {}
+    lcoe_count = {}
     no_feasible = 0
-    for iii in solutions.keys():
+    for i in solutions.keys():
         #count no feasible solutions
-        if (solutions[iii] == 'No Feasible solutions'):
+        if (solutions[i] == 'No Feasible solutions'):
             no_feasible += 1
         else:
             #get the generatos, lcoe and batteries of each solution
-            gen_list = list(solutions[iii].generators_dict_sol.keys())
-            bat_list = list(solutions[iii].batteries_dict_sol.keys())
-            lcoe = solutions[iii].results.descriptive['LCOE']
-            tot[iii] = gen_list + bat_list
+            gen_list = list(solutions[i].generators_dict_sol.keys())
+            bat_list = list(solutions[i].batteries_dict_sol.keys())
+            lcoe = solutions[i].results.descriptive['LCOE']
+            total_data[i] = gen_list + bat_list
             #auxiliar dictionaries
-            cont[iii]=1
-            lcoe_cont[iii] = lcoe
+            count[i]=1
+            lcoe_count[i] = lcoe
     
     sum_lcoe = {}
     #count the times that a solution is equal to others (same gen and bat)
-    for fff in tot.keys():
-        sum_lcoe[fff] = 0
+    for i in total_data.keys():
+        sum_lcoe[i] = 0
         #compare with all solutions
-        for ggg in tot.keys():
+        for j in total_data.keys():
             #count repeated values
-            if ((tot[fff] == tot[ggg]) and (fff != ggg)):
-                cont[fff] += 1
+            if ((total_data[i] == total_data[j]) and (i != j)):
+                count[i] += 1
                 #sum lcoe of each equal solutions, similar to an average lcoe
-                sum_lcoe[fff] += lcoe_cont[fff]
+                sum_lcoe[i] += lcoe_count[i]
 
     #count the times that exist and repeated solution
     #if all = 1, return the solution of original data or first feasible
-    max_repetition = max(cont.values())
+    max_repetition = max(count.values())
     if (max_repetition > 1):
         #extract the solutions with more repetitions
-        list_rep = [k for k, v in cont.items() if v == max_repetition]
-        men_sol = math.inf
+        list_rep = [k for k, v in count.items() if v == max_repetition]
+        min_sol = math.inf
         
         #evaluate the lowest average lcoe of all solutions, 
         #sum is equal to average because have equal denominator
         
         for i in list_rep:
-            if sum_lcoe[i] < men_sol:
+            if sum_lcoe[i] < min_sol:
                best_sol = solutions[i]
-               men_sol = sum_lcoe[i]
+               min_sol = sum_lcoe[i]
         #return the selected solution
         print(best_sol.results.descriptive)
         print(best_sol.results.df_results)

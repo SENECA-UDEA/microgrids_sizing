@@ -9,12 +9,12 @@ import copy
 import math
 import pandas as pd
 
-from Dispatch_Estrategy.dispatchstrategy import select_strategy
-from Dispatch_Estrategy.dispatchstrategy import ds_diesel
-from Dispatch_Estrategy.dispatchstrategy import ds_dies_batt_renew
-from Dispatch_Estrategy.dispatchstrategy import ds_diesel_renewable
-from Dispatch_Estrategy.dispatchstrategy import ds_battery_renewable 
-from Dispatch_Estrategy.dispatchstrategy import Results 
+from dispatchstrategy.strategies import select_strategy
+from dispatchstrategy.strategies import ds_diesel
+from dispatchstrategy.strategies import ds_dies_batt_renew
+from dispatchstrategy.strategies import ds_diesel_renewable
+from dispatchstrategy.strategies import ds_battery_renewable 
+from dispatchstrategy.strategies import Results 
 
 #Strategy list for select
 list_ds_diesel = ["diesel"]
@@ -55,7 +55,7 @@ class SolConstructor():
         auxiliar_dict_generator = {}
         #calculate the total available area
         area_available = instance_data['amax']
-        Alpha_shortlist = instance_data['Alpha_shortlist']
+        alpha_shortlist = instance_data['Alpha_shortlist']
         area = 0
         
         #Calculate the maximum demand that the Diesel have to covered
@@ -63,14 +63,14 @@ class SolConstructor():
         demand_to_be_covered = demand_to_be_covered * (1 - instance_data['nse'])
         
         #parameters
-        rev = ""
-        rev2 = ""
+        techno = ""
+        techno2 = ""
         aux_control = ""
         for g in self.generators_dict.values(): 
             if g.tec == 'D':
                 auxiliar_dict_generator[g.id_gen] = g.DG_max
 
-        rev = 'D'
+        techno = 'D'
         #if not diesel try with solar and one battery or wind and one battery
         if (auxiliar_dict_generator == {}):
             auxiliar_dict_bat = {}
@@ -80,19 +80,19 @@ class SolConstructor():
             if (auxiliar_dict_bat != {}):
                 sorted_batteries = sorted(auxiliar_dict_bat, 
                                           key=auxiliar_dict_bat.get, reverse = True) 
-                rev2 = 'B'
+                techno2 = 'B'
 
             for g in self.generators_dict.values(): 
                 if g.tec == 'S':
                     auxiliar_dict_generator[g.id_gen] = g.Ppv_stc
 
-            rev = 'S'
+            techno = 'S'
             if (auxiliar_dict_generator == {}):
                 for g in self.generators_dict.values(): 
                     if g.tec == 'W':
                         auxiliar_dict_generator[g.id_gen] = g.P_y
 
-                rev = 'W'
+                techno = 'W'
 
         #sorted generator max to min capacity
         sorted_generators = sorted(auxiliar_dict_generator, 
@@ -105,30 +105,30 @@ class SolConstructor():
                 available_generators = False
             else:
                 #shortlist candidates
-                len_candidate = math.ceil(len(sorted_generators) * Alpha_shortlist)
+                len_candidate = math.ceil(len(sorted_generators) * alpha_shortlist)
                 position = rand_ob.create_rand_int(0, len_candidate - 1)
                 f = self.generators_dict[sorted_generators[position]]
                 area_gen = f.area
                 #check the technology set
-                if (rev == 'D'):
-                    demand_gen = f.DG_max
-                elif (rev == 'S'):
-                    demand_gen = f.Ppv_stc
-                    if (rev2 == 'B'):
+                if (techno == 'D'):
+                    demand_supplied = f.DG_max
+                elif (techno == 'S'):
+                    demand_supplied = f.Ppv_stc
+                    if (techno2 == 'B'):
                         #put first only one battery
                         f = self.batteries_dict[sorted_batteries[0]]
-                        demand_gen = 0
+                        demand_supplied = 0
                         area_gen = f.area
-                        rev2 = ""
+                        techno2 = ""
                         aux_control = 'B'
 
-                elif(rev == 'W'):
-                    demand_gen = f.P_y
-                    if (rev2 == 'B'):
+                elif(techno == 'W'):
+                    demand_supplied = f.P_y
+                    if (techno2 == 'B'):
                         f = self.batteries_dict[sorted_batteries[0]]
-                        rev2 = ""
+                        techno2 = ""
                         area_gen = f.area
-                        demand_gen = 0
+                        demand_supplied = 0
                         aux_control = 'B'
 
                 #check if already supplies all demand
@@ -146,7 +146,7 @@ class SolConstructor():
                     area += f.area
                     sorted_generators.pop(position)
                     area_available = area_available - area_gen
-                    demand_to_be_covered = demand_to_be_covered - demand_gen
+                    demand_to_be_covered = demand_to_be_covered - demand_supplied
                 #the generator cannot enter to the solution
                 else:
                     sorted_generators.pop(position)
@@ -156,7 +156,7 @@ class SolConstructor():
                                                                           batteries_dict_sol)
  
         #check strategy to be used
-        strategy_def = select_strategy(generators_dict = generators_dict_sol,
+        check_strategy = select_strategy(generators_dict = generators_dict_sol,
                                        batteries_dict = batteries_dict_sol) 
         
         #default solution to use dispatch strategy
@@ -167,16 +167,16 @@ class SolConstructor():
                            renewables_dict_sol,
                            sol_results) 
         #run dispatch strategy
-        if (strategy_def == "diesel"):
+        if (check_strategy == "diesel"):
             lcoe_cost, df_results, state, time_f, nsh = ds_diesel(sol_try, self.demand_df, 
                                                                   instance_data, cost_data, CRF)
-        elif (strategy_def in list_ds_diesel_renewable):
+        elif (check_strategy in list_ds_diesel_renewable):
             lcoe_cost, df_results, state, time_f, nsh = ds_diesel_renewable(sol_try, 
                                                                             self.demand_df, instance_data, cost_data,CRF,delta)
-        elif (strategy_def in list_ds_battery_renewable):
+        elif (check_strategy in list_ds_battery_renewable):
             lcoe_cost, df_results, state, time_f, nsh = ds_battery_renewable (sol_try, 
                                                                               self.demand_df, instance_data, cost_data, CRF, delta, rand_ob)
-        elif (strategy_def in ds_dies_batt_renew):
+        elif (check_strategy in ds_dies_batt_renew):
             lcoe_cost, df_results, state, time_f, nsh = ds_dies_batt_renew(sol_try, 
                                                                            self.demand_df, instance_data, cost_data, CRF, delta, rand_ob)
         else:
@@ -207,7 +207,7 @@ class SolConstructor():
                                                                               batteries_dict_sol)
             
             #check solution strategy
-            strategy_def = select_strategy(generators_dict = generators_dict_sol,
+            check_strategy = select_strategy(generators_dict = generators_dict_sol,
                                            batteries_dict = batteries_dict_sol) 
             #fefault solution to run
             sol_try = Solution(generators_dict_sol, 
@@ -217,7 +217,7 @@ class SolConstructor():
                                sol_results) 
             #run dispatch strategy with false diesel
 
-            if (strategy_def in list_ds_diesel):
+            if (check_strategy in list_ds_diesel):
                 lcoe_cost, df_results, state, time_f, nsh = ds_diesel(sol_try, 
                                                                       self.demand_df, instance_data, cost_data, CRF)
             else:
@@ -309,7 +309,7 @@ class SearchOperator():
         #random select: one position with the maximum value
         pos_max = rand_ob.create_rand_list(list_max)
         #get the generation in the period of maximum selected
-        gen_reference = remove_report[pos_max]
+        reference_generation = remove_report[pos_max]
         dict_total = {**self.generators_dict, **self.batteries_dict}
         best_cost = math.inf
         #generation_total: parameter to calculate the total energy by generator
@@ -337,12 +337,12 @@ class SearchOperator():
                 if dic.tec == rand_tec:
                     list_rand_tec.append(dic.id_gen)
                     if dic.tec == 'D':
-                        gen_generator = dic.DG_max
+                        generation_tot = dic.DG_max
                     else:
-                        gen_generator = dic.gen_rule[pos_max]
+                        generation_tot = dic.gen_rule[pos_max]
                     
                     #check if is better than dict remove
-                    if gen_generator > gen_reference:
+                    if generation_tot > reference_generation:
                         if dic.tec == 'D':
                             #Operation cost at maximum capacity
                             generation_total = len(remove_report) * dic.DG_max

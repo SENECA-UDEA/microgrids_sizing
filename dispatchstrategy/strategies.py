@@ -11,9 +11,13 @@ pio.renderers.default = 'browser'
 
 def select_strategy (batteries_dict, generators_dict):
     
+    #diesel
     d = 0
+    #solar
     s = 0
+    #battery
     b = 0
+    #wind
     w = 0    
     dispatch = ""
     #check technologies to create strategy name
@@ -60,29 +64,29 @@ def ds_diesel (solution, demand_df, instance_data, cost_data, CRF):
     lcoe_op = 0 #operative cost
     lcoe_inf = 0 #investment cost
     lcoe_inftot = 0 #total investment cost
-    len_data =  len(demand_df['demand'])
-    costsminus = {'cost_s-': [0] * len_data} #not supplied cost
-    costsplus = {'cost_s+': [0] * len_data} #wasted cost
-    splus = {'s+': [0] * len_data} #wasted energy
-    sminus = {'s-': [0] * len_data} #not supplied energy
-    lpsp = {'lpsp': [0] * len_data} #lpsp calculate
+    LEN_DATA =  len(demand_df['demand'])
+    costsminus = {'cost_s-': [0] * LEN_DATA} #not supplied cost
+    costsplus = {'cost_s+': [0] * LEN_DATA} #wasted cost
+    splus = {'s+': [0] * LEN_DATA} #wasted energy
+    sminus = {'s-': [0] * LEN_DATA} #not supplied energy
+    lpsp = {'lpsp': [0] * LEN_DATA} #lpsp calculate
     #generation by each generator
-    p = {k : [0] * len_data for k in solution.generators_dict_sol} 
+    p = {k : [0] * LEN_DATA for k in solution.generators_dict_sol} 
     #variable cost
-    cost = {k + '_cost': [0] * len_data for k in solution.generators_dict_sol} 
+    cost = {k + '_cost': [0] * LEN_DATA for k in solution.generators_dict_sol} 
     ptot = 0 #total generation
     costvopm = 0 #variable cost
     splustot = 0 #wasted energy cost
     sminustot = 0 #not supplied load cost
     #battery stated of charge
-    soc = {l + '_soc': [0] * len_data for l in solution.batteries_dict_sol} 
+    soc = {l + '_soc': [0] * LEN_DATA for l in solution.batteries_dict_sol} 
     #charge battery
-    bplus = {l + '_b+': [0] * len_data for l in solution.batteries_dict_sol} 
+    bplus = {l + '_b+': [0] * LEN_DATA for l in solution.batteries_dict_sol} 
     #discharge battery
-    bminus = {l + '_b-': [0]*len_data for l in solution.batteries_dict_sol} 
+    bminus = {l + '_b-': [0]*LEN_DATA for l in solution.batteries_dict_sol} 
     fuel_cost = instance_data['fuel_cost']
     inverter = instance_data['inverter_cost']
-    average_demand = np.mean(demand_df['demand'])
+    AVERAGE_DEMAND = np.mean(demand_df['demand'])
     nsh = 0 #count not server hours
     
     #calculate investments cost
@@ -90,9 +94,9 @@ def ds_diesel (solution, demand_df, instance_data, cost_data, CRF):
         lcoe_inf = (g.cost_up + g.cost_r - g.cost_s + g.cost_fopm)* CRF 
         lcoe_inftot += lcoe_inf
         #assume it produces around the average
-        prod = min (average_demand, g.DG_max)
-        lcoe_op = (g.f0 * g.DG_max + g.f1 * prod) * fuel_cost * len_data
-        aux_dict[g.id_gen] = ((prod * len_data) / (lcoe_inf * CRF + lcoe_op))
+        prod = min (AVERAGE_DEMAND, g.DG_max)
+        lcoe_op = (g.f0 * g.DG_max + g.f1 * prod) * fuel_cost * LEN_DATA
+        aux_dict[g.id_gen] = ((prod * LEN_DATA) / (lcoe_inf * CRF + lcoe_op))
 
     #sort to initialize always with the best lcoe diesel generator
     sorted_generators = sorted(aux_dict, key = aux_dict.get, reverse = False) 
@@ -156,10 +160,10 @@ def ds_diesel (solution, demand_df, instance_data, cost_data, CRF):
                                  min_periods = None, center = False, 
                                  win_type = None, on = None, axis = 0).mean()
     
-    mean_av = lpsp_check[lpsp_check['lpsp'] > instance_data['nse']].count()
+    count_lpsp = lpsp_check[lpsp_check['lpsp'] > instance_data['nse']].count()
     
     #check feasible lpsp
-    if (mean_av['lpsp'] > 0):
+    if (count_lpsp['lpsp'] > 0):
         state = 'no feasible'
     else:
         state = 'optimal'
@@ -195,33 +199,33 @@ def ds_diesel_renewable (solution, demand_df, instance_data,
     lcoe_op = 0 #operative cost
     lcoe_inf = 0 #investment cost
     lcoe_inftot = 0 #total investment cost
-    len_data =  len(demand_df['demand'])
-    costsminus = {'cost_s-': [0] * len_data} #not supplied cost
-    costsplus = {'cost_s+': [0] * len_data} #wasted cost
-    splus = {'s+': [0] * len_data} #wasted energy
-    sminus = {'s-': [0] * len_data} #not supplied energy
-    lpsp = {'lpsp': [0] * len_data} #lpsp calculate
+    LEN_DATA =  len(demand_df['demand'])
+    costsminus = {'cost_s-': [0] * LEN_DATA} #not supplied cost
+    costsplus = {'cost_s+': [0] * LEN_DATA} #wasted cost
+    splus = {'s+': [0] * LEN_DATA} #wasted energy
+    sminus = {'s-': [0] * LEN_DATA} #not supplied energy
+    lpsp = {'lpsp': [0] * LEN_DATA} #lpsp calculate
     #generation by each generator
-    p = {k: [0] * len_data for k in solution.generators_dict_sol} 
+    p = {k: [0] * LEN_DATA for k in solution.generators_dict_sol} 
     #variable cost
-    cost = {k + '_cost': [0] * len_data for k in solution.generators_dict_sol} 
+    cost = {k + '_cost': [0] * LEN_DATA for k in solution.generators_dict_sol} 
     ptot = 0 #total generation
     costvopm = 0 #variable cost
     splustot = 0 #wasted energy cost
     sminustot = 0 #not supplied load cost
     #battery stated of charge
-    soc = {l + '_soc': [0] * len_data for l in solution.batteries_dict_sol} 
+    soc = {l + '_soc': [0] * LEN_DATA for l in solution.batteries_dict_sol} 
     #charge battery
-    bplus = {l + '_b+': [0] * len_data for l in solution.batteries_dict_sol} 
+    bplus = {l + '_b+': [0] * LEN_DATA for l in solution.batteries_dict_sol} 
     #discharge battery
-    bminus = {l + '_b-': [0] * len_data for l in solution.batteries_dict_sol} 
+    bminus = {l + '_b-': [0] * LEN_DATA for l in solution.batteries_dict_sol} 
     fuel_cost = instance_data['fuel_cost']
     inverter = instance_data['inverter_cost']
     list_ren = [] #renewable generation
     demand_tobe_covered = [] 
     #initial min reference (diesel reference for renewable generators)
     min_ref = math.inf 
-    average_demand = np.mean(demand_df['demand'])
+    AVERAGE_DEMAND = np.mean(demand_df['demand'])
     nsh = 0 #count not server hours
  
     #calculate investment cost    
@@ -230,9 +234,9 @@ def ds_diesel_renewable (solution, demand_df, instance_data,
             lcoe_inf = (g.cost_up + g.cost_r - g.cost_s + g.cost_fopm) * CRF 
             lcoe_inftot += lcoe_inf   
             #assume it produces around the average
-            prod = min (average_demand, g.DG_max)
-            lcoe_op = (g.f0 * g.DG_max + g.f1 * prod) * fuel_cost * len_data
-            aux_dict[g.id_gen] = (prod * len_data) / (lcoe_inf * CRF + lcoe_op)
+            prod = min (AVERAGE_DEMAND, g.DG_max)
+            lcoe_op = (g.f0 * g.DG_max + g.f1 * prod) * fuel_cost * LEN_DATA
+            aux_dict[g.id_gen] = (prod * LEN_DATA) / (lcoe_inf * CRF + lcoe_op)
             
             #get the lowest reference
             if g.DG_min <= min_ref:
@@ -349,10 +353,10 @@ def ds_diesel_renewable (solution, demand_df, instance_data,
                                  min_periods = None, center = False, 
                                  win_type = None, on = None, axis = 0).mean()
     
-    mean_av = lpsp_check[lpsp_check['lpsp'] > instance_data['nse']].count()
+    count_lpsp = lpsp_check[lpsp_check['lpsp'] > instance_data['nse']].count()
     
     #check feasible lpsp
-    if (mean_av['lpsp'] > 0):
+    if (count_lpsp['lpsp'] > 0):
         state = 'no feasible'
     else:
         state = 'optimal'
@@ -391,28 +395,28 @@ def ds_battery_renewable  (solution, demand_df, instance_data,
     aux_dict = {}
     lcoe_inf = 0 #investment cost
     lcoe_inftot = 0 #total investment cost
-    len_data =  len(demand_df['demand'])
-    costsminus = {'cost_s-': [0] * len_data} #not supplied cost
-    costsplus = {'cost_s+': [0] * len_data} #wasted cost
-    splus = {'s+': [0] * len_data} #wasted energy
-    sminus = {'s-': [0] * len_data} #not supplied energy
-    lpsp = {'lpsp': [0] * len_data} #lpsp calculate
+    LEN_DATA =  len(demand_df['demand'])
+    costsminus = {'cost_s-': [0] * LEN_DATA} #not supplied cost
+    costsplus = {'cost_s+': [0] * LEN_DATA} #wasted cost
+    splus = {'s+': [0] * LEN_DATA} #wasted energy
+    sminus = {'s-': [0] * LEN_DATA} #not supplied energy
+    lpsp = {'lpsp': [0] * LEN_DATA} #lpsp calculate
     #generation by each generator
-    p = {k: [0] * len_data for k in solution.generators_dict_sol} 
+    p = {k: [0] * LEN_DATA for k in solution.generators_dict_sol} 
     ptot = 0 #total generation
     costvopm = 0 #variable cost
     splustot = 0 #wasted energy cost
     sminustot = 0 #not supplied load cost
     #battery stated of charge
-    soc = {l + '_soc': [0] * len_data for l in solution.batteries_dict_sol} 
+    soc = {l + '_soc': [0] * LEN_DATA for l in solution.batteries_dict_sol} 
     #charge battery
-    bplus = {l + '_b+': [0] * len_data for l in solution.batteries_dict_sol}
+    bplus = {l + '_b+': [0] * LEN_DATA for l in solution.batteries_dict_sol}
     #discharge battery
-    bminus = {l + '_b-': [0] * len_data for l in solution.batteries_dict_sol} 
+    bminus = {l + '_b-': [0] * LEN_DATA for l in solution.batteries_dict_sol} 
     list_ren = [] #renewable generation
     demand_tobe_covered = [] 
     dict_total = {**solution.generators_dict_sol, **solution.batteries_dict_sol}
-    cost = {k + '_cost': [0] * len_data for k in dict_total} #variable cost
+    cost = {k + '_cost': [0] * LEN_DATA for k in dict_total} #variable cost
     inverter = instance_data['inverter_cost']
     extra_generation = 0  #extra renewavble generation to waste or charge
     nsh = 0 #count not server hours
@@ -535,10 +539,10 @@ def ds_battery_renewable  (solution, demand_df, instance_data,
                                  min_periods = None, center = False, 
                                  win_type = None, on = None, axis = 0).mean()
     
-    mean_av = lpsp_check[lpsp_check['lpsp'] > instance_data['nse']].count()
+    count_lpsp = lpsp_check[lpsp_check['lpsp'] > instance_data['nse']].count()
     
     #check feasible lpsp
-    if (mean_av['lpsp'] > 0):
+    if (count_lpsp['lpsp'] > 0):
         state = 'no feasible'
     else:
         state = 'optimal'
@@ -577,33 +581,33 @@ def ds_dies_batt_renew(solution, demand_df, instance_data,
     lcoe_op = 0 #operative cost
     lcoe_inf = 0 #investment cost
     lcoe_inftot = 0 #total investment cost
-    len_data =  len(demand_df['demand'])
-    costsminus = {'cost_s-': [0] * len_data} #not supplied cost
-    costsplus = {'cost_s+': [0] * len_data} #wasted cost
-    splus = {'s+': [0] * len_data} #wasted energy
-    sminus = {'s-': [0] * len_data} #not supplied energy
-    lpsp = {'lpsp': [0] * len_data} #lpsp calculate
+    LEN_DATA =  len(demand_df['demand'])
+    costsminus = {'cost_s-': [0] * LEN_DATA} #not supplied cost
+    costsplus = {'cost_s+': [0] * LEN_DATA} #wasted cost
+    splus = {'s+': [0] * LEN_DATA} #wasted energy
+    sminus = {'s-': [0] * LEN_DATA} #not supplied energy
+    lpsp = {'lpsp': [0] * LEN_DATA} #lpsp calculate
     #generation by each generator
-    p = {k: [0] * len_data for k in solution.generators_dict_sol}
+    p = {k: [0] * LEN_DATA for k in solution.generators_dict_sol}
     ptot = 0 #total generation
     costvopm = 0 #variable cost
     splustot = 0 #wasted energy cost
     sminustot = 0 #not supplied load cost
     #battery stated of charge
-    soc = {l + '_soc': [0] * len_data for l in solution.batteries_dict_sol} 
+    soc = {l + '_soc': [0] * LEN_DATA for l in solution.batteries_dict_sol} 
     #charge battery
-    bplus = {l + '_b+': [0] * len_data for l in solution.batteries_dict_sol} 
+    bplus = {l + '_b+': [0] * LEN_DATA for l in solution.batteries_dict_sol} 
     #discharge battery
-    bminus = {l + '_b-': [0] * len_data for l in solution.batteries_dict_sol} 
+    bminus = {l + '_b-': [0] * LEN_DATA for l in solution.batteries_dict_sol} 
     list_ren = [] #renewable generation
     demand_tobe_covered = [] 
     dict_total = {**solution.generators_dict_sol, **solution.batteries_dict_sol}
-    cost = {k + '_cost': [0] * len_data for k in dict_total} #variable cost
+    cost = {k + '_cost': [0] * LEN_DATA for k in dict_total} #variable cost
     extra_generation = 0  #extra renewavble generation to waste or charge
     fuel_cost = instance_data['fuel_cost']
     inverter = instance_data['inverter_cost']
     aux_demand = 0
-    average_demand = np.mean(demand_df['demand'])
+    AVERAGE_DEMAND = np.mean(demand_df['demand'])
     nsh = 0 #count not server hours
 
     #calculate investment cost
@@ -612,9 +616,9 @@ def ds_dies_batt_renew(solution, demand_df, instance_data,
             lcoe_inf = (g.cost_up + g.cost_r - g.cost_s + g.cost_fopm) * CRF 
             lcoe_inftot += lcoe_inf  
             #assume it produces around the average
-            prod = min(average_demand, g.DG_max)
-            lcoe_op = (g.f0 * g.DG_max + g.f1 * prod) * fuel_cost * len_data
-            aux_gen[g.id_gen] = (prod * len_data) / (lcoe_inf * CRF + lcoe_op)
+            prod = min(AVERAGE_DEMAND, g.DG_max)
+            lcoe_op = (g.f0 * g.DG_max + g.f1 * prod) * fuel_cost * LEN_DATA
+            aux_gen[g.id_gen] = (prod * LEN_DATA) / (lcoe_inf * CRF + lcoe_op)
         else:
             lcoe_inf = (g.cost_up * delta + g.cost_r 
                         * delta - g.cost_s + g.cost_fopm) * CRF 
@@ -847,10 +851,10 @@ def ds_dies_batt_renew(solution, demand_df, instance_data,
                                  min_periods = None, center = False, 
                                  win_type = None, on = None, axis = 0).mean()
     
-    mean_av = lpsp_check[lpsp_check['lpsp'] > instance_data['nse']].count()
+    count_lpsp = lpsp_check[lpsp_check['lpsp'] > instance_data['nse']].count()
     
     #check feasible lpsp
-    if (mean_av['lpsp'] > 0):
+    if (count_lpsp['lpsp'] > 0):
         state = 'no feasible'
     else:
         state = 'optimal'
@@ -967,7 +971,7 @@ class Results():
 
 '''
 Ambiental cost
-cost_ambiental = {'cost_amb': [0]*len_data} #ambiental cost
+cost_ambiental = {'cost_amb': [0]*LEN_DATA} #ambiental cost
 ambiental = cost_data['ambiental']
 turn_on = cost_data['ambiental_turn_on']
 cost[i+'_cost'][t]= (gen.f0 * gen.DG_max + gen.f1 * p[i][t])*fuel_cost

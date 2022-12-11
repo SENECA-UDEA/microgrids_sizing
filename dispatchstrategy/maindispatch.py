@@ -8,38 +8,38 @@ from src.utilities import calculate_area, calculate_energy, interest_rate
 from src.utilities import fiscal_incentive, calculate_cost_data
 from src.classes import RandomCreate
 import pandas as pd 
-from Dispatch_Estrategy.operatorsdispatch import SolConstructor, SearchOperator
+from dispatchstrategy.operatorsdispatch import SolConstructor, SearchOperator
 from plotly.offline import plot
-from Dispatch_Estrategy.dispatchstrategy import select_strategy
-from Dispatch_Estrategy.dispatchstrategy import ds_diesel
-from Dispatch_Estrategy.dispatchstrategy import ds_dies_batt_renew
-from Dispatch_Estrategy.dispatchstrategy import ds_diesel_renewable
-from Dispatch_Estrategy.dispatchstrategy import ds_battery_renewable 
-from Dispatch_Estrategy.dispatchstrategy import Results
+from dispatchstrategy.strategies import select_strategy
+from dispatchstrategy.strategies import ds_diesel
+from dispatchstrategy.strategies import ds_dies_batt_renew
+from dispatchstrategy.strategies import ds_diesel_renewable
+from dispatchstrategy.strategies import ds_battery_renewable 
+from dispatchstrategy.strategies import Results
 import copy
 pd.options.display.max_columns = None
 
 #Set the seed for random
 
-#seed = 42
+#SEED = 42
 
-seed = None
+SEED = None
 
-rand_ob = RandomCreate(seed = seed)
+rand_ob = RandomCreate(seed = SEED)
 
 #add and remove funtion
-add_function = 'GRASP'
-remove_function = 'RANDOM'
+ADD_FUNCTION = 'GRASP'
+REMOVE_FUNCTION = 'RANDOM'
 
-#data place
-place = 'Providencia'
+#data PLACE
+PLACE = 'Providencia'
 
 '''
-place = 'San_Andres'
-place = 'Puerto_Nar'
-place = 'Leticia'
-place = 'Test'
-place = 'Oswaldo'
+PLACE = 'San_Andres'
+PLACE = 'Puerto_Nar'
+PLACE = 'Leticia'
+PLACE = 'Test'
+PLACE = 'Oswaldo'
 '''
 
 #Strategy list for select
@@ -68,24 +68,23 @@ loc_file = '/SENECA-UDEA/microgrids_sizing/development/data/'
 github_rute = 'https://raw.githubusercontent.com' + loc_file
 
 # file paths github
-demand_filepath = github_rute + place + '/demand_' + place + '.csv' 
-forecast_filepath = github_rute + place + '/forecast_' + place + '.csv' 
-units_filepath = github_rute + place + '/parameters_' + place + '.json' 
-instanceData_filepath = github_rute + place + '/instance_data_' + place + '.json' 
+demand_filepath = github_rute + PLACE + '/demand_' + PLACE + '.csv' 
+forecast_filepath = github_rute + PLACE + '/forecast_' + PLACE + '.csv' 
+units_filepath = github_rute + PLACE + '/parameters_' + PLACE + '.json' 
+instanceData_filepath = github_rute + PLACE + '/instance_data_' + PLACE + '.json' 
 fiscalData_filepath = github_rute +'fiscal_incentive.json'
  
 # file paths local
-demand_filepath = "../data/" + place + "/demand_" + place+".csv"
-forecast_filepath = "../data/"+place+"/forecast_" + place + ".csv"
-units_filepath = "../data/" + place + "/parameters_" + place + ".json"
-instanceData_filepath = "../data/" + place + "/instance_data_" + place + ".json"
+demand_filepath = "../data/" + PLACE + "/demand_" + PLACE+".csv"
+forecast_filepath = "../data/"+PLACE+"/forecast_" + PLACE + ".csv"
+units_filepath = "../data/" + PLACE + "/parameters_" + PLACE + ".json"
+instanceData_filepath = "../data/" + PLACE + "/instance_data_" + PLACE + ".json"
 
 #fiscal Data
 fiscalData_filepath = "../data/Cost/fiscal_incentive.json"
 
 #cost Data
 costData_filepath = "../data/Cost/parameters_cost.json"
-
 
 
 # read data
@@ -97,11 +96,11 @@ demand_df, forecast_df, generators, batteries, instance_data, fisc_data, cost_da
                                                                                                 costData_filepath)
 
 #calulate parameters
-amax = instance_data['amax'] 
-N_iterations = instance_data['N_iterations']
+AMAX = instance_data['amax'] 
+N_ITERATIONS = instance_data['N_iterations']
 
 #Special Oswaldo data
-if (place == 'Oswaldo'):
+if (PLACE == 'Oswaldo'):
     cost_data["NSE_COST"]["L1"][1] = 0.2
     cost_data["NSE_COST"]["L2"][1] = 0.2
     cost_data["NSE_COST"]["L3"][1] = 0.2
@@ -114,7 +113,7 @@ if (place == 'Oswaldo'):
     cost_data["param_v_wind"] = 0
     cost_data["param_v_solar"] = 0
 
-#Calculate salvage, operation and replacement cost with investment cost
+#Calculate salvage, operation and rePLACEment cost with investment cost
 generators, batteries = calculate_cost_data(generators, batteries, 
                                             instance_data, cost_data)
 #Demand to be covered
@@ -190,7 +189,7 @@ if ('D' in technologies_dict.keys() or 'B' in technologies_dict.keys()
     
     #check that first solution is feasible
     if (sol_best.results != None):
-        for i in range(instance_data['N_iterations']):
+        for i in range(N_ITERATIONS):
             '''
             ILS Procedure
             '''
@@ -204,24 +203,24 @@ if ('D' in technologies_dict.keys() or 'B' in technologies_dict.keys()
                 # save copy as the last solution feasible seen
                 sol_feasible = copy.deepcopy(sol_current) 
                 # Remove a generator or battery from the current solution
-                if (remove_function == 'GRASP'):
+                if (REMOVE_FUNCTION == 'GRASP'):
                     sol_try, remove_report = search_operator.remove_object(sol_current, 
                                                                            CRF, delta)
-                elif (remove_function == 'RANDOM'):
+                elif (REMOVE_FUNCTION == 'RANDOM'):
                     sol_try, remove_report = search_operator.remove_random_object(sol_current, 
                                                                                   rand_ob)
     
                 movement = "Remove"
             else:
                 #  Create list of generators that could be added
-                list_available_bat, list_available_gen, list_tec_gen  = search_operator.available_items(sol_current, amax)
+                list_available_bat, list_available_gen, list_tec_gen  = search_operator.available_items(sol_current, AMAX)
                 if (list_available_gen != [] or list_available_bat != []):
                     # Add a generator or battery to the current solution
-                    if (add_function == 'GRASP'):                        
+                    if (ADD_FUNCTION == 'GRASP'):                        
                         sol_try, remove_report = search_operator.add_object(sol_current, 
                                                                             list_available_bat, list_available_gen, list_tec_gen, remove_report,  
                                                                             CRF, instance_data['fuel_cost'], rand_ob, delta)
-                    elif (add_function == 'RANDOM'):
+                    elif (ADD_FUNCTION == 'RANDOM'):
                         sol_try = search_operator.add_random_object(sol_current, 
                                                                     list_available_bat, list_available_gen, list_tec_gen,rand_ob)
                     movement = "Add"
@@ -231,7 +230,7 @@ if ('D' in technologies_dict.keys() or 'B' in technologies_dict.keys()
                     sol_current = copy.deepcopy(sol_feasible)
                     continue # Skip running the model and go to the begining of the for loop
     
-            #review which dispatch strategy to use
+            #define which dispatch strategy to use 
             strategy_def = select_strategy(generators_dict = sol_try.generators_dict_sol,
                                            batteries_dict = sol_try.batteries_dict_sol) 
             
@@ -303,7 +302,7 @@ if ('D' in technologies_dict.keys() or 'B' in technologies_dict.keys()
                 pass
             #calculate current COP   
 
-            LCOE_COP = TRM * sol_best.results.descriptive['LCOE']
+            lcoe_cop = TRM * sol_best.results.descriptive['LCOE']
             #create Excel
             '''
             sol_best.results.df_results.to_excel("resultsdf.xlsx")    

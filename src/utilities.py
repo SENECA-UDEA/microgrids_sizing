@@ -70,9 +70,9 @@ def create_objects(generators, batteries, forecast_df,
     for k in generators:
       if k['tec'] == 'S':
         obj_aux = Solar(*k.values())
-        gt = irradiance_panel (forecast_df, instance_data)
+        irr = irradiance_panel (forecast_df, instance_data)
         obj_aux.get_inoct(instance_data["caso"], instance_data["w"])
-        obj_aux.solar_generation( forecast_df['t_ambt'], gt, instance_data["G_stc"])
+        obj_aux.solar_generation( forecast_df['t_ambt'], irr, instance_data["G_stc"])
         obj_aux.solar_cost()
       elif k['tec'] == 'W':
         obj_aux = Eolic(*k.values())
@@ -169,10 +169,10 @@ def calculate_sizing_cost(generators_dict, batteries_dict, ir, years,
                 expr -= bat.cost_s
                 expr += bat.cost_fopm
 
-            CRF = (ir * (1 + ir) ** (years)) / ((1 + ir) ** (years) - 1)    
+            crf = (ir * (1 + ir) ** (years)) / ((1 + ir) ** (years) - 1)    
             #Operative cost doesn't take into account the crf
-            TNPCCRF = (expr + inverter) * CRF 
-            return TNPCCRF
+            tnpccrf = (expr + inverter) * crf
+            return tnpccrf
 
 
 def calculate_area (sol_actual):
@@ -295,16 +295,17 @@ def calculate_cost_data(generators, batteries, instance_data,
     ir = interest_rate(i_f, inf)
     #defaul useful life Diesel and batteries = 10
     life_cicle = parameters_cost['life_cicle']
-    ran = years / life_cicle
+    n_cycles = years / life_cicle
     
     #Calculate tax for remplacement
     tax = 0
-    for h in range(1, int(ran) + 1):
+    for h in range(1, int(n_cycles) + 1):
         tax += 1 / ((1 + ir)**(h * life_cicle))
         
     aux_generators = []
-    generators_def = []
     aux_batteries = []
+    #definitive list
+    generators_def = []
     batteries_def = []
     #Calculate costs with investment cost
     for i in generators:
@@ -374,7 +375,7 @@ def irradiance_panel (forecast_df, instance_data):
  
     if (forecast_df['GHI'].sum() <= 0 or forecast_df['DHI'].sum() <= 0):
         #Default only DNI if it is not GHI or DHI
-        gt_data = forecast_df['DNI']
+        irr_data = forecast_df['DNI']
     else:       
         theta_M = instance_data["tilted_angle"]
         a_M = 90 - theta_M
@@ -384,7 +385,7 @@ def irradiance_panel (forecast_df, instance_data):
         latit = instance_data["latitude"]
         alpha = instance_data["alpha_albedo"]
         SF1 = instance_data['shading factor']
-        gt_data = {}
+        irr_data = {}
         for t in list(forecast_df['t'].index.values):
             LT = forecast_df['t'][t]
             DNI = forecast_df['DNI'][t] #Direct normal Irradiance
@@ -400,11 +401,11 @@ def irradiance_panel (forecast_df, instance_data):
 
             G_df = svf * DHI #Diffuse irradiancia
             G_alb = alpha*(1 - svf) * GHI #Groud irradiance
-            gt_data[t] = G_dr + G_df + G_alb #Total irradiance
+            irr_data[t] = G_dr + G_df + G_alb #Total irradiance
     
-    gt =  pd.DataFrame(gt_data.items(), columns = ['t','gt']) 
+    irr =  pd.DataFrame(irr_data.items(), columns = ['t','irr']) 
         
-    return  gt
+    return  irr
 
 
 def min_to_hms(hm):
@@ -500,11 +501,11 @@ def hour_data(data):
     
     for t in data.index.tolist():
         #get the hour
-        l = t % 24
+        hour_day = t % 24
         #get the day
-        k = math.floor(t / 24)
+        day_year = math.floor(t / 24)
         #create data
-        vec[l][k] = data[t]
+        vec[hour_day][day_year] = data[t]
         
     return vec
 
@@ -557,10 +558,10 @@ def best_distribution(data):
 def calculate_stochasticity_demand(rand_ob, demand_df, dem_dist):
     for t in demand_df['t']:
         #get the hour for the distribution
-        l = t % 24
-        #generate one random number for each hour (demand and forecast)
-        n_d = generate_random(rand_ob, dem_dist[l])
-        demand_df.loc[t] = [t, n_d]
+        hour = t % 24
+        #generate one random number for each hour 
+        obj = generate_random(rand_ob, dem_dist[hour])
+        demand_df.loc[t] = [t,]
         
     return demand_df
     
@@ -570,12 +571,12 @@ def calculate_stochasticity_forecast(rand_ob, forecast_df, wind_dist,
     
     for t in forecast_df['t']:
         #get the hour for the distribution
-        l = t % 24
+        hour = t % 24
         #generate one random number for each hour (demand and forecast)
-        nf_w = generate_random(rand_ob, wind_dist[l])
-        nf_dni = generate_random(rand_ob, sol_distdni[l])
-        nf_dhi = generate_random(rand_ob, sol_distdhi[l])
-        nf_ghi = generate_random(rand_ob, sol_distghi[l])
+        nf_w = generate_random(rand_ob, wind_dist[hour])
+        nf_dni = generate_random(rand_ob, sol_distdni[hour])
+        nf_dhi = generate_random(rand_ob, sol_distdhi[hour])
+        nf_ghi = generate_random(rand_ob, sol_distghi[hour])
         t_ambt = forecast_df['t_ambt'][t]
         Qt = forecast_df['Qt'][t]
         day = forecast_df['day'][t]

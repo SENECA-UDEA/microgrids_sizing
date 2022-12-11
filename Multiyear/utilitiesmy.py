@@ -4,7 +4,7 @@ Created on Wed Apr 20 13:51:07 2022
 
 @author: scastellanos
 """
-from Multiyear.classesmy import Solar, Eolic, Diesel, Battery
+from multiyear.classesmy import Solar, Eolic, Diesel, Battery
 import pandas as pd
 import requests
 import json 
@@ -79,9 +79,9 @@ def create_objects(generators, batteries, forecast_df,
     for k in generators:
       if k['tec'] == 'S':
         obj_aux = Solar(*k.values())
-        gt = irradiance_panel (forecast_df, instance_data)
+        irr = irradiance_panel (forecast_df, instance_data)
         obj_aux.get_inoct(instance_data["caso"], instance_data["w"])
-        obj_aux.solar_generation( forecast_df['t_ambt'], gt,
+        obj_aux.solar_generation( forecast_df['t_ambt'], irr,
                                  instance_data["G_stc"], my_data["sol_deg"])
         obj_aux.solar_cost()
       elif k['tec'] == 'W':
@@ -180,9 +180,9 @@ def calculate_sizing_cost(generators_dict, batteries_dict,
                 expr += bat.cost_fopm
     
             #Operative cost doesn't take into account the crf
-            TNPCCRF = (expr + inverter) * (1 + ir)
+            tnpccrf = (expr + inverter) * (1 + ir)
     
-            return TNPCCRF
+            return tnpccrf
 
 
 def calculate_area (sol_actual):
@@ -306,15 +306,16 @@ def calculate_cost_data(generators, batteries, instance_data,
     ir = interest_rate(i_f,inf)
     #defaul useful life Diesel and batteries = 10
     life_cicle = parameters_cost['life_cicle']
-    ran = years/life_cicle    
+    n_cycles = years/life_cicle    
     #Calculate tax for remplacement
     tax = 0
-    for h in range(1, int(ran) + 1):
+    for h in range(1, int(n_cycles) + 1):
         tax += 1 / ((1 + ir)**(h * life_cicle))
         
     aux_generators = []
-    generators_def = []
     aux_batteries = []
+    #definitive list
+    generators_def = []
     batteries_def = []
     #Calculate costs with investment cost
     for i in generators:
@@ -392,7 +393,7 @@ def irradiance_panel (forecast_df, instance_data):
  
     if (forecast_df['GHI'].sum() <= 0 or forecast_df['DHI'].sum() <= 0):
         #Default only DNI if it is not GHI or DHI
-        gt_data = forecast_df['DNI']
+        irr_data = forecast_df['DNI']
     else:       
         theta_M = instance_data["tilted_angle"]
         a_M = 90 - theta_M
@@ -402,7 +403,7 @@ def irradiance_panel (forecast_df, instance_data):
         latit = instance_data["latitude"]
         alpha = instance_data["alpha_albedo"]
         SF1 = instance_data['shading factor']
-        gt_data = {}
+        irr_data = {}
         for t in list(forecast_df['t'].index.values):
             LT = forecast_df['t'][t]
             DNI = forecast_df['DNI'][t] #Direct normal Irradiance
@@ -418,11 +419,11 @@ def irradiance_panel (forecast_df, instance_data):
 
             G_df = svf * DHI #Diffuse irradiancia
             G_alb = alpha*(1 - svf) * GHI #Groud irradiance
-            gt_data[t] = G_dr + G_df + G_alb #Total irradiance
+            irr_data[t] = G_dr + G_df + G_alb #Total irradiance
     
-    gt =  pd.DataFrame(gt_data.items(), columns = ['t','gt']) 
+    irr =  pd.DataFrame(irr_data.items(), columns = ['t','irr']) 
         
-    return  gt
+    return  irr
 
 
 def min_to_hms(hm):
@@ -515,23 +516,23 @@ def calculate_multiyear_data(demand_df, forecast_df, my_data, years):
     
     #total hours
     len_total = 8760 * years
-    dem = {k : [0] * (len_total) for k in demand_df}
-    forc = {k : [0] * (len_total) for k in forecast_df}
+    aux_demand = {k : [0] * (len_total) for k in demand_df}
+    aux_forecast = {k : [0] * (len_total) for k in forecast_df}
     
     for i in range(len_total):
-        dem['t'][i] = i
-        forc['t'][i] = i
+        aux_demand['t'][i] = i
+        aux_forecast['t'][i] = i
         #first year same 
         if (i < 8760):    
-            dem['demand'][i]= demand_df['demand'][i]
-            forc['DNI'][i] = forecast_df['DNI'][i]
-            forc['t_ambt'][i] = forecast_df['t_ambt'][i]
-            forc['Wt'][i] = forecast_df['Wt'][i]
-            forc['Qt'][i] = forecast_df['Qt'][i]
-            forc['GHI'][i] = forecast_df['GHI'][i]
-            forc['day'][i] = forecast_df['day'][i]
-            forc['SF'][i] = forecast_df['SF'][i]
-            forc['DHI'][i] = forecast_df['DHI'][i]
+            aux_demand['demand'][i]= demand_df['demand'][i]
+            aux_forecast['DNI'][i] = forecast_df['DNI'][i]
+            aux_forecast['t_ambt'][i] = forecast_df['t_ambt'][i]
+            aux_forecast['Wt'][i] = forecast_df['Wt'][i]
+            aux_forecast['Qt'][i] = forecast_df['Qt'][i]
+            aux_forecast['GHI'][i] = forecast_df['GHI'][i]
+            aux_forecast['day'][i] = forecast_df['day'][i]
+            aux_forecast['SF'][i] = forecast_df['SF'][i]
+            aux_forecast['DHI'][i] = forecast_df['DHI'][i]
         #others years
         else:
             #get the year
@@ -539,28 +540,27 @@ def calculate_multiyear_data(demand_df, forecast_df, my_data, years):
             #apply tax
             val = demand_df['demand'][i - 8760 * k] * (1 + my_data["demand_tax"]) ** k
             #asign value
-            dem['demand'][i] = val
+            aux_demand['demand'][i] = val
             #forecast is the same that first year
             val2 = forecast_df['DNI'][i - 8760 * k]
-            forc['DNI'][i] = val2
-            forc['t_ambt'][i] = forecast_df['t_ambt'][i - 8760 * k]
+            aux_forecast['DNI'][i] = val2
+            aux_forecast['t_ambt'][i] = forecast_df['t_ambt'][i - 8760 * k]
             val3 = forecast_df['Wt'][i - 8760 * k]
-            forc['Wt'][i] = val3
-            forc['Qt'][i] = forecast_df['Qt'][i - 8760 * k]
+            aux_forecast['Wt'][i] = val3
+            aux_forecast['Qt'][i] = forecast_df['Qt'][i - 8760 * k]
             val4 = forecast_df['GHI'][i - 8760 * k]
-            forc['GHI'][i] = val4
-            forc['day'][i] = forecast_df['day'][i - 8760 * k]
-            forc['SF'][i] = forecast_df['SF'][i - 8760 * k]
+            aux_forecast['GHI'][i] = val4
+            aux_forecast['day'][i] = forecast_df['day'][i - 8760 * k]
+            aux_forecast['SF'][i] = forecast_df['SF'][i - 8760 * k]
             val5 = forecast_df['DHI'][i - 8760 * k]
-            forc['DHI'][i] = val5      
+            aux_forecast['DHI'][i] = val5      
             
     #create dataframe
-    demand = pd.DataFrame(dem, columns=['t','demand'])
-    forecast = pd.DataFrame(forc, columns=['t','DNI','t_ambt','Wt', 
+    demand = pd.DataFrame(aux_demand, columns=['t','demand'])
+    forecast = pd.DataFrame(aux_forecast, columns=['t','DNI','t_ambt','Wt', 
                                            'Qt','GHI','day','SF','DHI'])
         
     return demand, forecast
-
 
 #create the hourly dataframe
 def hour_data(data):
@@ -569,11 +569,11 @@ def hour_data(data):
     
     for t in data.index.tolist():
         #get the hour
-        l = t % 24
+        hour_day = t % 24
         #get the day
-        k = math.floor(t / 24)
+        day_year = math.floor(t / 24)
         #create data
-        vec[l][k] = data[t]
+        vec[hour_day][day_year] = data[t]
         
     return vec
 
@@ -626,10 +626,10 @@ def best_distribution(data):
 def calculate_stochasticity_demand(rand_ob, demand_df, dem_dist):
     for t in demand_df['t']:
         #get the hour for the distribution
-        l = t % 24
+        hour = t % 24
         #generate one random number for each hour (demand and forecast)
-        n_d = generate_random(rand_ob, dem_dist[l])
-        demand_df.loc[t] = [t, n_d]
+        obj = generate_random(rand_ob, dem_dist[hour])
+        demand_df.loc[t] = [t, obj]
         
     return demand_df
     
@@ -639,12 +639,12 @@ def calculate_stochasticity_forecast(rand_ob, forecast_df, wind_dist,
     
     for t in forecast_df['t']:
         #get the hour for the distribution
-        l = t % 24
+        hour = t % 24
         #generate one random number for each hour (demand and forecast)
-        nf_w = generate_random(rand_ob, wind_dist[l])
-        nf_dni = generate_random(rand_ob, sol_distdni[l])
-        nf_dhi = generate_random(rand_ob, sol_distdhi[l])
-        nf_ghi = generate_random(rand_ob, sol_distghi[l])
+        nf_w = generate_random(rand_ob, wind_dist[hour])
+        nf_dni = generate_random(rand_ob, sol_distdni[hour])
+        nf_dhi = generate_random(rand_ob, sol_distdhi[hour])
+        nf_ghi = generate_random(rand_ob, sol_distghi[hour])
         t_ambt = forecast_df['t_ambt'][t]
         Qt = forecast_df['Qt'][t]
         day = forecast_df['day'][t]

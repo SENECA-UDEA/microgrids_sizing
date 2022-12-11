@@ -14,34 +14,34 @@ pd.options.display.max_columns = None
 
 #Algortyhm data
 #Set GAP
-Solver_data = {"MIP_GAP":0.01,"TEE_SOLVER":True,"OPT_SOLVER":"gurobi"}
+solver_data = {"MIP_GAP":0.01,"TEE_SOLVER":True,"OPT_SOLVER":"gurobi"}
 
 #Instance Data
-place = 'Providencia'
+PLACE = 'Providencia'
 TRM = 3910
 
 '''
-place = 'San_Andres'
-place = 'Puerto_Nar'
-place = 'Leticia'
-place = 'Test'
-place = 'Oswaldo'
+PLACE = 'San_Andres'
+PLACE = 'Puerto_Nar'
+PLACE = 'Leticia'
+PLACE = 'Test'
+PLACE = 'Oswaldo'
 '''
 loc_file = '/SENECA-UDEA/microgrids_sizing/development/data/'
 github_rute = 'https://raw.githubusercontent.com' + loc_file
 
 # file paths github
-demand_filepath = github_rute + place + '/demand_' + place + '.csv' 
-forecast_filepath = github_rute + place + '/forecast_' + place + '.csv' 
-units_filepath = github_rute + place + '/parameters_' + place + '.json' 
-instanceData_filepath = github_rute + place + '/instance_data_' + place + '.json' 
+demand_filepath = github_rute + PLACE + '/demand_' + PLACE + '.csv' 
+forecast_filepath = github_rute + PLACE + '/forecast_' + PLACE + '.csv' 
+units_filepath = github_rute + PLACE + '/parameters_' + PLACE + '.json' 
+instanceData_filepath = github_rute + PLACE + '/instance_data_' + PLACE + '.json' 
 fiscalData_filepath = github_rute +'fiscal_incentive.json'
  
 # file paths local
-demand_filepath = "../data/" + place + "/demand_" + place+".csv"
-forecast_filepath = "../data/"+place+"/forecast_" + place + ".csv"
-units_filepath = "../data/" + place + "/parameters_" + place + ".json"
-instanceData_filepath = "../data/" + place + "/instance_data_" + place + ".json"
+demand_filepath = "../data/" + PLACE + "/demand_" + PLACE+".csv"
+forecast_filepath = "../data/"+PLACE+"/forecast_" + PLACE + ".csv"
+units_filepath = "../data/" + PLACE + "/parameters_" + PLACE + ".json"
+instanceData_filepath = "../data/" + PLACE + "/instance_data_" + PLACE + ".json"
 
 #fiscal Data
 fiscalData_filepath = "../data/Cost/fiscal_incentive.json"
@@ -58,7 +58,7 @@ demand_df, forecast_df, generators, batteries, instance_data, fisc_data, cost_da
                                                                                                 fiscalData_filepath,
                                                                                                 costData_filepath)
 
-#Calculate salvage, operation and replacement cost with investment cost
+#Calculate salvage, operation and rePLACEment cost with investment cost
 generators, batteries = calculate_cost_data(generators, batteries, 
                                             instance_data, cost_data)
 
@@ -108,7 +108,7 @@ model = opt.make_model(generators_dict,
 print("Model generated")
 # solve model 
 results, termination = opt.solve_model(model, 
-                                        Solver_data)
+                                        solver_data)
 print("Model optimized")
 
 if termination['Temination Condition'] == 'optimal': 
@@ -127,7 +127,7 @@ if termination['Temination Condition'] == 'optimal':
 
 #Calculate LCOE in Colombia current - COP
 
-LCOE_COP = TRM * model_results.descriptive['LCOE']
+lcoe_cop = TRM * model_results.descriptive['LCOE']
 
 #Create Excel File
 '''

@@ -20,44 +20,44 @@ pd.options.display.max_columns = None
 
 #Set the seed for random
 
-#seed = 42
+#SEED = 42
 
-seed = None
-rand_ob = RandomCreate(seed = seed)
+SEED = None
+rand_ob = RandomCreate(seed = SEED)
 
 #Set solver settings
-Solver_data = {"MIP_GAP":0.01,"TEE_SOLVER":True,"OPT_SOLVER":"gurobi"}
+solver_data = {"MIP_GAP":0.01,"TEE_SOLVER":True,"OPT_SOLVER":"gurobi"}
 #select the search strategy
-add_function = 'GRASP'
-remove_function = 'RANDOM'
+ADD_FUNCTION = 'GRASP'
+REMOVE_FUNCTION = 'RANDOM'
 
 #Model data
-place = 'Providencia'
-place = 'Test'
+PLACE = 'Providencia'
+PLACE = 'Test'
 TRM = 3910
 
 '''
-place = 'San_Andres'
-place = 'Puerto_Nar'
-place = 'Leticia'
-place = 'Test'
-place = 'Oswaldo'
+PLACE = 'San_Andres'
+PLACE = 'Puerto_Nar'
+PLACE = 'Leticia'
+PLACE = 'Test'
+PLACE = 'Oswaldo'
 '''
 loc_file = '/SENECA-UDEA/microgrids_sizing/development/data/'
 github_rute = 'https://raw.githubusercontent.com' + loc_file
 
 # file paths github
-demand_filepath = github_rute + place + '/demand_' + place + '.csv' 
-forecast_filepath = github_rute + place + '/forecast_' + place + '.csv' 
-units_filepath = github_rute + place + '/parameters_' + place + '.json' 
-instanceData_filepath = github_rute + place + '/instance_data_' + place + '.json' 
+demand_filepath = github_rute + PLACE + '/demand_' + PLACE + '.csv' 
+forecast_filepath = github_rute + PLACE + '/forecast_' + PLACE + '.csv' 
+units_filepath = github_rute + PLACE + '/parameters_' + PLACE + '.json' 
+instanceData_filepath = github_rute + PLACE + '/instance_data_' + PLACE + '.json' 
 fiscalData_filepath = github_rute +'fiscal_incentive.json'
  
 # file paths local
-demand_filepath = "../data/" + place + "/demand_" + place+".csv"
-forecast_filepath = "../data/"+place+"/forecast_" + place + ".csv"
-units_filepath = "../data/" + place + "/parameters_" + place + ".json"
-instanceData_filepath = "../data/" + place + "/instance_data_" + place + ".json"
+demand_filepath = "../data/" + PLACE + "/demand_" + PLACE+".csv"
+forecast_filepath = "../data/"+PLACE+"/forecast_" + PLACE + ".csv"
+units_filepath = "../data/" + PLACE + "/parameters_" + PLACE + ".json"
+instanceData_filepath = "../data/" + PLACE + "/instance_data_" + PLACE + ".json"
 
 #fiscal Data
 fiscalData_filepath = "../data/Cost/fiscal_incentive.json"
@@ -75,10 +75,10 @@ demand_df, forecast_df, generators, batteries, instance_data, fisc_data, cost_da
                                                                                                 costData_filepath)
 
 #nputs for the model
-amax = instance_data['amax']
-N_iterations = instance_data['N_iterations']
+AMAX = instance_data['amax']
+N_ITERATIONS = instance_data['N_iterations']
 
-#Calculate salvage, operation and replacement cost with investment cost
+#Calculate salvage, operation and rePLACEment cost with investment cost
 generators, batteries = calculate_cost_data(generators, 
                                             batteries, instance_data, cost_data)
 #Demand to be covered
@@ -119,7 +119,7 @@ sol_feasible = sol_constructor.initial_solution(instance_data,
                                                technologies_dict, 
                                                renewables_dict,
                                                delta,
-                                               Solver_data,
+                                               solver_data,
                                                rand_ob,
                                                nse_cost = cost_data['NSE_COST'])
 
@@ -146,7 +146,7 @@ search_operator = SearchOperator(generators_dict,
 #check initial solution feasible
 if (sol_best.results != None):
     movement = "Initial Solution"
-    for i in range(N_iterations):
+    for i in range(N_ITERATIONS):
         #create data for df
         rows_df.append([i, sol_current.feasible, 
                         sol_current.results.descriptive['area'], 
@@ -156,11 +156,11 @@ if (sol_best.results != None):
             # save copy as the last solution feasible seen
             sol_feasible = copy.deepcopy(sol_current) 
             # Remove a generator or battery from the current solution - grasp or random
-            if (remove_function == 'GRASP'):
+            if (REMOVE_FUNCTION == 'GRASP'):
                 sol_try, remove_report = search_operator.remove_object(sol_current, 
                                                                        CRF, delta)
                 
-            elif (remove_function == 'RANDOM'):
+            elif (REMOVE_FUNCTION == 'RANDOM'):
                 sol_try, remove_report = search_operator.remove_random_object(sol_current, 
                                                                               rand_ob)
 
@@ -168,16 +168,16 @@ if (sol_best.results != None):
         else:
             #  Create list of generators that could be added
             list_available_bat, list_available_gen, list_tec_gen  = search_operator.available_items(sol_current,
-                                                                                                    amax)
+                                                                                                    AMAX)
             
             if (list_available_gen != [] or list_available_bat != []):
                 # Add a generator or battery to the current solution - grasp or random
-                if (add_function == 'GRASP'):
+                if (ADD_FUNCTION == 'GRASP'):
                     sol_try, remove_report = search_operator.add_object(sol_current, 
                                                                         list_available_bat, list_available_gen, list_tec_gen, remove_report,  
                                                                         CRF, instance_data['fuel_cost'], rand_ob, delta)
                
-                elif (add_function == 'RANDOM'):
+                elif (ADD_FUNCTION == 'RANDOM'):
                     sol_try = search_operator.add_random_object(sol_current, 
                                                                 list_available_bat, list_available_gen, list_tec_gen, rand_ob)
                 
@@ -214,7 +214,7 @@ if (sol_best.results != None):
         
         #Solve the model
         results, termination = opt.solve_model(model, 
-                                               Solver_data)
+                                               solver_data)
         
         #Create results
         if termination['Temination Condition'] == 'optimal':
@@ -261,7 +261,7 @@ if (sol_best.results != None):
             pass
         #calculate current COP   
        
-        LCOE_COP = TRM * sol_best.results.descriptive['LCOE']
+        lcoe_cop = TRM * sol_best.results.descriptive['LCOE']
         #create Excel
         '''
         sol_best.results.df_results.to_excel("results2.xlsx")         

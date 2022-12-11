@@ -51,7 +51,7 @@ def make_model(generators_dict = None,
     #splus_cost = Penalized surplus energy cost
     #sminus_cost = Penalized unsupplied demand
     #tlpsp = Number of lpsp periods for moving average
-    #Delta = tax incentive
+    #delta = tax incentive
     #inverter = inverter cost
     #nse_cost = cost to calcalte not supplied load
     
@@ -76,28 +76,28 @@ def make_model(generators_dict = None,
     model.bat_area = pyo.Param(model.BATTERIES, initialize = {k:batteries_dict[k].area 
                                                               for k in batteries_dict.keys()})# Battery area
     
-    model.d = pyo.Param(model.HTIME, initialize = demand_df) #demand    
+    model.demand = pyo.Param(model.HTIME, initialize = demand_df) #demand    
     model.ir = pyo.Param(initialize = ir) #Interest rate
     model.nse = pyo.Param(initialize = nse) #Available not supplied demand  
     # Number of years evaluation of the project, for CRF
     model.t_years = pyo.Param(initialize = years) 
-    CRF_calc = ((model.ir * (1 + model.ir) ** (model.t_years))
+    crf_calc = ((model.ir * (1 + model.ir) ** (model.t_years))
                 /((1 + model.ir) ** (model.t_years) - 1)) #CRF to LCOE
-    model.CRF = pyo.Param(initialize = CRF_calc) #capital recovery factor 
+    model.CRF = pyo.Param(initialize = crf_calc) #capital recovery factor 
     model.tlpsp = pyo.Param (initialize = tlpsp) #LPSP Time for moving average
     model.splus_cost = pyo.Param (initialize = splus_cost)
     model.sminus_cost = pyo.Param (initialize = sminus_cost)
     model.delta = pyo.Param (initialize = delta)
     model.inverter = pyo.Param (initialize = inverter)
     #parameters to piecewise function
-    model.x1cost = pyo.Param (initialize = nse_cost["L1"][1])
-    model.x2cost = pyo.Param (initialize = nse_cost["L2"][1])
-    model.x3cost = pyo.Param (initialize = nse_cost["L3"][1])
-    model.x4cost = pyo.Param (initialize = nse_cost["L4"][1])
-    model.x1limit = pyo.Param (initialize = nse_cost["L1"][0])
-    model.x2limit = pyo.Param (initialize = nse_cost["L2"][0])
-    model.x3limit = pyo.Param (initialize = nse_cost["L3"][0])
-    model.x4limit = pyo.Param (initialize = nse_cost["L4"][0])
+    model.x1_cost = pyo.Param (initialize = nse_cost["L1"][1])
+    model.x2_cost = pyo.Param (initialize = nse_cost["L2"][1])
+    model.x3_cost = pyo.Param (initialize = nse_cost["L3"][1])
+    model.x4_cost = pyo.Param (initialize = nse_cost["L4"][1])
+    model.x1_limit = pyo.Param (initialize = nse_cost["L1"][0])
+    model.x2_limit = pyo.Param (initialize = nse_cost["L2"][0])
+    model.x3_limit = pyo.Param (initialize = nse_cost["L3"][0])
+    model.x4_limit = pyo.Param (initialize = nse_cost["L4"][0])
     # Variables
     model.w = pyo.Var(model.GENERATORS, within = pyo.Binary) #select or not the generator
     model.q = pyo.Var(model.BATTERIES, within = pyo.Binary) #select or not the battery
@@ -154,26 +154,26 @@ def make_model(generators_dict = None,
     model.G_rule = pyo.Constraint(model.GENERATORS, model.HTIME, rule = G_rule)
     
     # Minimum Diesel  
-    def G_mindiesel (model, k, t):
+    def G_min_diesel (model, k, t):
       gen = generators_dict[k]
       return model.p[k, t] >= gen.DG_min * model.v[k, t]
-    model.G_mindiesel = pyo.Constraint(model.GENERATORS_DIESEL, 
-                                       model.HTIME, rule = G_mindiesel)
+    model.G_min_diesel = pyo.Constraint(model.GENERATORS_DIESEL, 
+                                       model.HTIME, rule = G_min_diesel)
     
     # Defines balance rule
     def balance_rule(model, t):
       return  (sum(model.p[(k, t)] for k in model.GENERATORS) 
                +  sum(model.b_discharge[(l, t)] for l in model.BATTERIES) 
-               + model.s_minus[t] == model.s_plus[t] + model.d[t]  
+               + model.s_minus[t] == model.s_plus[t] + model.demand[t]  
                + sum(model.b_charge[(l, t)] for l in model.BATTERIES))
     model.balance_rule = pyo.Constraint(model.HTIME, rule = balance_rule)
 
     # Defines operative cost
-    def cop_rule(model,k, t):
+    def cost_op_rule(model,k, t):
       gen = generators_dict[k]
       return model.operative_cost[k, t] == (gen.f0 
                                            * gen.DG_max * model.v[k, t]  + gen.f1 * model.p[k, t]) * model.fuel_cost
-    model.cop_rule = pyo.Constraint(model.GENERATORS_DIESEL, model.HTIME, rule = cop_rule)
+    model.cop_rule = pyo.Constraint(model.GENERATORS_DIESEL, model.HTIME, rule = cost_op_rule)
         
     #Batteries management
     def soc_rule(model, l, t):
@@ -225,25 +225,25 @@ def make_model(generators_dict = None,
     
 
     # Defines LPSP constraint
-    def lpspcons_rule(model, t):
+    def lpsp_cons_rule(model, t):
       if t >= (model.tlpsp - 1):
-        rev = sum(model.d[t] for t in range((t - model.tlpsp + 1), t + 1)) 
-        if rev > 0:
+        rev_mov_average = sum(model.demand[t] for t in range((t - model.tlpsp + 1), t + 1)) 
+        if rev_mov_average > 0:
           return sum(model.s_minus[t] for t in range((t - model.tlpsp + 1)
-                                                     , t + 1)) / rev  <= model.nse 
+                                                     , t + 1)) / rev_mov_average  <= model.nse 
         else:
           return pyo.Constraint.Skip
       else:
         return pyo.Constraint.Skip
-    model.lpspcons = pyo.Constraint(model.HTIME, rule = lpspcons_rule)
+    model.lpsp_cons = pyo.Constraint(model.HTIME, rule = lpsp_cons_rule)
 
     #control that s- is lower than demand if tlpsp is two or more
-    def other_rule(model, t):
+    def aditional_rule(model, t):
         if (model.tlpsp > 1):
-            return model.s_minus[t] <= model.d[t]
+            return model.s_minus[t] <= model.demand[t]
         else:
             return pyo.Constraint.Skip
-    model.other_rule = pyo.Constraint(model.HTIME, rule = other_rule)
+    model.aditional_rule = pyo.Constraint(model.HTIME, rule = aditional_rule)
     
     # Defines strategic rule relation Renewable - Diesel
     def relation_rule(model):
@@ -257,19 +257,19 @@ def make_model(generators_dict = None,
 
     
     # Defines operational rule relation Renewable - Diesel
-    def oprelation_rule(model, t):
-        rev = 0
+    def op_relation_rule(model, t):
+        check_tec = 0
         for i in generators_dict.values():
             if (i.tec == 'S' or i.tec == 'W'):
-                rev = 1
-        if (rev == 1):
-            expr4 = sum(model.d[t1] for t1 in model.HTIME)
+                check_tec = 1
+        if (check_tec == 1):
+            expr4 = sum(model.demand[t1] for t1 in model.HTIME)
             return sum( model.p[k, t] for k in model.GENERATORS 
                        if generators_dict[k].tec != 'D') <= expr4 * (sum( model.v[k2,t] 
                                                                        for k2 in model.GENERATORS_DIESEL)  + sum(model.soc[l, t] for l in model.BATTERIES)) 
         else:
             return pyo.Constraint.Skip
-    model.oprelation_rule = pyo.Constraint(model.HTIME, rule = oprelation_rule)
+    model.op_relation_rule = pyo.Constraint(model.HTIME, rule = op_relation_rule)
 
     
     #Constraints s- cost piecewise
@@ -278,35 +278,35 @@ def make_model(generators_dict = None,
     model.sminusx_rule = pyo.Constraint(model.HTIME, rule = sminusx_rule)
     
     def sminusx1_rule(model, t):
-        return model.x1[t] <= model.x1limit * model.d[t]
+        return model.x1[t] <= model.x1_limit * model.demand[t]
     model.sminusx1_rule = pyo.Constraint(model.HTIME, rule = sminusx1_rule)
     
     def sminusx2_rule(model, t):
-        return model.x1[t] >= model.x1limit * model.d[t] * model.z1[t]
+        return model.x1[t] >= model.x1_limit * model.demand[t] * model.z1[t]
     model.sminusx2_rule = pyo.Constraint(model.HTIME, rule = sminusx2_rule)    
 
     def sminusx3_rule(model, t):
-        return model.x2[t] <= (model.x2limit - model.x1limit) * model.d[t] * model.z1[t]
+        return model.x2[t] <= (model.x2_limit - model.x1_limit) * model.demand[t] * model.z1[t]
     model.sminusx3_rule = pyo.Constraint(model.HTIME, rule = sminusx3_rule)
     
     def sminusx4_rule(model, t):
-        return model.x2[t] >= (model.x2limit - model.x1limit) * model.d[t] * model.z2[t]
+        return model.x2[t] >= (model.x2_limit - model.x1_limit) * model.demand[t] * model.z2[t]
     model.sminusx4_rule = pyo.Constraint(model.HTIME, rule = sminusx4_rule)  
     
     def sminusx5_rule(model, t):
-        return model.x3[t] <= (model.x3limit - model.x2limit) * model.d[t] * model.z2[t]
+        return model.x3[t] <= (model.x3_limit - model.x2_limit) * model.demand[t] * model.z2[t]
     model.sminusx5_rule = pyo.Constraint(model.HTIME, rule = sminusx5_rule)
     
     def sminusx6_rule(model, t):
-        return model.x3[t] >= (model.x3limit - model.x2limit) * model.d[t] * model.z3[t]
+        return model.x3[t] >= (model.x3_limit - model.x2_limit) * model.demand[t] * model.z3[t]
     model.sminusx6_rule = pyo.Constraint(model.HTIME, rule = sminusx6_rule)  
 
     def sminusx7_rule(model, t):
-        return model.x4[t] <= (model.x4limit - model.x3limit) * model.d[t] * model.z3[t]
+        return model.x4[t] <= (model.x4_limit - model.x3_limit) * model.demand[t] * model.z3[t]
     model.sminusx7_rule = pyo.Constraint(model.HTIME, rule = sminusx7_rule)
      
     #Objective function
-    def obj2_rule(model):
+    def obj_rule(model):
         tnpc =  sum(batteries_dict[l].cost_up * model.delta
                     * model.q[l] for l in model.BATTERIES)
         
@@ -349,14 +349,14 @@ def make_model(generators_dict = None,
         lcoe_cost = tnpc * model.CRF + tnpc_op 
         lcoe_cost += model.splus_cost * sum( model.s_plus[t] for t in model.HTIME)
         #s- cost piecewise
-        lcoe_cost += sum(model.x1cost * model.x1[t] for t in model.HTIME)
-        lcoe_cost += sum(model.x2cost * model.x2[t] for t in model.HTIME)
-        lcoe_cost += sum(model.x3cost * model.x3[t] for t in model.HTIME)
-        lcoe_cost += sum(model.x4cost * model.x4[t] for t in model.HTIME)
-        lcoe = lcoe_cost/ (sum( model.d[t] for t in model.HTIME))
+        lcoe_cost += sum(model.x1_cost * model.x1[t] for t in model.HTIME)
+        lcoe_cost += sum(model.x2_cost * model.x2[t] for t in model.HTIME)
+        lcoe_cost += sum(model.x3_cost * model.x3[t] for t in model.HTIME)
+        lcoe_cost += sum(model.x4_cost * model.x4[t] for t in model.HTIME)
+        lcoe = lcoe_cost/ (sum( model.demand[t] for t in model.HTIME))
         #lcoe +=  model.sminus_cost * sum( model.s_minus[t] for t in model.HTIME)
         return lcoe
-    model.LCOE_value = pyo.Objective(sense = pyo.minimize, rule = obj2_rule)
+    model.LCOE_value = pyo.Objective(sense = pyo.minimize, rule = obj_rule)
     '''
     #ambiental cost
     model.ambiental = pyo.Param (initialize = ambiental)
@@ -414,11 +414,11 @@ def make_model_operational(generators_dict = None,
     model.HTIME = pyo.Set(initialize = [t for t in range(len(demand_df))])
 
     # Parameters 
-    model.d = pyo.Param(model.HTIME, initialize = demand_df) #demand     
+    model.demand = pyo.Param(model.HTIME, initialize = demand_df) #demand     
     model.fuel_cost = pyo.Param(initialize = fuel_cost) #Fuel Cost
     model.nse = pyo.Param(initialize = nse) # Available unsupplied demand  
     #Total net present cost (Sizing decision)
-    model.TNPCCRF = pyo.Param(initialize = TNPCCRF) 
+    model.tnpccrf = pyo.Param(initialize = TNPCCRF) 
     model.tlpsp = pyo.Param (initialize = tlpsp) #LPSP for moving average
     model.gen_area = pyo.Param(model.GENERATORS, initialize = {k:generators_dict[k].area
                                                                for k in generators_dict.keys()})# Generator area
@@ -427,14 +427,14 @@ def make_model_operational(generators_dict = None,
     model.splus_cost = pyo.Param (initialize = splus_cost)
     model.sminus_cost = pyo.Param (initialize = sminus_cost)
     #Data from piecewise function
-    model.x1cost = pyo.Param (initialize = nse_cost["L1"][1])
-    model.x2cost = pyo.Param (initialize = nse_cost["L2"][1])
-    model.x3cost = pyo.Param (initialize = nse_cost["L3"][1])
-    model.x4cost = pyo.Param (initialize = nse_cost["L4"][1])
-    model.x1limit = pyo.Param (initialize = nse_cost["L1"][0])
-    model.x2limit = pyo.Param (initialize = nse_cost["L2"][0])
-    model.x3limit = pyo.Param (initialize = nse_cost["L3"][0])
-    model.x4limit = pyo.Param (initialize = nse_cost["L4"][0])
+    model.x1_cost = pyo.Param (initialize = nse_cost["L1"][1])
+    model.x2_cost = pyo.Param (initialize = nse_cost["L2"][1])
+    model.x3_cost = pyo.Param (initialize = nse_cost["L3"][1])
+    model.x4_cost = pyo.Param (initialize = nse_cost["L4"][1])
+    model.x1_limit = pyo.Param (initialize = nse_cost["L1"][0])
+    model.x2_limit = pyo.Param (initialize = nse_cost["L2"][0])
+    model.x3_limit = pyo.Param (initialize = nse_cost["L3"][0])
+    model.x4_limit = pyo.Param (initialize = nse_cost["L4"][0])
 
     # Variables
     #select or not the generator in each period
@@ -478,28 +478,28 @@ def make_model_operational(generators_dict = None,
     model.G_rule = pyo.Constraint(model.GENERATORS, model.HTIME, rule = G_rule)
     
     # Minimum Diesel  
-    def G_mindiesel (model, k, t):
+    def G_min_diesel (model, k, t):
       gen = generators_dict[k]
       return model.p[k, t] >= gen.DG_min * model.v[k, t]
       
-    model.G_mindiesel = pyo.Constraint(model.GENERATORS_DIESEL,
-                                       model.HTIME, rule = G_mindiesel)
+    model.G_min_diesel = pyo.Constraint(model.GENERATORS_DIESEL,
+                                       model.HTIME, rule = G_min_diesel)
     
     # Defines energy balance
     def balance_rule(model, t):
       return  (sum(model.p[(k, t)] for k in model.GENERATORS) 
                +  sum(model.b_discharge[(l, t)] for l in model.BATTERIES) 
-               + model.s_minus[t] ==  model.s_plus[t] + model.d[t]  
+               + model.s_minus[t] ==  model.s_plus[t] + model.demand[t]  
                + sum(model.b_charge[(l, t)] for l in model.BATTERIES))
     model.balance_rule = pyo.Constraint(model.HTIME, rule = balance_rule)
 
     # Defines operative cost
-    def cop_rule(model,k, t):
+    def cost_op_rule(model,k, t):
       gen = generators_dict[k]
       return model.operative_cost[k, t] == (gen.f0 * gen.DG_max  
                                            * model.v[k, t] + gen.f1 *  model.p[k, t]) * model.fuel_cost
-    model.cop_rule = pyo.Constraint(model.GENERATORS_DIESEL,
-                                    model.HTIME, rule = cop_rule)
+    model.cost_op_rule = pyo.Constraint(model.GENERATORS_DIESEL,
+                                    model.HTIME, rule = cost_op_rule)
     
     # Batteries management
     def soc_rule(model, l, t):
@@ -552,41 +552,41 @@ def make_model_operational(generators_dict = None,
 
     
     # Defines operational rule relation Renewable - Diesel
-    def oprelation_rule(model, t):
-        rev = 0
+    def op_relation_rule(model, t):
+        check_tec = 0
         for i in generators_dict.values():
             if (i.tec == 'S' or i.tec == 'W'):
-                rev = 1
+                check_tec = 1
                 break
-        if (rev == 1):
-            expr4 = sum(model.d[t1] for t1 in model.HTIME)
+        if (check_tec == 1):
+            expr4 = sum(model.demand[t1] for t1 in model.HTIME)
             return sum( model.p[k, t] for k in model.GENERATORS 
                        if generators_dict[k].tec != 'D') <= expr4 * (sum( model.v[k2,t] for k2 
                                                                          in model.GENERATORS_DIESEL)  + sum(model.soc[l, t] for l in model.BATTERIES)) 
         else:
             return pyo.Constraint.Skip
-    model.oprelation_rule = pyo.Constraint(model.HTIME, rule = oprelation_rule)
+    model.op_relation_rule = pyo.Constraint(model.HTIME, rule = op_relation_rule)
 
     # Defines LPSP constraint
-    def lpspcons_rule(model, t):
+    def lpsp_cons_rule(model, t):
       if t >= (model.tlpsp - 1):
-        rev = sum(model.d[t] for t in range((t - model.tlpsp + 1), t + 1)) 
-        if rev > 0:
+        rev_mov_average = sum(model.demand[t] for t in range((t - model.tlpsp + 1), t + 1)) 
+        if rev_mov_average > 0:
           return (sum(model.s_minus[t] for t in range((t - model.tlpsp + 1), t + 1)) 
-                  / sum(model.d[t] for t in range((t - model.tlpsp + 1), t + 1)))  <= model.nse 
+                  / rev_mov_average)  <= model.nse 
         else:
           return pyo.Constraint.Skip
       else:
         return pyo.Constraint.Skip
-    model.lpspcons = pyo.Constraint(model.HTIME, rule = lpspcons_rule)
+    model.lpsp_cons = pyo.Constraint(model.HTIME, rule = lpsp_cons_rule)
     
     #control that s- is lower than demand if tlpsp is two or more
-    def other_rule(model, t):
+    def aditional_rule(model, t):
         if (model.tlpsp > 1):
-            return model.s_minus[t] <= model.d[t]
+            return model.s_minus[t] <= model.demand[t]
         else:
             return pyo.Constraint.Skip
-    model.other_rule = pyo.Constraint(model.HTIME, rule = other_rule)
+    model.aditional_rule = pyo.Constraint(model.HTIME, rule = aditional_rule)
 
     #Constraints s- cost piecewise
     def sminusx_rule(model, t):
@@ -594,35 +594,35 @@ def make_model_operational(generators_dict = None,
     model.sminusx_rule = pyo.Constraint(model.HTIME, rule = sminusx_rule)
     
     def sminusx1_rule(model, t):
-        return model.x1[t] <= model.x1limit * model.d[t]
+        return model.x1[t] <= model.x1_limit * model.demand[t]
     model.sminusx1_rule = pyo.Constraint(model.HTIME, rule = sminusx1_rule)
     
     def sminusx2_rule(model, t):
-        return model.x1[t] >= model.x1limit * model.d[t] * model.z1[t]
+        return model.x1[t] >= model.x1_limit * model.demand[t] * model.z1[t]
     model.sminusx2_rule = pyo.Constraint(model.HTIME, rule = sminusx2_rule)    
 
     def sminusx3_rule(model, t):
-        return model.x2[t] <= (model.x2limit - model.x1limit) * model.d[t] * model.z1[t]
+        return model.x2[t] <= (model.x2_limit - model.x1_limit) * model.demand[t] * model.z1[t]
     model.sminusx3_rule = pyo.Constraint(model.HTIME, rule = sminusx3_rule)
     
     def sminusx4_rule(model, t):
-        return model.x2[t] >= (model.x2limit - model.x1limit) * model.d[t] * model.z2[t]
+        return model.x2[t] >= (model.x2_limit - model.x1_limit) * model.demand[t] * model.z2[t]
     model.sminusx4_rule = pyo.Constraint(model.HTIME, rule = sminusx4_rule)  
     
     def sminusx5_rule(model, t):
-        return model.x3[t] <= (model.x3limit - model.x2limit) * model.d[t] * model.z2[t]
+        return model.x3[t] <= (model.x3_limit - model.x2_limit) * model.demand[t] * model.z2[t]
     model.sminusx5_rule = pyo.Constraint(model.HTIME, rule = sminusx5_rule)
     
     def sminusx6_rule(model, t):
-        return model.x3[t] >= (model.x3limit - model.x2limit) * model.d[t] * model.z3[t]
+        return model.x3[t] >= (model.x3_limit - model.x2_limit) * model.demand[t] * model.z3[t]
     model.sminusx6_rule = pyo.Constraint(model.HTIME, rule = sminusx6_rule)  
 
     def sminusx7_rule(model, t):
-        return model.x4[t] <= (model.x4limit - model.x3limit) * model.d[t] * model.z3[t]
+        return model.x4[t] <= (model.x4_limit - model.x3_limit) * model.demand[t] * model.z3[t]
     model.sminusx7_rule = pyo.Constraint(model.HTIME, rule = sminusx7_rule)    
 
     # Defines Objective function
-    def obj2_rule(model):
+    def obj_rule(model):
         tnpc_op = sum(sum(model.operative_cost[k, t] 
                           for t in model.HTIME) for k in model.GENERATORS_DIESEL)
         
@@ -632,16 +632,16 @@ def make_model_operational(generators_dict = None,
         tnpc_op += sum(sum(model.b_discharge[l, t] 
                            * batteries_dict[l].cost_vopm for l in model.BATTERIES) for t in model.HTIME)
         
-        lcoe_cost = model.TNPCCRF + tnpc_op
+        lcoe_cost = model.tnpccrf + tnpc_op
         lcoe_cost +=  model.splus_cost * sum( model.s_plus[t] for t in model.HTIME)
         #lcoe_cost +=  model.sminus_cost * sum( model.s_minus[t] for t in model.HTIME)
-        lcoe_cost += sum(model.x1cost * model.x1[t] for t in model.HTIME)
-        lcoe_cost += sum(model.x2cost * model.x2[t] for t in model.HTIME)
-        lcoe_cost += sum(model.x3cost * model.x3[t] for t in model.HTIME)
-        lcoe_cost += sum(model.x4cost * model.x4[t] for t in model.HTIME)
-        lcoe = lcoe_cost / (sum( model.d[t] for t in model.HTIME))
+        lcoe_cost += sum(model.x1_cost * model.x1[t] for t in model.HTIME)
+        lcoe_cost += sum(model.x2_cost * model.x2[t] for t in model.HTIME)
+        lcoe_cost += sum(model.x3_cost * model.x3[t] for t in model.HTIME)
+        lcoe_cost += sum(model.x4_cost * model.x4[t] for t in model.HTIME)
+        lcoe = lcoe_cost / (sum( model.demand[t] for t in model.HTIME))
         return lcoe
-    model.LCOE_value = pyo.Objective(sense = pyo.minimize, rule = obj2_rule)
+    model.LCOE_value = pyo.Objective(sense = pyo.minimize, rule = obj_rule)
     '''
     #ambiental cost
     model.ambiental = pyo.Param (initialize = ambiental)
@@ -750,8 +750,8 @@ class Results():
         lpsp_data = [0] * len(model.HTIME)
         for t in model.HTIME:
             sminus_data[t] = value(model.s_minus[t])
-            if model.d[t] != 0:
-              lpsp_data [t] = value(model.s_minus[t]) / value(model.d[t])
+            if model.demand[t] != 0:
+              lpsp_data [t] = value(model.s_minus[t]) / value(model.demand[t])
         
         sminus_df = pd.DataFrame(list(zip(sminus_data, lpsp_data)), 
                                  columns = ['S-','LPSP'])

@@ -16,7 +16,7 @@ generators = generators_data['generators']
 batteries = generators_data['batteries']
 
 aux_generators = []
-generators_def = []
+generators_def = [] #definitive list of generators
 aux_batteries = []
 batteries_def = []
 generators_transformed = copy.deepcopy(generators)
