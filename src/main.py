@@ -99,7 +99,6 @@ model = opt.make_model(generators_dict,
                        nse = instance_data['nse'], 
                        years = instance_data['years'],
                        splus_cost = instance_data['splus_cost'],
-                       sminus_cost = instance_data['sminus_cost'],
                        tlpsp = instance_data['tlpsp'],
                        delta = delta,
                        inverter = instance_data['inverter_cost'],
@@ -113,7 +112,7 @@ print("Model optimized")
 
 if termination['Temination Condition'] == 'optimal': 
    #create results
-   model_results = opt.Results(model, generators_dict, batteries_dict)
+   model_results = opt.Results(model, generators_dict, batteries_dict,'One-Stage')
    print(model_results.descriptive)
    print(model_results.df_results)
    generation_graph = model_results.generation_graph(0, len(demand_df))

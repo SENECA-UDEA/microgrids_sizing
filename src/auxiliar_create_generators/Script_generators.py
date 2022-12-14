@@ -7,18 +7,18 @@ units_filepath = "C:/Users/sebas/OneDrive/Documentos/GitHub/microgrids_sizing/da
 
 #load the data
 try:
-    generators_data =  requests.get(units_filepath)
-    generators_data = json.loads(generators_data.text)
+    items_data =  requests.get(units_filepath)
+    items_data = json.loads(items_data.text)
 except:
     f = open(units_filepath)
-    generators_data = json.load(f)    
-generators = generators_data['generators']
-batteries = generators_data['batteries']
+    items_data = json.load(f)    
+generators = items_data['generators']
+batteries = items_data['batteries']
 
 aux_generators = []
 generators_def = [] #definitive list of generators
 aux_batteries = []
-batteries_def = []
+batteries_def = [] #definitive list of batteries
 generators_transformed = copy.deepcopy(generators)
 batteries_transformed = copy.deepcopy(batteries)
 total_transformed = generators_transformed + batteries_transformed

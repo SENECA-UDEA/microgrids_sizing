@@ -7,7 +7,6 @@
     "years" : 20,
     "tlpsp" :24,
     "splus_cost": 0.000001,
-    "sminus_cost": 0.2,
     "inverter_cost": 0,
     "h2" : 10,
     "coef_hel" : 0.1,

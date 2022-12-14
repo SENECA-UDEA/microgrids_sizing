@@ -149,7 +149,6 @@ class SolConstructor():
                                            nse =  instance_data['nse'], 
                                            TNPCCRF = tnpccrf_calc,
                                            splus_cost = instance_data['splus_cost'],
-                                           sminus_cost = instance_data['sminus_cost'],
                                            tlpsp = instance_data['tlpsp'],
                                            nse_cost = nse_cost)  
 
@@ -157,7 +156,7 @@ class SolConstructor():
                                                Solver_data)
         
         if termination['Temination Condition'] == 'optimal': 
-            sol_results = opt.Results(model,generators_dict_sol)
+            sol_results = opt.Results(model,generators_dict_sol,batteries_dict_sol,'Two-Stage')
         else: 
             #create a false Diesel auxiliar if not optimal
             k = {
@@ -202,7 +201,6 @@ class SolConstructor():
                                                nse =  instance_data['nse'], 
                                                TNPCCRF = tnpccrf_calc,
                                                splus_cost = instance_data['splus_cost'],
-                                               sminus_cost = instance_data['sminus_cost'],
                                                tlpsp = instance_data['tlpsp'],
                                                nse_cost = nse_cost)  
 
@@ -210,7 +208,7 @@ class SolConstructor():
             results, termination = opt.solve_model(model, 
                                                    Solver_data)
             
-            sol_results = opt.Results(model, generators_dict_sol, batteries_dict_sol)
+            sol_results = opt.Results(model, generators_dict_sol, batteries_dict_sol,'Two-Stage')
         
         #create solution
         sol_initial = Solution(generators_dict_sol, 
