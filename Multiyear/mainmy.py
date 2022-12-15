@@ -103,7 +103,7 @@ demand_df, forecast_df = calculate_multiyear_data(demand_df_i, forecast_df_i,
 #calulate parameters
 AMAX = instance_data['amax'] 
 N_ITERATIONS = instance_data['N_iterations']
-#Calculate salvage, operation and rePLACEment cost with investment cost
+#Calculate salvage, operation and replacement cost with investment cost
 generators, batteries = calculate_cost_data(generators, batteries, 
                                             instance_data, cost_data)
 #Demand to be covered
@@ -311,7 +311,4 @@ if ('D' in technologies_dict.keys() or 'B' in technologies_dict.keys()
 else:
     print('No feasible solution, solution need diesel generators or batteries')
 
-
-
-# -*- coding: utf-8 -*-
 

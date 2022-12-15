@@ -34,6 +34,7 @@ REMOVE_FUNCTION = 'RANDOM'
 #Model data
 PLACE = 'Providencia'
 PLACE = 'Test'
+#trm to current COP
 TRM = 3910
 
 '''
@@ -74,11 +75,11 @@ demand_df, forecast_df, generators, batteries, instance_data, fisc_data, cost_da
                                                                                                 fiscalData_filepath,
                                                                                                 costData_filepath)
 
-#nputs for the model
+#Inputs for the model
 AMAX = instance_data['amax']
 N_ITERATIONS = instance_data['N_iterations']
 
-#Calculate salvage, operation and rePLACEment cost with investment cost
+#Calculate salvage, operation and replacement cost with investment cost
 generators, batteries = calculate_cost_data(generators, 
                                             batteries, instance_data, cost_data)
 #Demand to be covered
@@ -147,6 +148,9 @@ search_operator = SearchOperator(generators_dict,
 if (sol_best.results != None):
     movement = "Initial Solution"
     for i in range(N_ITERATIONS):
+        '''
+        ILS PROCEDURE
+        '''
         #create data for df
         rows_df.append([i, sol_current.feasible, 
                         sol_current.results.descriptive['area'], 

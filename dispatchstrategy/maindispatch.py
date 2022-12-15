@@ -99,21 +99,7 @@ demand_df, forecast_df, generators, batteries, instance_data, fisc_data, cost_da
 AMAX = instance_data['amax'] 
 N_ITERATIONS = instance_data['N_iterations']
 
-#Special Oswaldo data
-if (PLACE == 'Oswaldo'):
-    cost_data["NSE_COST"]["L1"][1] = 0.2
-    cost_data["NSE_COST"]["L2"][1] = 0.2
-    cost_data["NSE_COST"]["L3"][1] = 0.2
-    cost_data["NSE_COST"]["L4"][1] = 0.2
-    cost_data["param_s_solar"] = 0
-    cost_data["param_s_wind"] = 0
-    cost_data["param_s_diesel"] = 0
-    cost_data["param_s_bat"] = 0
-    cost_data["param_v_bat"] = 0
-    cost_data["param_v_wind"] = 0
-    cost_data["param_v_solar"] = 0
-
-#Calculate salvage, operation and rePLACEment cost with investment cost
+#Calculate salvage, operation and replacement cost with investment cost
 generators, batteries = calculate_cost_data(generators, batteries, 
                                             instance_data, cost_data)
 #Demand to be covered
@@ -252,7 +238,6 @@ if ('D' in technologies_dict.keys() or 'B' in technologies_dict.keys()
                 #no feasible combination
                 state = 'no feasible'
                 df_results = []
-            
              
             print("finish simulation - state: " + state)
             #Create results

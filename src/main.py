@@ -18,6 +18,7 @@ solver_data = {"MIP_GAP":0.01,"TEE_SOLVER":True,"OPT_SOLVER":"gurobi"}
 
 #Instance Data
 PLACE = 'Providencia'
+#trm to current COP
 TRM = 3910
 
 '''
@@ -49,7 +50,6 @@ fiscalData_filepath = "../data/Cost/fiscal_incentive.json"
 #cost Data
 costData_filepath = "../data/Cost/parameters_cost.json"
 
-
 # read data
 demand_df, forecast_df, generators, batteries, instance_data, fisc_data, cost_data = read_data(demand_filepath,
                                                                                                 forecast_filepath,
@@ -58,7 +58,7 @@ demand_df, forecast_df, generators, batteries, instance_data, fisc_data, cost_da
                                                                                                 fiscalData_filepath,
                                                                                                 costData_filepath)
 
-#Calculate salvage, operation and rePLACEment cost with investment cost
+#Calculate salvage, operation and replacement cost with investment cost
 generators, batteries = calculate_cost_data(generators, batteries, 
                                             instance_data, cost_data)
 

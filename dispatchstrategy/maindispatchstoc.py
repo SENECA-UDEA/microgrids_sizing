@@ -110,7 +110,7 @@ demand_df_i, forecast_df_i, generators, batteries, instance_data, fisc_data, cos
 #calulate parameters
 AMAX = instance_data['amax'] 
 N_ITERATIONS = instance_data['N_iterations']
-#Calculate salvage, operation and rePLACEment cost with investment cost
+#Calculate salvage, operation and replacement cost with investment cost
 generators, batteries = calculate_cost_data(generators, batteries, 
                                             instance_data, cost_data)
 #Demand to be covered
@@ -336,26 +336,8 @@ for scn in range(N_SCENARIOS):
                 #print results best solution
                 print(sol_best.results.descriptive)
                 print(sol_best.results.df_results)
-                generation_graph = sol_best.results.generation_graph(0, len(demand_df))
-                print('best solution number of not served hours: ' + str(best_nsh))
-                #plot(generation_graph)
                 #save the solution
                 solutions[scn] = sol_best
-                try:
-                    #stats
-                    percent_df, energy_df, renew_df, total_df, brand_df = calculate_energy(sol_best.batteries_dict_sol, 
-                                                                                           sol_best.generators_dict_sol, sol_best.results, demand_df)
-                except KeyError:
-                    pass
-                
-                #calculate current COP   
-                lcoe_cop = TRM * sol_best.results.descriptive['LCOE']
-                #create Excel
-                '''
-                sol_best.results.df_results.to_excel("resultsolarbat.xlsx")         
-                percent_df.to_excel("percentresultssolarbat.xlsx")
-        
-                '''
         else:
             print('No feasible solution, review data')
     else:
@@ -372,11 +354,12 @@ for j in solutions.keys():
         best_sol = solutions[j]
         break
 
-#any feasible solution in all scenarios
 if (best_sol == None):
+    #any feasible solution in all scenarios
     print('No Feasible solutions')
-#get the feasible solutions
+
 else:
+    #get the feasible solutions
     total_data = {}
     count = {}
     lcoe_count = {}
@@ -422,16 +405,27 @@ else:
             if sum_lcoe[i] < min_sol:
                best_sol = solutions[i]
                min_sol = sum_lcoe[i]
-        #return the selected solution
-        print(best_sol.results.descriptive)
-        print(best_sol.results.df_results)
-        #return number of no feasible solutions
-        print('number of no feasible scenarios: ' + str(no_feasible))
-    else:
-        #return the selected solution
-        print(best_sol.results.descriptive)
-        print(best_sol.results.df_results)
-        #return number of no feasible solutions
-        print('number of no feasible scenarios: ' + str(no_feasible))
+
+    #return the selected solution
+    print(best_sol.results.descriptive)
+    print(best_sol.results.df_results)
+    #return number of no feasible solutions
+    print('number of no feasible scenarios: ' + str(no_feasible))
+    generation_graph = best_sol.results.generation_graph(0, len(demand_df_i))
+    plot(generation_graph)
     
+    try:
+        #stats
+        percent_df, energy_df, renew_df, total_df, brand_df = calculate_energy(best_sol.batteries_dict_sol, 
+                                                                               best_sol.generators_dict_sol, best_sol.results, demand_df_i)
+    except KeyError:
+        pass
     
+    #calculate current COP   
+    lcoe_cop = TRM * best_sol.results.descriptive['LCOE']
+    #create Excel
+    '''
+    sol_best.results.df_results.to_excel("resultsolarbat.xlsx")         
+    percent_df.to_excel("percentresultssolarbat.xlsx")
+
+    '''
