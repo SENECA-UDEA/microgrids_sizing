@@ -175,8 +175,7 @@ def calculate_sizing_cost(generators_dict, batteries_dict, ir, years,
             return tnpccrf
 
 
-def calculate_area (sol_actual):
-    solution = copy.deepcopy(sol_actual)
+def calculate_area (solution):
     dict_actual = {**solution.generators_dict_sol, **solution.batteries_dict_sol}
     area = 0
     for i in dict_actual.values():
@@ -561,7 +560,7 @@ def calculate_stochasticity_demand(rand_ob, demand_df, dem_dist):
         hour = t % 24
         #generate one random number for each hour 
         obj = generate_random(rand_ob, dem_dist[hour])
-        demand_df.loc[t] = [t,]
+        demand_df.loc[t] = [t,obj]
         
     return demand_df
     

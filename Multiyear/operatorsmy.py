@@ -44,7 +44,8 @@ class SolConstructor():
                           delta,
                           rand_ob,
                           cost_data,
-                          my_data): 
+                          my_data,
+                          ir): 
     
         generators_dict_sol = {}
         batteries_dict_sol = {}
@@ -107,7 +108,7 @@ class SolConstructor():
                 if (techno == 'D'):
                     demand_supplied = f.DG_max
                 elif (techno == 'S'):
-                    demand_supplied = f.Ppv_stc
+                    demand_supplied = f.Ppv_stc * f.fpv
                     if (techno2 == 'B'):
                         #put first only one battery
                         f = self.batteries_dict[sorted_batteries[0]]
@@ -168,19 +169,19 @@ class SolConstructor():
             
         if (check_strategy in list_ds_diesel):
             lcoe_cost, df_results, state, time_f, nsh = ds_diesel(sol_try, 
-                                                                  self.demand_df, instance_data, cost_data, my_data)
+                                                                  self.demand_df, instance_data, cost_data, my_data, ir)
             
         elif (check_strategy in list_ds_diesel_renewable):
             lcoe_cost, df_results, state, time_f, nsh = ds_diesel_renewable(sol_try, 
-                                                                            self.demand_df, instance_data, cost_data,delta, my_data)
+                                                                            self.demand_df, instance_data, cost_data,delta, my_data, ir)
             
         elif (check_strategy in list_ds_battery_renewable):
             lcoe_cost, df_results, state, time_f, nsh = ds_battery_renewable (sol_try, 
-                                                                              self.demand_df, instance_data, cost_data, delta, rand_ob, my_data)
+                                                                              self.demand_df, instance_data, cost_data, delta, rand_ob, my_data, ir)
             
         elif (check_strategy in ds_dies_batt_renew):
             lcoe_cost, df_results, state, time_f, nsh = ds_dies_batt_renew(sol_try, 
-                                                                           self.demand_df, instance_data, cost_data, delta, rand_ob, my_data)
+                                                                           self.demand_df, instance_data, cost_data, delta, rand_ob, my_data, ir)
             
         else:
             #no feasible combination
@@ -224,7 +225,7 @@ class SolConstructor():
             #run dispatch strategy with false diesel
             if (check_strategy in list_ds_diesel):
                 lcoe_cost, df_results, state, time_f, nsh = ds_diesel(sol_try, 
-                                                                      self.demand_df, instance_data, cost_data, my_data)
+                                                                      self.demand_df, instance_data, cost_data, my_data, ir)
             else:
                 state = 'no feasible'
 
@@ -258,24 +259,30 @@ class SearchOperator():
         for dic in dict_actual.values(): 
             if dic.tec == 'B':
                 #Operation cost
-                op_cost = 0 
+                op_cost = solution.results.df_results[dic.id_bat + '_cost'].sum(axis = 0, 
+                                                                              skipna = True)
                 #Investment cost
                 inv_cost = dic.cost_up * delta + dic.cost_r * delta - dic.cost_s + dic.cost_fopm
+                #Generation
                 sum_generation = solution.results.df_results[dic.id_bat + '_b-'].sum(axis = 0,
                                                                                      skipna = True) 
                 
             else:
                 if dic.tec == 'D':
+                    #Generation
                     sum_generation = solution.results.df_results[dic.id_gen].sum(axis = 0, 
                                                                                  skipna = True)
-                    
+                    #Operation cost
                     op_cost = solution.results.df_results[dic.id_gen + '_cost'].sum(axis = 0, 
                                                                                     skipna = True)
-                    
+                    #Investment cost
                     inv_cost = dic.cost_up + dic.cost_r - dic.cost_s + dic.cost_fopm 
                 else:
+                    #Generation
                     sum_generation = sum(dic.gen_rule.values())
+                    #Operation cost
                     op_cost = dic.cost_rule
+                    #Investment cost
                     inv_cost = dic.cost_up * delta + dic.cost_r * delta - dic.cost_s + dic.cost_fopm 
                     
             relation = sum_generation / (inv_cost  + op_cost)

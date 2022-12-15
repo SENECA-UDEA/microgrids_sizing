@@ -155,36 +155,6 @@ def calculate_inverter_cost(generators_dict, batteries_dict, inverter_cost):
             return expr
 
 
-#calculate total cost for two stage approach
-def calculate_sizing_cost(generators_dict, batteries_dict,
-                          ir, years, delta, inverter):
-    
-            expr = 0
-            
-            for gen in generators_dict.values(): 
-                if (gen.tec != 'D'): 
-                    #fiscal incentive if not diesel
-                    expr += gen.cost_up * delta 
-                    expr += gen.cost_r * delta
-                else:
-                    expr += gen.cost_up
-                    expr += gen.cost_r 
-
-                expr -= gen.cost_s 
-                expr += gen.cost_fopm 
-
-            for bat in batteries_dict.values(): 
-                expr += bat.cost_up * delta
-                expr += bat.cost_r * delta
-                expr -= bat.cost_s
-                expr += bat.cost_fopm
-    
-            #Operative cost doesn't take into account the crf
-            tnpccrf = (expr + inverter) * (1 + ir)
-    
-            return tnpccrf
-
-
 def calculate_area (sol_actual):
     solution = copy.deepcopy(sol_actual)
     dict_actual = {**solution.generators_dict_sol, **solution.batteries_dict_sol}

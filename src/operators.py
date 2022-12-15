@@ -87,7 +87,7 @@ class SolConstructor():
                 if (techno == 'D'):
                     demand_supplied = f.DG_max
                 elif (techno == 'S'):
-                    demand_supplied = f.Ppv_stc
+                    demand_supplied = f.Ppv_stc * f.fpv
                     if (techno2 == 'B'):
                         #put first only one battery
                         f = self.batteries_dict[sorted_batteries[0]]
@@ -238,23 +238,29 @@ class SearchOperator():
         for d in dict_actual.values(): 
             if d.tec == 'B':
                 #Operation cost
-                op_cost = 0 
+                op_cost = solution.results.df_results[d.id_bat + '_cost'].sum(axis = 0, 
+                                                                              skipna = True)
                 #Investment cost
                 inv_cost = d.cost_up * delta + d.cost_r * delta - d.cost_s + d.cost_fopm
+                #generation
                 sum_generation = solution.results.df_results[d.id_bat + '_b-'].sum(axis = 0,
                                                                                    skipna = True)          
             else:
                 if d.tec == 'D':
+                    #Generation
                     sum_generation = solution.results.df_results[d.id_gen].sum(axis = 0, 
                                                                                skipna = True)
-                    
+                    #Operation cost
                     op_cost = solution.results.df_results[d.id_gen + '_cost'].sum(axis = 0, 
                                                                                   skipna = True)
-                    
+                    #Investment cost
                     inv_cost = d.cost_up + d.cost_r - d.cost_s + d.cost_fopm 
                 else:
+                    #Generation
                     sum_generation = sum(d.gen_rule.values())
+                    #Operation cost
                     op_cost = d.cost_rule
+                    #Investment cost
                     inv_cost = d.cost_up * delta + d.cost_r * delta - d.cost_s + d.cost_fopm 
 
             relation = sum_generation / (inv_cost * CRF + op_cost)

@@ -147,7 +147,8 @@ if ('D' in technologies_dict.keys() or 'B' in technologies_dict.keys()
                                                    delta,
                                                    rand_ob,
                                                    cost_data,
-                                                   my_data)
+                                                   my_data,
+                                                   ir)
     
     #if use aux_diesel asigns a big area to avoid select it again
     if ('aux_diesel' in sol_feasible.generators_dict_sol.keys()):
@@ -231,19 +232,19 @@ if ('D' in technologies_dict.keys() or 'B' in technologies_dict.keys()
             #run the dispatch strategy
             if (strategy_def in list_ds_diesel):
                 lcoe_cost, df_results, state, time_f, nsh = ds_diesel(sol_try, demand_df, 
-                                                                      instance_data, cost_data, my_data)
+                                                                      instance_data, cost_data, my_data, ir)
                 
             elif (strategy_def in list_ds_diesel_renewable):
                 lcoe_cost, df_results, state, time_f, nsh = ds_diesel_renewable(sol_try, 
-                                                                                demand_df, instance_data, cost_data, delta, my_data)
+                                                                                demand_df, instance_data, cost_data, delta, my_data, ir)
                 
             elif (strategy_def in list_ds_battery_renewable):
                 lcoe_cost, df_results, state, time_f, nsh = ds_battery_renewable (sol_try, 
-                                                                                  demand_df, instance_data, cost_data, delta, rand_ob, my_data)
+                                                                                  demand_df, instance_data, cost_data, delta, rand_ob, my_data, ir)
                 
             elif (strategy_def in ds_dies_batt_renew):
                 lcoe_cost, df_results, state, time_f, nsh = ds_dies_batt_renew(sol_try, 
-                                                                               demand_df, instance_data, cost_data, delta, rand_ob, my_data)
+                                                                               demand_df, instance_data, cost_data, delta, rand_ob, my_data, ir)
                 
             else:
                 #no feasible combination

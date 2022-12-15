@@ -51,7 +51,7 @@ def select_strategy (batteries_dict, generators_dict):
     return dispatch
 
 
-def ds_diesel (solution, demand_df, instance_data, cost_data, my_data):
+def ds_diesel (solution, demand_df, instance_data, cost_data, my_data, ir):
     '''dispatch strategy -> only diesel'''
     #initial parameters 
     time_i = time.time()
@@ -172,7 +172,7 @@ def ds_diesel (solution, demand_df, instance_data, cost_data, my_data):
 
     #create results
     demand = pd.DataFrame(demand_df['demand'], columns = ['demand'])
-    lcoe_cost = ((sminustot + splustot + lcoe_inftot + costvopm + inverter)
+    lcoe_cost = ((sminustot + splustot + lcoe_inftot + costvopm + inverter)*(1+ir)
                  / (sum(demand_df['demand']) - sum(sminus['s-'])))
     
     generation = pd.DataFrame(p, columns = [*p.keys()])
@@ -193,7 +193,7 @@ def ds_diesel (solution, demand_df, instance_data, cost_data, my_data):
 
 
 def ds_diesel_renewable(solution, demand_df, instance_data, 
-                        cost_data, delta, my_data):
+                        cost_data, delta, my_data, ir):
     '''dispatch strategy Diesel plus renewable (Solar - Eolic or Both)'''
     #initial parameters 
     time_i = time.time()
@@ -366,7 +366,7 @@ def ds_diesel_renewable(solution, demand_df, instance_data,
         state = 'optimal'
 
     #create results df
-    lcoe_cost = ((sminustot + splustot + lcoe_inftot + costvopm + inverter)
+    lcoe_cost = ((sminustot + splustot + lcoe_inftot + costvopm + inverter)*(1+ir)
                  / (sum(demand_df['demand']) - sum(sminus['s-'])))
     
     demand = pd.DataFrame(demand_df['demand'], columns = ['demand'])
@@ -387,7 +387,7 @@ def ds_diesel_renewable(solution, demand_df, instance_data,
 
 
 def ds_battery_renewable  (solution, demand_df, instance_data,
-                           cost_data, delta, rand_ob, my_data):
+                           cost_data, delta, rand_ob, my_data, ir):
     ''' Dispatch strategy battery with renewable(Solar - Eolic or both)'''
     #initial parameters 
     time_i = time.time()
@@ -542,7 +542,7 @@ def ds_battery_renewable  (solution, demand_df, instance_data,
         state = 'optimal'
     
     #calculate results
-    lcoe_cost = ((sminustot + splustot + lcoe_inftot + costvopm + inverter)
+    lcoe_cost = ((sminustot + splustot + lcoe_inftot + costvopm + inverter)*(1+ir)
                  / (sum(demand_df['demand']) - sum(sminus['s-'])))
     
     demand = pd.DataFrame(demand_df['demand'], columns = ['demand'])
@@ -562,7 +562,7 @@ def ds_battery_renewable  (solution, demand_df, instance_data,
 
 
 def ds_dies_batt_renew(solution, demand_df, instance_data, 
-                       cost_data, delta, rand_ob, my_data):
+                       cost_data, delta, rand_ob, my_data, ir):
     '''Dispatch strategy diesel and battery and (Solar, Eolic or both)'''
     #initial parameters 
     time_i = time.time()
@@ -860,7 +860,7 @@ def ds_dies_batt_renew(solution, demand_df, instance_data,
     solution.feasible = state
 
     #create df results
-    lcoe_cost = ((sminustot + splustot + lcoe_inftot + costvopm + inverter)
+    lcoe_cost = ((sminustot + splustot + lcoe_inftot + costvopm + inverter)*(1+ir)
                  / (sum(demand_df['demand']) - sum(sminus['s-'])))
     
     demand = pd.DataFrame(demand_df['demand'], columns = ['demand'])
