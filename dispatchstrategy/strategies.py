@@ -969,14 +969,6 @@ class Results():
         
         return plot
 
-'''
-Ambiental cost
-cost_ambiental = {'cost_amb': [0]*LEN_DATA} #ambiental cost
-ambiental = cost_data['ambiental']
-turn_on = cost_data['ambiental_turn_on']
-cost[i+'_cost'][t]= (gen.f0 * gen.DG_max + gen.f1 * p[i][t])*fuel_cost
-cost_ambiental['cost_amb'][t]= (turn_on +  p[i][t]*ambiental)
-costvopm += cost_ambiental['cost_amb'][t]
-'''
+
 
 

@@ -291,22 +291,6 @@ if ('D' in technologies_dict.keys() or 'B' in technologies_dict.keys()
             #create Excel
             '''
             sol_best.results.df_results.to_excel("resultsdf.xlsx")    
-            generation_cost = pd.DataFrame.from_dict(sol_best.results.descriptive, orient ='index')
-            dict_descriptive = pd.DataFrame({ key:pd.Series(value) for key, 
-                                             value in sol_best.results.descriptive.items()}).T
-            
-            writer = pd.ExcelWriter('result2s.xlsx', engine='xlsxwriter')
-            # Write each dataframe to a different worksheet.
-            sol_best.results.df_results.to_excel(writer, sheet_name='Dataframe')
-            dict_descriptive.to_excel(writer, sheet_name='Descriptive')
-            writer.save()
-            
-            percent_df.to_excel("percentresults.xlsx")
-            energy_df.to_excel("energyresults.xlsx")
-            renew_df.to_excel("renewresults.xlsx")
-            total_df.to_excel("totalresults.xlsx")
-            brand_df.to_excel("brandresults.xlsx")
-    
             '''
     else:
         print('No feasible solution, review data')

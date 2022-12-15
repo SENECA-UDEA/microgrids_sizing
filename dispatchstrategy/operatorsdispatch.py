@@ -469,7 +469,5 @@ class SearchOperator():
                         list_tec_gen.append(g.tec)
    
         return list_available_bat, list_available_gen, list_tec_gen  
-    
-# -*- coding: utf-8 -*-
 
 

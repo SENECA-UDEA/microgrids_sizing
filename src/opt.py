@@ -632,16 +632,7 @@ def make_model_operational(generators_dict = None,
         lcoe = lcoe_cost / (sum( model.demand[t] for t in model.HTIME))
         return lcoe
     model.LCOE_value = pyo.Objective(sense = pyo.minimize, rule = obj_rule)
-    '''
-    #ambiental cost
-    model.ambiental = pyo.Param (initialize = ambiental)
-    model.ambiental_turn_on = pyo.Param (initialize = ambiental_turn_on)
-    # Defines operative cost
-    def cop_rule(model,k, t):
-      gen = generators_dict[k]
-      aux = (gen.f0 * gen.DG_max * model.v[k, t] + gen.f1 * model.p[k, t] ) * model.fuel_cost
-      aux2 = model.v[k, t] * model.ambiental_turn_on + model.p[k, t] * model.ambiental
-    '''
+
     return model
 
 
