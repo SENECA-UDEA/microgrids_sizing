@@ -155,6 +155,10 @@ sol_distghi = get_best_distribution(sol_vecghi)
 param = instance_data['fuel_cost']
 
 solutions = {}
+#save demand and forecast to best solution
+demand_scenarios = {}
+forecast_scenarios = {}
+
 #scenarios       
 for scn in range(N_SCENARIOS):
     '''
@@ -172,6 +176,8 @@ for scn in range(N_SCENARIOS):
         forecast_df = calculate_stochasticity_forecast(rand_ob, forecast_p, wind_dist, 
                                                        sol_distdni, sol_distdhi, sol_distghi)
     
+    demand_scenarios[scn] = demand_df
+    forecast_scenarios[scn] = forecast_df
     # Create objects and generation rule
     generators_dict, batteries_dict = create_objects(generators,
                                                      batteries,  
@@ -352,6 +358,7 @@ best_sol = None
 for j in solutions.keys():
     if (solutions[j] != 'No Feasible solutions'):
         best_sol = solutions[j]
+        position_sol = j
         break
 
 if (best_sol == None):
@@ -405,6 +412,7 @@ else:
             if sum_lcoe[i] < min_sol:
                best_sol = solutions[i]
                min_sol = sum_lcoe[i]
+               position_sol = i
 
     #return the selected solution
     print(best_sol.results.descriptive)
@@ -417,7 +425,7 @@ else:
     try:
         #stats
         percent_df, energy_df, renew_df, total_df, brand_df = calculate_energy(best_sol.batteries_dict_sol, 
-                                                                               best_sol.generators_dict_sol, best_sol.results, demand_df_i)
+                                                                               best_sol.generators_dict_sol, best_sol.results, demand_scenarios[position_sol])
     except KeyError:
         pass
     
