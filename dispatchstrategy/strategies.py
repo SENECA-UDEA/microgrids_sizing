@@ -78,6 +78,7 @@ def ds_diesel (solution, demand_df, instance_data, cost_data, CRF):
     costvopm = 0 #variable cost
     splustot = 0 #wasted energy cost
     sminustot = 0 #not supplied load cost
+    #batteries, 0 in this case, report the same of others strategies
     #battery stated of charge
     soc = {l + '_soc': [0] * LEN_DATA for l in solution.batteries_dict_sol} 
     #charge battery
@@ -213,6 +214,7 @@ def ds_diesel_renewable (solution, demand_df, instance_data,
     costvopm = 0 #variable cost
     splustot = 0 #wasted energy cost
     sminustot = 0 #not supplied load cost
+    #batteries, 0 in this case, report the same of others strategies
     #battery stated of charge
     soc = {l + '_soc': [0] * LEN_DATA for l in solution.batteries_dict_sol} 
     #charge battery
@@ -896,7 +898,7 @@ class Results():
  
         except:
             for k in solution.generators_dict_sol.values():
-                if df_results[k.id_gen].sum() > 0:
+                if df_results[k.id_gen].sum() >= 0:
                     generators[k.id_gen] = 1
 
             self.descriptive['generators'] = generators
@@ -920,11 +922,11 @@ class Results():
 
         except:
             for l in solution.batteries_dict_sol.values():
-                if df_results[l.id_bat + '_b-'].sum() + df_results[l.id_bat + '_b+'].sum() > 0:
+                if df_results[l.id_bat + '_b-'].sum() + df_results[l.id_bat + '_b+'].sum() >= 0:
                     bat_data[l.id_bat] = 1
 
             self.descriptive['batteries'] = bat_data 
-                  
+        #auxiliar area, is calculated with another function          
         self.descriptive['area'] = 0
             
         # objective function
