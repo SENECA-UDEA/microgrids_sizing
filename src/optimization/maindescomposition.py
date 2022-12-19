@@ -4,14 +4,15 @@ Created on Wed Apr 20 11:14:21 2022
 
 @author: scastellanos
 """
-from src.utilities import read_data, create_objects, calculate_sizing_cost
-from src.utilities import create_technologies, calculate_area, calculate_energy
-from src.utilities import interest_rate, calculate_inverter_cost
-from src.utilities import fiscal_incentive, calculate_cost_data
-import src.opt as opt
-from src.classes import RandomCreate
+from src.optimization.utilities import read_data, calculate_sizing_cost
+from src.optimization.utilities import create_objects, calculate_area
+from src.optimization.utilities import create_technologies, calculate_energy
+from src.optimization.utilities import interest_rate, calculate_inverter_cost
+from src.optimization.utilities import fiscal_incentive, calculate_cost_data
+import src.optimization.opt as opt
+from src.optimization.classes import RandomCreate
 import pandas as pd 
-from src.operators import SolConstructor, SearchOperator
+from src.optimization.operators import SolConstructor, SearchOperator
 from plotly.offline import plot
 import copy
 pd.options.display.max_columns = None
@@ -55,16 +56,16 @@ instanceData_filepath = github_rute + PLACE + '/instance_data_' + PLACE + '.json
 fiscalData_filepath = github_rute +'fiscal_incentive.json'
  
 # file paths local
-demand_filepath = "../data/" + PLACE + "/demand_" + PLACE+".csv"
-forecast_filepath = "../data/"+PLACE+"/forecast_" + PLACE + ".csv"
-units_filepath = "../data/" + PLACE + "/parameters_" + PLACE + ".json"
-instanceData_filepath = "../data/" + PLACE + "/instance_data_" + PLACE + ".json"
+demand_filepath = "../../data/" + PLACE + "/demand_" + PLACE+".csv"
+forecast_filepath = "../../data/"+PLACE+"/forecast_" + PLACE + ".csv"
+units_filepath = "../../data/" + PLACE + "/parameters_" + PLACE + ".json"
+instanceData_filepath = "../../data/" + PLACE + "/instance_data_" + PLACE + ".json"
 
 #fiscal Data
-fiscalData_filepath = "../data/auxiliar/fiscal_incentive.json"
+fiscalData_filepath = "../../data/auxiliar/fiscal_incentive.json"
 
 #cost Data
-costData_filepath = "../data/auxiliar/parameters_cost.json"
+costData_filepath = "../../data/auxiliar/parameters_cost.json"
 
 
 # read data

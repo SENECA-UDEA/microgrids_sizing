@@ -3,18 +3,18 @@
 Created on Wed Apr 20 11:14:21 2022
 
 """
-from multiyear.utilitiesmy import read_data, create_technologies
-from multiyear.utilitiesmy import calculate_area, calculate_energy
-from multiyear.utilitiesmy import fiscal_incentive, calculate_cost_data
-from multiyear.utilitiesmy import calculate_multiyear_data, interest_rate
-from multiyear.utilitiesmy import calculate_inverter_cost, create_objects
-from multiyear.classesmy import RandomCreate
+from src.multiyear.utilitiesmy import read_data, create_technologies
+from src.multiyear.utilitiesmy import calculate_area, calculate_energy
+from src.multiyear.utilitiesmy import fiscal_incentive, calculate_cost_data
+from src.multiyear.utilitiesmy import calculate_multiyear_data, interest_rate
+from src.multiyear.utilitiesmy import calculate_inverter_cost, create_objects
+from src.multiyear.classesmy import RandomCreate
 import pandas as pd 
-from multiyear.operatorsmy import SolConstructor, SearchOperator
+from src.multiyear.operatorsmy import SolConstructor, SearchOperator
 from plotly.offline import plot
-from multiyear.strategiesmy import select_strategy, ds_diesel, ds_dies_batt_renew
-from multiyear.strategiesmy import ds_diesel_renewable, ds_battery_renewable 
-from multiyear.strategiesmy import Results
+from src.multiyear.strategiesmy import select_strategy, ds_battery_renewable
+from src.multiyear.strategiesmy import ds_diesel_renewable, ds_diesel 
+from src.multiyear.strategiesmy import Results, ds_dies_batt_renew
 import copy
 pd.options.display.max_columns = None
 
@@ -73,19 +73,19 @@ instanceData_filepath = github_rute + PLACE + '/instance_data_' + PLACE + '.json
 fiscalData_filepath = github_rute +'fiscal_incentive.json'
  
 # file paths local
-demand_filepath = "../data/" + PLACE + "/demand_" + PLACE+".csv"
-forecast_filepath = "../data/"+PLACE+"/forecast_" + PLACE + ".csv"
-units_filepath = "../data/" + PLACE + "/parameters_" + PLACE + ".json"
-instanceData_filepath = "../data/" + PLACE + "/instance_data_" + PLACE + ".json"
+demand_filepath = "../../data/" + PLACE + "/demand_" + PLACE+".csv"
+forecast_filepath = "../../data/"+PLACE+"/forecast_" + PLACE + ".csv"
+units_filepath = "../../data/" + PLACE + "/parameters_" + PLACE + ".json"
+instanceData_filepath = "../../data/" + PLACE + "/instance_data_" + PLACE + ".json"
 
 #fiscal Data
-fiscalData_filepath = "../data/auxiliar/fiscal_incentive.json"
+fiscalData_filepath = "../../data/auxiliar/fiscal_incentive.json"
 
 #cost Data
-costData_filepath = "../data/auxiliar/parameters_cost.json"
+costData_filepath = "../../data/auxiliar/parameters_cost.json"
 
 #multiyear Data
-myearData_filepath = "../data/auxiliar/multiyear.json"
+myearData_filepath = "../../data/auxiliar/multiyear.json"
 
 # read data
 demand_df_i, forecast_df_i, generators, batteries, instance_data, fisc_data, cost_data, my_data = read_data(demand_filepath,

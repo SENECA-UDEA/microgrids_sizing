@@ -3,18 +3,18 @@
 Created on Wed May 11 10:23:49 2022
 @author: scastellanos
 """
-from src.utilities import create_technologies
-from src.classes import Solution, Diesel
+from src.optimization.utilities import create_technologies
+from src.optimization.classes import Solution, Diesel
 import copy
 import math
 import pandas as pd
 
-from dispatchstrategy.strategies import select_strategy
-from dispatchstrategy.strategies import ds_diesel
-from dispatchstrategy.strategies import ds_dies_batt_renew
-from dispatchstrategy.strategies import ds_diesel_renewable
-from dispatchstrategy.strategies import ds_battery_renewable 
-from dispatchstrategy.strategies import Results 
+from src.simulation.strategies import select_strategy
+from src.simulation.strategies import ds_diesel
+from src.simulation.strategies import ds_dies_batt_renew
+from src.simulation.strategies import ds_diesel_renewable
+from src.simulation.strategies import ds_battery_renewable 
+from src.simulation.strategies import Results 
 
 #Strategy list for select
 list_ds_diesel = ["diesel"]

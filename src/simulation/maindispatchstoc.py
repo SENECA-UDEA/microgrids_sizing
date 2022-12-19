@@ -3,23 +3,26 @@
 Created on Wed Apr 20 11:14:21 2022
 
 """
-from src.utilities import read_data, create_objects, create_technologies
-from src.utilities import calculate_area, calculate_energy, interest_rate
-from src.utilities import fiscal_incentive, calculate_cost_data
-from src.utilities import calculate_inverter_cost, get_best_distribution
-from src.utilities import calculate_stochasticity_forecast, hour_data
-from src.utilities import generate_number_distribution
-from src.utilities import calculate_stochasticity_demand
-from src.classes import RandomCreate
+from src.optimization.utilities import read_data, create_technologies
+from src.optimization.utilities import calculate_energy, interest_rate
+from src.optimization.utilities import fiscal_incentive, calculate_cost_data
+from src.optimization.utilities import calculate_inverter_cost
+from src.optimization.utilities import calculate_stochasticity_forecast
+from src.optimization.utilities import generate_number_distribution
+from src.optimization.utilities import calculate_stochasticity_demand
+from src.optimization.utilities import create_objects, calculate_area
+from src.optimization.utilities import  get_best_distribution, hour_data
+
+from src.optimization.classes import RandomCreate
 import pandas as pd 
-from dispatchstrategy.operatorsdispatch import SolConstructor, SearchOperator
+from src.simulation.operatorsdispatch import SolConstructor, SearchOperator
 from plotly.offline import plot
-from dispatchstrategy.strategies import select_strategy
-from dispatchstrategy.strategies import ds_diesel
-from dispatchstrategy.strategies import ds_dies_batt_renew
-from dispatchstrategy.strategies import ds_diesel_renewable
-from dispatchstrategy.strategies import ds_battery_renewable 
-from dispatchstrategy.strategies import Results
+from src.simulation.strategies import select_strategy
+from src.simulation.strategies import ds_diesel
+from src.simulation.strategies import ds_dies_batt_renew
+from src.simulation.strategies import ds_diesel_renewable
+from src.simulation.strategies import ds_battery_renewable 
+from src.simulation.strategies import Results
 import copy
 import math
 pd.options.display.max_columns = None
@@ -87,16 +90,16 @@ instanceData_filepath = github_rute + PLACE + '/instance_data_' + PLACE + '.json
 fiscalData_filepath = github_rute +'fiscal_incentive.json'
  
 # file paths local
-demand_filepath = "../data/" + PLACE + "/demand_" + PLACE+".csv"
-forecast_filepath = "../data/"+PLACE+"/forecast_" + PLACE + ".csv"
-units_filepath = "../data/" + PLACE + "/parameters_" + PLACE + ".json"
-instanceData_filepath = "../data/" + PLACE + "/instance_data_" + PLACE + ".json"
+demand_filepath = "../../data/" + PLACE + "/demand_" + PLACE+".csv"
+forecast_filepath = "../../data/"+PLACE+"/forecast_" + PLACE + ".csv"
+units_filepath = "../../data/" + PLACE + "/parameters_" + PLACE + ".json"
+instanceData_filepath = "../../data/" + PLACE + "/instance_data_" + PLACE + ".json"
 
 #fiscal Data
-fiscalData_filepath = "../data/auxiliar/fiscal_incentive.json"
+fiscalData_filepath = "../../data/auxiliar/fiscal_incentive.json"
 
 #cost Data
-costData_filepath = "../data/auxiliar/parameters_cost.json"
+costData_filepath = "../../data/auxiliar/parameters_cost.json"
 
 
 # read data

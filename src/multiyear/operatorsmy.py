@@ -4,14 +4,14 @@ Created on Wed May 11 10:23:49 2022
 @author: scastellanos
 """
 
-from multiyear.utilitiesmy import create_technologies
-from multiyear.classesmy import Solution, Diesel
+from src.multiyear.utilitiesmy import create_technologies
+from src.multiyear.classesmy import Solution, Diesel
 import copy
 import math
 import pandas as pd
-from  multiyear.strategiesmy import select_strategy, ds_diesel
-from  multiyear.strategiesmy import ds_diesel_renewable, ds_battery_renewable 
-from  multiyear.strategiesmy import Results, ds_dies_batt_renew
+from  src.multiyear.strategiesmy import select_strategy, ds_battery_renewable 
+from  src.multiyear.strategiesmy import ds_diesel_renewable, ds_diesel
+from  src.multiyear.strategiesmy import Results, ds_dies_batt_renew
 
 #Strategy list for select
 list_ds_diesel = ["diesel"]

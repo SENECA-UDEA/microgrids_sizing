@@ -4,7 +4,7 @@ Created on Wed Apr 20 13:51:07 2022
 
 @author: scastellanos
 """
-from src.classes import Solar, Eolic, Diesel, Battery
+from src.multiyear.classesmy import Solar, Eolic, Diesel, Battery
 import pandas as pd
 import requests
 import json 
@@ -18,12 +18,13 @@ def read_data(demand_filepath,
               units_filepath,
               instance_filepath,
               fiscal_filepath,
-              cost_filepath):
+              cost_filepath,
+              my_filepath):
     
     forecast_df = pd.read_csv(forecast_filepath)
     demand_df = pd.read_csv(demand_filepath)
     try:
-        generators_data = requests.get(units_filepath)
+        generators_data =  requests.get(units_filepath)
         generators_data = json.loads(generators_data.text)
     except:
         f = open(units_filepath)
@@ -33,7 +34,7 @@ def read_data(demand_filepath,
         generators = generators_data['generators']
     except:
         generators = {}
-        
+
     try:
         batteries = generators_data['batteries']
     except: 
@@ -47,37 +48,46 @@ def read_data(demand_filepath,
         instance_data = json.load(f) 
 
     try:
-        fiscal_data =  requests.get(fiscal_filepath)
+        fiscal_data = requests.get(fiscal_filepath)
         fiscal_data = json.loads(fiscal_data.text)
     except:
         f = open(fiscal_filepath)
         fiscal_data = json.load(f) 
 
     try:
-        cost_data =  requests.get(cost_filepath)
+        cost_data = requests.get(cost_filepath)
         cost_data = json.loads(cost_data.text)
     except:
         f = open(cost_filepath)
         cost_data = json.load(f) 
         
-    return demand_df, forecast_df, generators, batteries, instance_data, fiscal_data, cost_data
+    try:
+        my_data = requests.get(my_filepath)
+        my_data = json.loads(my_data.text)
+    except:
+        f = open(my_filepath)
+        my_data = json.load(f) 
+        
+    return demand_df, forecast_df, generators, batteries, instance_data, fiscal_data, cost_data, my_data
 
 
 def create_objects(generators, batteries, forecast_df, 
-                   demand_df, instance_data):
-    # Create generators and batteries
+                   demand_df, instance_data, my_data):
+    
+    '''Create generators and batteries'''
     generators_dict = {}
     for k in generators:
       if k['tec'] == 'S':
         obj_aux = Solar(*k.values())
         irr = irradiance_panel (forecast_df, instance_data)
         obj_aux.get_inoct(instance_data["caso"], instance_data["w"])
-        obj_aux.solar_generation( forecast_df['t_ambt'], irr, instance_data["G_stc"])
+        obj_aux.solar_generation( forecast_df['t_ambt'], irr,
+                                 instance_data["G_stc"], my_data["sol_deg"])
         obj_aux.solar_cost()
       elif k['tec'] == 'W':
         obj_aux = Eolic(*k.values())
-        obj_aux.eolic_generation(forecast_df['Wt'], instance_data["h2"],
-                                 instance_data["coef_hel"] )
+        obj_aux.eolic_generation(forecast_df['Wt'], instance_data["h2"]
+                                 , instance_data["coef_hel"], my_data["wind_deg"] )
         obj_aux.eolic_cost()
       elif k['tec'] == 'D':
         obj_aux = Diesel(*k.values())   
@@ -89,12 +99,11 @@ def create_objects(generators, batteries, forecast_df,
         obj_aux = Battery(*l.values())
         batteries_dict[l['id_bat']] = obj_aux
         batteries_dict[l['id_bat']].calculate_soc()
- 
     return generators_dict, batteries_dict
 
 
 def create_technologies(generators_dict, batteries_dict):
-    # Create technologies dictionary
+    '''Create technologies dictionary'''
     technologies_dict = dict()
     for bat in batteries_dict.values(): 
       if not (bat.tec in technologies_dict.keys()):
@@ -121,10 +130,11 @@ def create_technologies(generators_dict, batteries_dict):
               renewables_dict[gen.tec].add(gen.br)
               
     return technologies_dict, renewables_dict
- 
 
-#calculate inverter cost with the instaled generators and batteries
+    
+
 def calculate_inverter_cost(generators_dict, batteries_dict, inverter_cost):
+            '''calculate inverter cost with the instaled generators and batteries'''
             expr = 0
             
             for gen in generators_dict.values(): 
@@ -145,37 +155,8 @@ def calculate_inverter_cost(generators_dict, batteries_dict, inverter_cost):
             return expr
 
 
-#calculate total cost for two stage approach
-def calculate_sizing_cost(generators_dict, batteries_dict, ir, years, 
-                          delta, inverter):
-    
-            expr = 0
-            
-            for gen in generators_dict.values(): 
-                if (gen.tec != 'D'): 
-                    #fiscal incentive if not diesel
-                    expr += gen.cost_up * delta
-                    expr += gen.cost_r  * delta
-                else:
-                    expr += gen.cost_up
-                    expr += gen.cost_r 
-                
-                expr -= gen.cost_s 
-                expr += gen.cost_fopm 
-            
-            for bat in batteries_dict.values(): 
-                expr += bat.cost_up * delta
-                expr += bat.cost_r * delta
-                expr -= bat.cost_s
-                expr += bat.cost_fopm
-
-            crf = (ir * (1 + ir) ** (years)) / ((1 + ir) ** (years) - 1)    
-            #Operative cost doesn't take into account the crf
-            tnpccrf = (expr + inverter) * crf
-            return tnpccrf
-
-
-def calculate_area (solution):
+def calculate_area (sol_actual):
+    solution = copy.deepcopy(sol_actual)
     dict_actual = {**solution.generators_dict_sol, **solution.batteries_dict_sol}
     area = 0
     for i in dict_actual.values():
@@ -184,9 +165,9 @@ def calculate_area (solution):
     return area
 
 
-#Calculate energy total, for eevery brand, technology or renewable 
+
 def calculate_energy(batteries_dict, generators_dict, model_results, demand_df):  
-   #create auxiliar sets
+   '''Calculate energy total, for eevery brand, technology or renewable '''
    column_data = {}
    energy_data = {}
    aux_energy_data = []
@@ -199,10 +180,9 @@ def calculate_energy(batteries_dict, generators_dict, model_results, demand_df):
    for bat in batteries_dict.values(): 
        #check that the battery is installed
        if (model_results.descriptive['batteries'][bat.id_bat] == 1):
-           column_data[bat.id_bat + '_%'] = (model_results.df_results[bat.id_bat + '_b-']
-                                             / model_results.df_results['demand'])
-           column_data[bat.id_bat + '_%charge'] = (model_results.df_results[bat.id_bat + '_b+']
-                                                   / model_results.df_results['demand'])
+           column_data[bat.id_bat + '_%'] =  model_results.df_results[bat.id_bat
+                                                                    + '_b-'] / model_results.df_results['demand']
+           
            aux_total_data = model_results.df_results[bat.id_bat + '_b-']
            #sum all generation
            total_data += aux_total_data
@@ -222,16 +202,18 @@ def calculate_energy(batteries_dict, generators_dict, model_results, demand_df):
                aux_brand_data = []
                aux_brand_data = (brand_data[key_brand_total] 
                                  + model_results.df_results[bat.id_bat + '_b-'])
+               
                #fill the dictionary
                brand_data[key_brand_total] = aux_brand_data
            else:
-               brand_data[key_brand_total] = model_results.df_results[bat.id_bat + '_b-']           
+               brand_data[key_brand_total] =  model_results.df_results[bat.id_bat + '_b-']           
       
    for gen in generators_dict.values():
        #check that the generator is installed
        if (model_results.descriptive['generators'][gen.id_gen] == 1):
-           column_data[gen.id_gen + '_%'] = (model_results.df_results[gen.id_gen] 
-                                            / model_results.df_results['demand'])
+           column_data[gen.id_gen + '_%'] =  (model_results.df_results[gen.id_gen] 
+                                             / model_results.df_results['demand'])
+           
            #check the key for create or continue in the same dict
            key_energy_total = gen.tec + 'total'
            key_renew_total = gen.tec + 'total'
@@ -245,22 +227,22 @@ def calculate_energy(batteries_dict, generators_dict, model_results, demand_df):
                #fill the dictionary
                energy_data[key_energy_total] = aux_energy_data
            else:
-               energy_data[key_energy_total] = model_results.df_results[gen.id_gen]           
+               energy_data[key_energy_total] =  model_results.df_results[gen.id_gen]           
            
            if key_brand_total in brand_data:
                aux_brand_data = []
-               aux_brand_data = (brand_data[key_brand_total] 
+               aux_brand_data = (brand_data[key_brand_total]
                                  + model_results.df_results[gen.id_gen])
                #fill the dictionary
                brand_data[key_brand_total] = aux_brand_data
            else:
-               brand_data[key_brand_total] = model_results.df_results[gen.id_gen]           
+               brand_data[key_brand_total] =  model_results.df_results[gen.id_gen]           
            
            if (gen.tec == 'S' or gen.tec == 'W'):
                if key_renew_total in renew_data:
                    aux_renew_data = []
                    aux_renew_data = (renew_data[key_renew_total] 
-                                     +  model_results.df_results[gen.id_gen])
+                                     + model_results.df_results[gen.id_gen])
                    #fill the dictionary
                    renew_data[key_renew_total] = aux_renew_data
                else:
@@ -291,11 +273,10 @@ def calculate_cost_data(generators, batteries, instance_data,
     #nominal rate
     i_f = instance_data['i_f']
     years = instance_data['years']
-    ir = interest_rate(i_f, inf)
+    ir = interest_rate(i_f,inf)
     #defaul useful life Diesel and batteries = 10
     life_cicle = parameters_cost['life_cicle']
-    n_cycles = years / life_cicle
-    
+    n_cycles = years/life_cicle    
     #Calculate tax for remplacement
     tax = 0
     for h in range(1, int(n_cycles) + 1):
@@ -313,27 +294,33 @@ def calculate_cost_data(generators, batteries, instance_data,
             aux_generators = []
             aux_generators = i
             aux_generators['cost_r'] = parameters_cost['param_r_solar']
-            aux_generators['cost_s'] = (cost_up * parameters_cost['param_s_solar'] 
-                                        * (((1 + inf) / (1 + ir)) ** years))
+            
+            aux_generators['cost_s'] = cost_up * parameters_cost['param_s_solar'] * (((1 + inf)
+                                                                                      /(1 + ir))**years)
+            
             aux_generators['cost_fopm'] = cost_up * parameters_cost['param_f_solar'] 
-            aux_generators['cost_vopm'] = cost_up * parameters_cost['param_v_solar']      
+            aux_generators['cost_vopm'] = parameters_cost['param_v_solar']      
         elif (i['tec'] == 'W'):
             cost_up = i['cost_up']
             aux_generators = []
             aux_generators = i
             aux_generators['cost_r'] = parameters_cost['param_r_wind']  
-            aux_generators['cost_s'] = (cost_up * parameters_cost['param_s_wind'] 
-                                        * (((1 + inf) / (1 + ir))**years))
+            aux_generators['cost_s'] = cost_up * parameters_cost['param_s_wind'] * (((1 + inf)
+                                                                                     / (1 + ir))**years)
+            
             aux_generators['cost_fopm'] = cost_up * parameters_cost['param_f_wind']  
-            aux_generators['cost_vopm'] = cost_up * parameters_cost['param_v_wind']              
+            aux_generators['cost_vopm'] = parameters_cost['param_v_wind']  
+            
         elif (i['tec'] == 'D'):
             cost_up = i['cost_up']
             aux_generators = []
             aux_generators = i
             aux_generators['cost_r'] = cost_up * parameters_cost['param_r_diesel'] * tax
-            aux_generators['cost_s'] = (cost_up * parameters_cost['param_s_diesel']   
-                                        * (((1 + inf) / (1 + ir))**years))
+            aux_generators['cost_s'] = cost_up * parameters_cost['param_s_diesel'] * (((1 + inf)
+                                                                                      / (1 + ir))**years)
+            
             aux_generators['cost_fopm'] = cost_up * parameters_cost['param_f_diesel']
+
         generators_def.append(copy.deepcopy(aux_generators))  
         
     for i in batteries:
@@ -341,8 +328,8 @@ def calculate_cost_data(generators, batteries, instance_data,
         aux_batteries = []
         aux_batteries = i
         aux_batteries['cost_r'] = cost_up * parameters_cost['param_r_bat'] * tax
-        aux_batteries['cost_s'] = (cost_up * parameters_cost['param_s_bat']
-                                   * (((1 + inf)/(1 + ir))**years))
+        aux_batteries['cost_s'] = cost_up * parameters_cost['param_s_bat'] * (((1 + inf)
+                                                                               / (1 + ir))**years)
         aux_batteries['cost_fopm'] = cost_up * parameters_cost['param_f_bat']
         aux_batteries['cost_vopm'] = cost_up * parameters_cost['param_v_bat']
         batteries_def.append(copy.deepcopy(aux_batteries))
@@ -351,12 +338,14 @@ def calculate_cost_data(generators, batteries, instance_data,
 
 
 def fiscal_incentive (credit, depreciation, corporate_tax, ir, T1, T2):
-    #corporate_tax = effective corporate tax income rate
-    #Credit = investment tax credit
-    #Depreciation -> factor expressed as % of investment cost over T2 year
-    #ir = Interest rate
-    #T1 = Maximum number of years to apply the investment tax credit
-    #T2 = useful life (year) of the power generating facility - depreciation
+    '''
+    corporate_tax = effective corporate tax income rate
+    Credit = investment tax credit
+    Depreciation = factor expressed as % of investment cost over T2 year
+    ir = Interest rate
+    T1 = Maximum number of years to apply the investment tax credit
+    T2 = useful life of the power generating facility in year - depreciation
+    '''
     delta = 0
     expr = 0
     for j in range(1, int(T1) + 1):
@@ -369,7 +358,7 @@ def fiscal_incentive (credit, depreciation, corporate_tax, ir, T1, T2):
     
     return delta
 
-  
+    
 def irradiance_panel (forecast_df, instance_data):
  
     if (forecast_df['GHI'].sum() <= 0 or forecast_df['DHI'].sum() <= 0):
@@ -479,8 +468,8 @@ def cos_incidence_angle(a_M, A_M, a_s, A_s):
         A_s: Sun Azimuth (degrees)
         """
     Ar = A_M - A_s
-    c1 = np.cos(a_M * np.pi / 180) * np.cos(a_s * np.pi / 180) * np.cos(Ar * np.pi / 180)
-    c2 = np.sin(a_M * np.pi / 180) * np.sin(a_s * np.pi / 180)
+    c1 = np.cos(a_M * np.pi / 180)*np.cos(a_s * np.pi / 180)*np.cos(Ar * np.pi / 180)
+    c2 = np.sin(a_M * np.pi / 180)*np.sin(a_s * np.pi / 180)
     ct = c1 + c2
     return ct
 
@@ -492,6 +481,56 @@ def get_sky_view_factor(t_M):
     svf = (1 + np.cos(t_M * np.pi / 180)) / 2
     return svf
 
+
+def calculate_multiyear_data(demand_df, forecast_df, my_data, years):
+    
+    #total hours
+    len_total = 8760 * years
+    aux_demand = {k : [0] * (len_total) for k in demand_df}
+    aux_forecast = {k : [0] * (len_total) for k in forecast_df}
+    
+    for i in range(len_total):
+        aux_demand['t'][i] = i
+        aux_forecast['t'][i] = i
+        #first year same 
+        if (i < 8760):    
+            aux_demand['demand'][i]= demand_df['demand'][i]
+            aux_forecast['DNI'][i] = forecast_df['DNI'][i]
+            aux_forecast['t_ambt'][i] = forecast_df['t_ambt'][i]
+            aux_forecast['Wt'][i] = forecast_df['Wt'][i]
+            aux_forecast['Qt'][i] = forecast_df['Qt'][i]
+            aux_forecast['GHI'][i] = forecast_df['GHI'][i]
+            aux_forecast['day'][i] = forecast_df['day'][i]
+            aux_forecast['SF'][i] = forecast_df['SF'][i]
+            aux_forecast['DHI'][i] = forecast_df['DHI'][i]
+        #others years
+        else:
+            #get the year
+            k = math.floor(i / 8760)
+            #apply tax
+            val = demand_df['demand'][i - 8760 * k] * (1 + my_data["demand_tax"]) ** k
+            #asign value
+            aux_demand['demand'][i] = val
+            #forecast is the same that first year
+            val2 = forecast_df['DNI'][i - 8760 * k]
+            aux_forecast['DNI'][i] = val2
+            aux_forecast['t_ambt'][i] = forecast_df['t_ambt'][i - 8760 * k]
+            val3 = forecast_df['Wt'][i - 8760 * k]
+            aux_forecast['Wt'][i] = val3
+            aux_forecast['Qt'][i] = forecast_df['Qt'][i - 8760 * k]
+            val4 = forecast_df['GHI'][i - 8760 * k]
+            aux_forecast['GHI'][i] = val4
+            aux_forecast['day'][i] = forecast_df['day'][i - 8760 * k]
+            aux_forecast['SF'][i] = forecast_df['SF'][i - 8760 * k]
+            val5 = forecast_df['DHI'][i - 8760 * k]
+            aux_forecast['DHI'][i] = val5      
+            
+    #create dataframe
+    demand = pd.DataFrame(aux_demand, columns=['t','demand'])
+    forecast = pd.DataFrame(aux_forecast, columns=['t','DNI','t_ambt','Wt', 
+                                           'Qt','GHI','day','SF','DHI'])
+        
+    return demand, forecast
 
 #create the hourly dataframe
 def hour_data(data):
@@ -558,9 +597,9 @@ def calculate_stochasticity_demand(rand_ob, demand_df, dem_dist):
     for t in demand_df['t']:
         #get the hour for the distribution
         hour = t % 24
-        #generate one random number for each hour 
+        #generate one random number for each hour (demand and forecast)
         obj = generate_random(rand_ob, dem_dist[hour])
-        demand_df.loc[t] = [t,obj]
+        demand_df.loc[t] = [t, obj]
         
     return demand_df
     

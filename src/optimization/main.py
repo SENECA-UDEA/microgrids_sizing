@@ -4,10 +4,10 @@ Created on Wed Apr 20 11:14:21 2022
 
 """
 
-from src.utilities import read_data, create_objects, create_technologies
-from src.utilities import calculate_energy, interest_rate
-from src.utilities import fiscal_incentive, calculate_cost_data
-import src.opt as opt
+from src.optimization.utilities import read_data, create_objects, interest_rate
+from src.optimization.utilities import calculate_energy, create_technologies
+from src.optimization.utilities import fiscal_incentive, calculate_cost_data
+import src.optimization.opt as opt
 import pandas as pd 
 from plotly.offline import plot
 pd.options.display.max_columns = None
@@ -39,16 +39,17 @@ instanceData_filepath = github_rute + PLACE + '/instance_data_' + PLACE + '.json
 fiscalData_filepath = github_rute +'fiscal_incentive.json'
  
 # file paths local
-demand_filepath = "../data/" + PLACE + "/demand_" + PLACE+".csv"
-forecast_filepath = "../data/"+PLACE+"/forecast_" + PLACE + ".csv"
-units_filepath = "../data/" + PLACE + "/parameters_" + PLACE + ".json"
-instanceData_filepath = "../data/" + PLACE + "/instance_data_" + PLACE + ".json"
+demand_filepath = "../../data/" + PLACE + "/demand_" + PLACE+".csv"
+forecast_filepath = "../../data/"+PLACE+"/forecast_" + PLACE + ".csv"
+units_filepath = "../../data/" + PLACE + "/parameters_" + PLACE + ".json"
+instanceData_filepath = "../../data/" + PLACE + "/instance_data_" + PLACE + ".json"
 
 #fiscal Data
-fiscalData_filepath = "../data/auxiliar/fiscal_incentive.json"
+fiscalData_filepath = "../../data/auxiliar/fiscal_incentive.json"
 
 #cost Data
-costData_filepath = "../data/auxiliar/parameters_cost.json"
+costData_filepath = "../../data/auxiliar/parameters_cost.json"
+
 
 # read data
 demand_df, forecast_df, generators, batteries, instance_data, fisc_data, cost_data = read_data(demand_filepath,
