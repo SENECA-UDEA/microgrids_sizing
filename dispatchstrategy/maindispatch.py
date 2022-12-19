@@ -81,10 +81,10 @@ units_filepath = "../data/" + PLACE + "/parameters_" + PLACE + ".json"
 instanceData_filepath = "../data/" + PLACE + "/instance_data_" + PLACE + ".json"
 
 #fiscal Data
-fiscalData_filepath = "../data/Cost/fiscal_incentive.json"
+fiscalData_filepath = "../data/auxiliar/fiscal_incentive.json"
 
 #cost Data
-costData_filepath = "../data/Cost/parameters_cost.json"
+costData_filepath = "../data/auxiliar/parameters_cost.json"
 
 
 # read data
