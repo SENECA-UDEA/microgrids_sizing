@@ -179,7 +179,7 @@ class SolConstructor():
             lcoe_cost, df_results, state, time_f, nsh = ds_battery_renewable (sol_try, 
                                                                               self.demand_df, instance_data, cost_data, delta, rand_ob, my_data, ir)
             
-        elif (check_strategy in ds_dies_batt_renew):
+        elif (check_strategy in list_ds_dies_batt_renew):
             lcoe_cost, df_results, state, time_f, nsh = ds_dies_batt_renew(sol_try, 
                                                                            self.demand_df, instance_data, cost_data, delta, rand_ob, my_data, ir)
             
@@ -446,7 +446,7 @@ class SearchOperator():
             
             solution.generators_dict_sol.pop(select_ob)
         
-        solution.technologies_dict_sol, solution.renewables_dict_sol = create_technologies (solution.generators_dict_sol.
+        solution.technologies_dict_sol, solution.renewables_dict_sol = create_technologies (solution.generators_dict_sol,
                                                                                             solution.batteries_dict_sol)
 
         

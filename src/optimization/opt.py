@@ -674,7 +674,7 @@ class Results():
     def __init__(self, model, generators_dict, batteries_dict, stage):
         
         # Hourly data frame
-        demand = pd.DataFrame(model.d.values(), columns = ['demand'])
+        demand = pd.DataFrame(model.demand.values(), columns = ['demand'])
         
         #Generator data frame
         generation = {k: [0] * len(model.HTIME) for k in model.GENERATORS}
@@ -701,8 +701,8 @@ class Results():
         #Operative cost batteries
         batteries_cost_data = {l + '_cost' : [0] * len(model.HTIME) for l in model.BATTERIES}
         #Baterries cost
-        for (l, t), f in model.model.b_discharge.items():
-          batteries_cost_data [l + '_cost'][t] = value(f) * batteries_dict[l]
+        for (l, t), f in model.b_discharge.items():
+          batteries_cost_data [l + '_cost'][t] = value(f) * batteries_dict[l].cost_vopm
         
         batteries_cost = pd.DataFrame(batteries_cost_data, 
                                       columns = [*batteries_cost_data.keys()])

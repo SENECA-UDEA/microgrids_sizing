@@ -34,7 +34,6 @@ REMOVE_FUNCTION = 'RANDOM'
 
 #Model data
 PLACE = 'Providencia'
-PLACE = 'Test'
 #trm to current COP
 TRM = 3910
 
@@ -42,8 +41,6 @@ TRM = 3910
 PLACE = 'San_Andres'
 PLACE = 'Puerto_Nar'
 PLACE = 'Leticia'
-PLACE = 'Test'
-PLACE = 'Oswaldo'
 '''
 loc_file = '/SENECA-UDEA/microgrids_sizing/development/data/'
 github_rute = 'https://raw.githubusercontent.com' + loc_file
@@ -213,7 +210,6 @@ if (sol_best.results != None):
                                            nse = instance_data['nse'], 
                                            TNPCCRF = tnpccrf_calc,
                                            splus_cost = instance_data['splus_cost'],
-                                           sminus_cost = instance_data['sminus_cost'],
                                            tlpsp = instance_data['tlpsp'],
                                            nse_cost = cost_data['NSE_COST']) 
         

@@ -440,7 +440,7 @@ def ds_battery_renewable  (solution, demand_df, instance_data,
     
     sorted_batteries = sorted(aux_dict, key = aux_dict.get, reverse = False) 
     #random order of generators
-    rand_ob.create_randomshuffle(sorted_batteries)
+    rand_ob.create_rand_shuffle(sorted_batteries)
     
     #simulation
     for t in demand_df['t']:
@@ -643,7 +643,7 @@ def ds_dies_batt_renew(solution, demand_df, instance_data,
     #initial battery alwatys the best lcoe
     sorted_batteries = sorted(aux_bat, key = aux_bat.get, reverse = False) 
     #random order of generators
-    rand_ob.create_randomshuffle(sorted_batteries)
+    rand_ob.create_rand_shuffle(sorted_batteries)
     
     #simulation
     for t in demand_df['t']:

@@ -37,8 +37,6 @@ PLACE = 'Providencia'
 PLACE = 'San_Andres'
 PLACE = 'Puerto_Nar'
 PLACE = 'Leticia'
-PLACE = 'Test'
-PLACE = 'Oswaldo'
 '''
 #trm to current COP
 TRM = 3910
@@ -242,7 +240,7 @@ if ('D' in technologies_dict.keys() or 'B' in technologies_dict.keys()
                 lcoe_cost, df_results, state, time_f, nsh = ds_battery_renewable (sol_try, 
                                                                                   demand_df, instance_data, cost_data, delta, rand_ob, my_data, ir)
                 
-            elif (strategy_def in ds_dies_batt_renew):
+            elif (strategy_def in list_ds_dies_batt_renew):
                 lcoe_cost, df_results, state, time_f, nsh = ds_dies_batt_renew(sol_try, 
                                                                                demand_df, instance_data, cost_data, delta, rand_ob, my_data, ir)
                 

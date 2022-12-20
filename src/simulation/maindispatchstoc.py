@@ -49,8 +49,6 @@ PLACE = 'Providencia'
 PLACE = 'San_Andres'
 PLACE = 'Puerto_Nar'
 PLACE = 'Leticia'
-PLACE = 'Test'
-PLACE = 'Oswaldo'
 '''
 
 #trm to current COP
@@ -299,7 +297,7 @@ for scn in range(N_SCENARIOS):
                 elif (strategy_def in list_ds_battery_renewable):
                     lcoe_cost, df_results, state, time_f, nsh = ds_battery_renewable (sol_try, 
                                                                                       demand_df, instance_data, cost_data, CRF, delta, rand_ob)
-                elif (strategy_def in ds_dies_batt_renew):
+                elif (strategy_def in list_ds_dies_batt_renew):
                     lcoe_cost, df_results, state, time_f, nsh = ds_dies_batt_renew(sol_try, 
                                                                                    demand_df, instance_data, cost_data, CRF, delta, rand_ob)
  

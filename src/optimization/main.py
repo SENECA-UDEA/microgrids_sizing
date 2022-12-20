@@ -25,8 +25,6 @@ TRM = 3910
 PLACE = 'San_Andres'
 PLACE = 'Puerto_Nar'
 PLACE = 'Leticia'
-PLACE = 'Test'
-PLACE = 'Oswaldo'
 '''
 loc_file = '/SENECA-UDEA/microgrids_sizing/development/data/'
 github_rute = 'https://raw.githubusercontent.com' + loc_file
