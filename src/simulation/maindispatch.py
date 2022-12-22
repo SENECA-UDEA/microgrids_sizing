@@ -190,7 +190,7 @@ if ('D' in technologies_dict.keys() or 'B' in technologies_dict.keys()
                 # Remove a generator or battery from the current solution
                 if (REMOVE_FUNCTION == 'GRASP'):
                     sol_try, remove_report = search_operator.remove_object(sol_current, 
-                                                                           CRF, delta)
+                                                                           CRF, delta, rand_ob)
                 elif (REMOVE_FUNCTION == 'RANDOM'):
                     sol_try, remove_report = search_operator.remove_random_object(sol_current, 
                                                                                   rand_ob)
@@ -287,9 +287,11 @@ if ('D' in technologies_dict.keys() or 'B' in technologies_dict.keys()
             #calculate current COP   
 
             lcoe_cop = TRM * sol_best.results.descriptive['LCOE']
+            
             #create Excel
             '''
             sol_best.results.df_results.to_excel("resultsdf.xlsx")    
+            
             '''
     else:
         print('No feasible solution, review data')

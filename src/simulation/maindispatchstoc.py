@@ -252,8 +252,9 @@ for scn in range(N_SCENARIOS):
                     # save copy as the last solution feasible seen
                     sol_feasible = copy.deepcopy(sol_current) 
                     # Remove a generator or battery from the current solution
-                    if (REMOVE_FUNCTION == 'GRASP'):
-                        sol_try, remove_report = search_operator.remove_object(sol_current, CRF, delta)
+                    if (REMOVE_FUNCTION == 'GRASP'):                        
+                        sol_try, remove_report = search_operator.remove_object(sol_current, 
+                                                                               CRF, delta, rand_ob)
                     elif (REMOVE_FUNCTION == 'RANDOM'):
                         sol_try, remove_report = search_operator.remove_random_object(sol_current, rand_ob)
         

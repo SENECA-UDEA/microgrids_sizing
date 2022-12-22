@@ -228,50 +228,62 @@ class SearchOperator():
         self.demand_df = demand_df
         self.forecast_df = forecast_df
         
-    def remove_object(self, sol_actual, CRF, delta): 
+    def remove_object(self, sol_actual, CRF, delta, rand_ob): 
         '''remove one generator or battery'''
         solution = copy.deepcopy(sol_actual)
         dict_actual = {**solution.generators_dict_sol, **solution.batteries_dict_sol}
         min_relation = math.inf
+        list_min = []
         #Check which one generates less energy at the highest cost
 
-        for d in dict_actual.values(): 
-            if d.tec == 'B':
+        for dic in dict_actual.values(): 
+            if dic.tec == 'B':
                 #Operation cost
-                op_cost = solution.results.df_results[d.id_bat + '_cost'].sum(axis = 0, 
-                                                                              skipna = True)
+                op_cost = solution.results.df_results[dic.id_bat + '_cost'].sum(axis = 0, 
+                                                                                skipna = True)
                 #Investment cost
-                inv_cost = d.cost_up * delta + d.cost_r * delta - d.cost_s + d.cost_fopm
+                inv_cost = dic.cost_up * delta + dic.cost_r * delta - dic.cost_s + dic.cost_fopm
                 #generation
-                sum_generation = solution.results.df_results[d.id_bat + '_b-'].sum(axis = 0,
-                                                                                   skipna = True)          
+                sum_generation = solution.results.df_results[dic.id_bat + '_b-'].sum(axis = 0,
+                                                                                     skipna = True)          
+            elif dic.tec == 'D':
+                #Generation
+                sum_generation = solution.results.df_results[dic.id_gen].sum(axis = 0, 
+                                                                             skipna = True)
+                #Operation cost
+                op_cost = solution.results.df_results[dic.id_gen + '_cost'].sum(axis = 0, 
+                                                                                skipna = True)
+                #Investment cost
+                inv_cost = dic.cost_up + dic.cost_r - dic.cost_s + dic.cost_fopm 
             else:
-                if d.tec == 'D':
-                    #Generation
-                    sum_generation = solution.results.df_results[d.id_gen].sum(axis = 0, 
-                                                                               skipna = True)
-                    #Operation cost
-                    op_cost = solution.results.df_results[d.id_gen + '_cost'].sum(axis = 0, 
-                                                                                  skipna = True)
-                    #Investment cost
-                    inv_cost = d.cost_up + d.cost_r - d.cost_s + d.cost_fopm 
-                else:
-                    #Generation
-                    sum_generation = sum(d.gen_rule.values())
-                    #Operation cost
-                    op_cost = d.cost_rule
-                    #Investment cost
-                    inv_cost = d.cost_up * delta + d.cost_r * delta - d.cost_s + d.cost_fopm 
+                #Generation
+                sum_generation = sum(dic.gen_rule.values())
+                #Operation cost
+                op_cost = dic.cost_rule
+                #Investment cost
+                inv_cost = dic.cost_up * delta + dic.cost_r * delta - dic.cost_s + dic.cost_fopm 
 
             relation = sum_generation / (inv_cost * CRF + op_cost)
-            #Quit the worst
-            if relation <= min_relation:
+
+            #check if it is the worst
+            if relation < min_relation:
                 min_relation = relation
-                if d.tec == 'B':
-                    select_ob = d.id_bat
+                #update worst list
+                list_min = []
+                if dic.tec == 'B':
+                    list_min.append(dic.id_bat)
                 else:
-                    select_ob = d.id_gen
-                
+                    list_min.append(dic.id_gen)
+            #if equal put in the worst list
+            elif relation == min_relation:
+                if dic.tec == 'B':
+                    list_min.append(dic.id_bat)
+                else:
+                    list_min.append(dic.id_gen)      
+                    
+        #Quit random of worst list                  
+        select_ob = rand_ob.create_rand_list(list_min)
+        
         if dict_actual[select_ob].tec == 'B':
             remove_report =  pd.Series(solution.results.df_results[select_ob + '_b-'].values,
                                        index = solution.results.df_results[select_ob + '_b-'].keys()).to_dict()
@@ -304,6 +316,7 @@ class SearchOperator():
         reference_generation = remove_report[pos_max]
         dict_total = {**self.generators_dict, **self.batteries_dict}
         best_cost = math.inf
+        best_vopm = math.inf
         #generation_total: parameter to calculate the total energy by generator
         generation_total = 0
         #random select battery or generator
@@ -318,15 +331,19 @@ class SearchOperator():
             #select a random battery
             select_ob = rand_ob.create_rand_list(available_bat)
             solution.batteries_dict_sol[select_ob] = dict_total[select_ob]
-            #check generation in max period that covers the remove object
+            
         else:
+            #check generation in max period that covers the remove object
             list_rand_tec = []
             list_best_lcoe = []
+            list_best_vopm = []
+            list_best_cap = []
             select_ob = ""
             for i in available_gen:
                 dic = dict_total[i]
                 #tecnhology = random
                 if dic.tec == rand_tec:
+                    #list1 = all generators of x technology
                     list_rand_tec.append(dic.id_gen)
                     if dic.tec == 'D':
                         generation_tot = dic.DG_max
@@ -335,26 +352,61 @@ class SearchOperator():
                     
                     #check if is better than dict remove
                     if generation_tot > reference_generation:
+                        #list2 = all who meets the capacity
+                        list_best_cap.append(dic.id_gen)
                         if dic.tec == 'D':
                             #Operation cost at maximum capacity
                             generation_total = len(remove_report) * dic.DG_max
                             lcoe_op =  (dic.f0 + dic.f1) * dic.DG_max * fuel_cost * len(remove_report)
                             lcoe_inf = (dic.cost_up + dic.cost_r - dic.cost_s + dic.cost_fopm) * CRF
+                            #calculate operative cost at the position max point
+                            aux_vopm = min(reference_generation, generation_tot)
+                            cost_vopm = (dic.f0 * dic.DG_max + dic.f1 * aux_vopm) * fuel_cost
                         else:
                             #Operation cost with generation rule
                             generation_total = sum(dic.gen_rule.values())
                             lcoe_op =  dic.cost_vopm * generation_total
                             lcoe_inf = (dic.cost_up * delta + dic.cost_r 
                                         * delta - dic.cost_s + dic.cost_fopm) * CRF
+                            #calculate operative cost at the position max point
+                            cost_vopm = generation_tot * dic.cost_vopm
 
                         total_lcoe = (lcoe_inf + lcoe_op) / generation_total
-                        if total_lcoe <= best_cost:
+                        #List3  = minimum average LCOE
+                        if total_lcoe < best_cost:
+                            #if less update the list
                             best_cost = total_lcoe
+                            list_best_lcoe = []
                             list_best_lcoe.append(dic.id_gen)
-                            
-            if (list_best_lcoe != []):
-                select_ob = rand_ob.create_rand_list(list_best_lcoe)
+                        elif total_lcoe == best_cost:
+                            #if equal add to the list
+                            list_best_lcoe.append(dic.id_gen)
+                        
+                        #List4 = miminum operative cost at point
+                        if cost_vopm < best_vopm:
+                            #if less update the list
+                            best_vopm = cost_vopm
+                            list_best_vopm = []
+                            list_best_vopm.append(dic.id_gen)
+                        elif cost_vopm == best_vopm:
+                            #if equal add to the list
+                            list_best_vopm.append(dic.id_gen) 
+                       
+            #random choose which list to use
+            rand_parameter = rand_ob.create_rand_list(['vopm','lcoe','cap','NA'])
+            
+            if (list_best_cap != []):
+                #if data in the list select random
+                if (rand_parameter == 'lcoe'):
+                    select_ob = rand_ob.create_rand_list(list_best_lcoe)
+                elif (rand_parameter == 'vopm'):
+                    select_ob = rand_ob.create_rand_list(list_best_vopm)
+                elif (rand_parameter == 'vopm'):
+                    select_ob = rand_ob.create_rand_list(list_best_cap)
+                else:
+                    select_ob = rand_ob.create_rand_list(list_rand_tec)                
             else:
+                #if neither can satisfy position max, choose random
                 select_ob = rand_ob.create_rand_list(list_rand_tec)
                        
             solution.generators_dict_sol[select_ob] = dict_total[select_ob] 

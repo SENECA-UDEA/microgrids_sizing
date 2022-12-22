@@ -190,7 +190,7 @@ if ('D' in technologies_dict.keys() or 'B' in technologies_dict.keys()
                 sol_feasible = copy.deepcopy(sol_current) 
                 # Remove a generator or battery from the current solution
                 if (REMOVE_FUNCTION == 'GRASP'):
-                    sol_try, remove_report = search_operator.remove_object(sol_current, delta)
+                    sol_try, remove_report = search_operator.remove_object(sol_current, delta, rand_ob)
                 elif (REMOVE_FUNCTION == 'RANDOM'):
                     sol_try, remove_report = search_operator.remove_random_object(sol_current,
                                                                                   rand_ob)

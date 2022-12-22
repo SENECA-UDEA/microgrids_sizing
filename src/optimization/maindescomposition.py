@@ -160,7 +160,7 @@ if (sol_best.results != None):
             # Remove a generator or battery from the current solution - grasp or random
             if (REMOVE_FUNCTION == 'GRASP'):
                 sol_try, remove_report = search_operator.remove_object(sol_current, 
-                                                                       CRF, delta)
+                                                                       CRF, delta, rand_ob)
                 
             elif (REMOVE_FUNCTION == 'RANDOM'):
                 sol_try, remove_report = search_operator.remove_random_object(sol_current, 
