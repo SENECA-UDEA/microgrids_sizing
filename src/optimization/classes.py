@@ -267,7 +267,7 @@ class RandomCreate():
         return number
 
     def dist_invgauss(self, a, b, c):
-        rand_generation = sc.triang.rvs(a, loc = b, scale = c, size = 1, random_state = self.seed)
+        rand_generation = sc.invgauss.rvs(a, loc = b, scale = c, size = 1, random_state = self.seed)
         number = max(0, rand_generation[0])
         return number
 
