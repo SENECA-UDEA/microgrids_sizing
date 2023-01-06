@@ -415,7 +415,7 @@ class SearchOperator():
                     select_ob = rand_ob.create_rand_list(list_best_lcoe)
                 elif (rand_parameter == 'vopm'):
                     select_ob = rand_ob.create_rand_list(list_best_vopm)
-                elif (rand_parameter == 'vopm'):
+                elif (rand_parameter == 'cap'):
                     select_ob = rand_ob.create_rand_list(list_best_cap)
                 else:
                     select_ob = rand_ob.create_rand_list(list_rand_tec)                
