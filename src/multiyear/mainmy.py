@@ -61,6 +61,9 @@ list_ds_dies_batt_renew = [
     "battery - diesel - solar - wind"
     ]
 
+yes_choices = ['yes', 'y']
+no_choices = ['no', 'n']
+
 loc_file = '/SENECA-UDEA/microgrids_sizing/development/data/'
 github_rute = 'https://raw.githubusercontent.com' + loc_file
 
@@ -95,9 +98,24 @@ demand_df_i, forecast_df_i, generators, batteries, instance_data, fisc_data, cos
                                                                                                                       costData_filepath,
                                                                                                                       myearData_filepath)
 
-#calculate multiyear data
-demand_df, forecast_df = calculate_multiyear_data(demand_df_i, forecast_df_i,
-                                                  my_data, instance_data['years'])
+
+
+while True:
+    user_input = input('Calculate multiyear data (yes/no): ')
+    if user_input.lower() in yes_choices:
+        #calculate multiyear data
+        demand_df, forecast_df = calculate_multiyear_data(demand_df_i, forecast_df_i,
+                                                          my_data, instance_data['years'])        
+        break
+    elif user_input.lower() in no_choices:
+        demand_df = copy.deepcopy(demand_df_i)
+        forecast_df = copy.deepcopy(forecast_df_i)
+        break
+    else:
+        print('Type yes or no')
+        continue
+    
+
 
 #calulate parameters
 AMAX = instance_data['amax'] 
