@@ -4,7 +4,7 @@ Created on Wed Apr 20 13:51:07 2022
 
 @author: scastellanos
 """
-from src.optimization.classes import Solar, Eolic, Diesel, Battery
+from src.support.classes import Solar, Eolic, Diesel, Battery
 import pandas as pd
 import requests
 import json 
@@ -72,12 +72,12 @@ def create_objects(generators, batteries, forecast_df,
         obj_aux = Solar(*k.values())
         irr = irradiance_panel (forecast_df, instance_data)
         obj_aux.get_inoct(instance_data["caso"], instance_data["w"])
-        obj_aux.solar_generation( forecast_df['t_ambt'], irr, instance_data["G_stc"])
+        obj_aux.solar_generation( forecast_df['t_ambt'], irr, instance_data["G_stc"], 0)
         obj_aux.solar_cost()
       elif k['tec'] == 'W':
         obj_aux = Eolic(*k.values())
         obj_aux.eolic_generation(forecast_df['Wt'], instance_data["h2"],
-                                 instance_data["coef_hel"] )
+                                 instance_data["coef_hel"], 0)
         obj_aux.eolic_cost()
       elif k['tec'] == 'D':
         obj_aux = Diesel(*k.values())   
@@ -492,6 +492,149 @@ def get_sky_view_factor(t_M):
     svf = (1 + np.cos(t_M * np.pi / 180)) / 2
     return svf
 
+
+
+'MULTIYEAR'
+def calculate_multiyear_data(demand_df, forecast_df, my_data, years):
+    
+    #total hours
+    len_total = 8760 * years
+    aux_demand = {k : [0] * (len_total) for k in demand_df}
+    aux_forecast = {k : [0] * (len_total) for k in forecast_df}
+    
+    for i in range(len_total):
+        aux_demand['t'][i] = i
+        aux_forecast['t'][i] = i
+        #first year same 
+        if (i < 8760):    
+            aux_demand['demand'][i]= demand_df['demand'][i]
+            aux_forecast['DNI'][i] = forecast_df['DNI'][i]
+            aux_forecast['t_ambt'][i] = forecast_df['t_ambt'][i]
+            aux_forecast['Wt'][i] = forecast_df['Wt'][i]
+            aux_forecast['Qt'][i] = forecast_df['Qt'][i]
+            aux_forecast['GHI'][i] = forecast_df['GHI'][i]
+            aux_forecast['day'][i] = forecast_df['day'][i]
+            aux_forecast['SF'][i] = forecast_df['SF'][i]
+            aux_forecast['DHI'][i] = forecast_df['DHI'][i]
+        #others years
+        else:
+            #get the year
+            k = math.floor(i / 8760)
+            #apply tax
+            val = demand_df['demand'][i - 8760 * k] * (1 + my_data["demand_tax"]) ** k
+            #asign value
+            aux_demand['demand'][i] = val
+            #forecast is the same that first year
+            val2 = forecast_df['DNI'][i - 8760 * k]
+            aux_forecast['DNI'][i] = val2
+            aux_forecast['t_ambt'][i] = forecast_df['t_ambt'][i - 8760 * k]
+            val3 = forecast_df['Wt'][i - 8760 * k]
+            aux_forecast['Wt'][i] = val3
+            aux_forecast['Qt'][i] = forecast_df['Qt'][i - 8760 * k]
+            val4 = forecast_df['GHI'][i - 8760 * k]
+            aux_forecast['GHI'][i] = val4
+            aux_forecast['day'][i] = forecast_df['day'][i - 8760 * k]
+            aux_forecast['SF'][i] = forecast_df['SF'][i - 8760 * k]
+            val5 = forecast_df['DHI'][i - 8760 * k]
+            aux_forecast['DHI'][i] = val5      
+            
+    #create dataframe
+    demand = pd.DataFrame(aux_demand, columns=['t','demand'])
+    forecast = pd.DataFrame(aux_forecast, columns=['t','DNI','t_ambt','Wt', 
+                                           'Qt','GHI','day','SF','DHI'])
+        
+    return demand, forecast
+
+def read_multiyear_data(demand_filepath, 
+                        forecast_filepath,
+                        units_filepath,
+                        instance_filepath,
+                        fiscal_filepath,
+                        cost_filepath,
+                        my_filepath):
+    
+    forecast_df = pd.read_csv(forecast_filepath)
+    demand_df = pd.read_csv(demand_filepath)
+    try:
+        generators_data =  requests.get(units_filepath)
+        generators_data = json.loads(generators_data.text)
+    except:
+        f = open(units_filepath)
+        generators_data = json.load(f)    
+
+    try:
+        generators = generators_data['generators']
+    except:
+        generators = {}
+
+    try:
+        batteries = generators_data['batteries']
+    except: 
+        batteries = {}
+        
+    try:
+        instance_data = requests.get(instance_filepath)
+        instance_data = json.loads(instance_data.text)
+    except:
+        f = open(instance_filepath)
+        instance_data = json.load(f) 
+
+    try:
+        fiscal_data = requests.get(fiscal_filepath)
+        fiscal_data = json.loads(fiscal_data.text)
+    except:
+        f = open(fiscal_filepath)
+        fiscal_data = json.load(f) 
+
+    try:
+        cost_data = requests.get(cost_filepath)
+        cost_data = json.loads(cost_data.text)
+    except:
+        f = open(cost_filepath)
+        cost_data = json.load(f) 
+        
+    try:
+        my_data = requests.get(my_filepath)
+        my_data = json.loads(my_data.text)
+    except:
+        f = open(my_filepath)
+        my_data = json.load(f) 
+        
+    return demand_df, forecast_df, generators, batteries, instance_data, fiscal_data, cost_data, my_data
+
+
+def create_multiyear_objects(generators, batteries, forecast_df, 
+                             demand_df, instance_data, my_data):
+    
+    '''Create generators and batteries'''
+    generators_dict = {}
+    for k in generators:
+      if k['tec'] == 'S':
+        obj_aux = Solar(*k.values())
+        irr = irradiance_panel (forecast_df, instance_data)
+        obj_aux.get_inoct(instance_data["caso"], instance_data["w"])
+        obj_aux.solar_generation( forecast_df['t_ambt'], irr,
+                                 instance_data["G_stc"], my_data["sol_deg"])
+        obj_aux.solar_cost()
+      elif k['tec'] == 'W':
+        obj_aux = Eolic(*k.values())
+        obj_aux.eolic_generation(forecast_df['Wt'], instance_data["h2"]
+                                 , instance_data["coef_hel"], my_data["wind_deg"] )
+        obj_aux.eolic_cost()
+      elif k['tec'] == 'D':
+        obj_aux = Diesel(*k.values())   
+        
+      generators_dict[k['id_gen']] = obj_aux
+      
+    batteries_dict = {}
+    for l in batteries:
+        obj_aux = Battery(*l.values())
+        batteries_dict[l['id_bat']] = obj_aux
+        batteries_dict[l['id_bat']].calculate_soc()
+    return generators_dict, batteries_dict
+
+
+'STOCHASTICITY'
 
 #create the hourly dataframe
 def hour_data(data):

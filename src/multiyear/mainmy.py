@@ -3,12 +3,13 @@
 Created on Wed Apr 20 11:14:21 2022
 
 """
-from src.multiyear.utilitiesmy import read_data, create_technologies
-from src.multiyear.utilitiesmy import calculate_area, calculate_energy
-from src.multiyear.utilitiesmy import fiscal_incentive, calculate_cost_data
-from src.multiyear.utilitiesmy import calculate_multiyear_data, interest_rate
-from src.multiyear.utilitiesmy import calculate_inverter_cost, create_objects
-from src.multiyear.classesmy import RandomCreate
+from src.support.utilities import read_multiyear_data, create_technologies
+from src.support.utilities import calculate_area, calculate_energy
+from src.support.utilities import fiscal_incentive, calculate_cost_data
+from src.support.utilities import calculate_multiyear_data, interest_rate
+from src.support.utilities import calculate_inverter_cost
+from src.support.utilities import create_multiyear_objects
+from src.support.classes import RandomCreate
 import pandas as pd 
 from src.multiyear.operatorsmy import SolConstructor, SearchOperator
 from plotly.offline import plot
@@ -86,13 +87,13 @@ costData_filepath = "../../data/auxiliar/parameters_cost.json"
 myearData_filepath = "../../data/auxiliar/multiyear.json"
 
 # read data
-demand_df_i, forecast_df_i, generators, batteries, instance_data, fisc_data, cost_data, my_data = read_data(demand_filepath,
-                                                                                                        forecast_filepath,
-                                                                                                        units_filepath,
-                                                                                                        instanceData_filepath,
-                                                                                                        fiscalData_filepath,
-                                                                                                        costData_filepath,
-                                                                                                        myearData_filepath)
+demand_df_i, forecast_df_i, generators, batteries, instance_data, fisc_data, cost_data, my_data = read_multiyear_data(demand_filepath,
+                                                                                                                      forecast_filepath,
+                                                                                                                      units_filepath,
+                                                                                                                      instanceData_filepath,
+                                                                                                                      fiscalData_filepath,
+                                                                                                                      costData_filepath,
+                                                                                                                      myearData_filepath)
 
 #calculate multiyear data
 demand_df, forecast_df = calculate_multiyear_data(demand_df_i, forecast_df_i,
@@ -119,12 +120,12 @@ delta = fiscal_incentive(fisc_data['credit'],
                          fisc_data['T2'])
 
 # Create objects and generation rule
-generators_dict, batteries_dict = create_objects(generators,
-                                                 batteries,  
-                                                 forecast_df,
-                                                 demand_df,
-                                                 instance_data,
-                                                 my_data)
+generators_dict, batteries_dict = create_multiyear_objects(generators,
+                                                           batteries,  
+                                                           forecast_df,
+                                                           demand_df,
+                                                           instance_data,
+                                                           my_data)
 #create technologies
 technologies_dict, renewables_dict = create_technologies (generators_dict,
                                                           batteries_dict)

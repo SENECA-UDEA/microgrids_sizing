@@ -2,7 +2,7 @@
 import random as random
 import numpy as np
 import scipy.stats as sc 
-
+import math
 
 class Generator(): #Superclass generators
     def __init__(self, id_gen, tec, br,  area, cost_up, cost_r, cost_s, cost_fopm):
@@ -33,7 +33,7 @@ class Solar(Generator):
         super(Solar, self).__init__(id_gen, tec, br,area, cost_up,  
                                     cost_r, cost_s, cost_fopm)
 
-    def solar_generation(self, t_amb, irr, g_stc): 
+    def solar_generation(self, t_amb, irr, g_stc, deg = 0): 
             '''Calculate solar generation at each period'''
             #G_stc: Standar solar radiation
             #Calculate generation over the time
@@ -46,7 +46,9 @@ class Solar(Generator):
                 else:
                     t_ref = t_amb[t] + (self.inoct - 20) * (irad_panel / self.G_noct) #reference temperature
                     self.gen_rule[t] = self.Ppv_stc * (irad_panel / g_stc) * (1 + self.kt * (t_ref - 25)) * self.fpv
-            
+                    year = math.floor(irr['t'][t] / 8760) 
+                    #degradarion rate
+                    self.gen_rule[t] = self.gen_rule[t] * (1 - deg)**(year)
             return self.gen_rule
 
     #calculate operative cost
@@ -96,7 +98,7 @@ class Eolic(Generator):
         super(Eolic, self).__init__(id_gen, tec, br, area, cost_up,
                                     cost_r, cost_s, cost_fopm)
     
-    def eolic_generation(self, forecastWt, h2, coef_hel): 
+    def eolic_generation(self, forecastWt, h2, coef_hel, deg = 0): 
         #Wt = wind speed over the time
         #Calculate generation over the time
         HELLMANN = (self.h / h2) ** coef_hel
@@ -109,8 +111,14 @@ class Eolic(Generator):
             elif i < self.s_rate:
               self.gen_rule[t] = self.P_y * ((i**self.n_eq - self.s_in**self.n_eq)
                                             / (self.s_rate**self.n_eq - self.s_in**self.n_eq))
-            elif i <= self.s_out:                  
+              #degradation rate
+              year = math.floor(forecastWt[t] / 8760) 
+              self.gen_rule[t] = self.gen_rule[t] * (1 - deg)**(year)
+            elif i <= self.s_out:
+              #degradation rate                  
               self.gen_rule[t] =  self.P_y
+              year = math.floor(forecastWt[t] / 8760) 
+              self.gen_rule[t] = self.gen_rule[t] * (1 - deg)**(year)
             else:
               self.gen_rule[t] = 0
        

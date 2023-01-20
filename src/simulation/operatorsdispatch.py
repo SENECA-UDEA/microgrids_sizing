@@ -3,8 +3,8 @@
 Created on Wed May 11 10:23:49 2022
 @author: scastellanos
 """
-from src.optimization.utilities import create_technologies
-from src.optimization.classes import Solution, Diesel
+from src.support.utilities import create_technologies
+from src.support.classes import Solution, Diesel
 import copy
 import math
 import pandas as pd
