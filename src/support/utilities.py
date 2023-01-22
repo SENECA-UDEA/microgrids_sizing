@@ -13,55 +13,35 @@ import copy
 import scipy.stats as st
 import math
 
+
 def read_data(demand_filepath, 
               forecast_filepath,
               units_filepath,
               instance_filepath,
               fiscal_filepath,
               cost_filepath):
-    
+
     forecast_df = pd.read_csv(forecast_filepath)
     demand_df = pd.read_csv(demand_filepath)
-    try:
-        generators_data = requests.get(units_filepath)
-        generators_data = json.loads(generators_data.text)
-    except:
-        f = open(units_filepath)
-        generators_data = json.load(f)    
 
-    try:
-        generators = generators_data['generators']
-    except:
-        generators = {}
-        
-    try:
-        batteries = generators_data['batteries']
-    except: 
-        batteries = {}
-        
-    try:
-        instance_data = requests.get(instance_filepath)
-        instance_data = json.loads(instance_data.text)
-    except:
-        f = open(instance_filepath)
-        instance_data = json.load(f) 
-
-    try:
-        fiscal_data =  requests.get(fiscal_filepath)
-        fiscal_data = json.loads(fiscal_data.text)
-    except:
-        f = open(fiscal_filepath)
-        fiscal_data = json.load(f) 
-
-    try:
-        cost_data =  requests.get(cost_filepath)
-        cost_data = json.loads(cost_data.text)
-    except:
-        f = open(cost_filepath)
-        cost_data = json.load(f) 
-        
+    generators_data = read_json_data(units_filepath)
+    generators = generators_data.get('generators', {})
+    batteries = generators_data.get('batteries', {})
+    
+    instance_data = read_json_data(instance_filepath)
+    fiscal_data = read_json_data(fiscal_filepath)
+    cost_data = read_json_data(cost_filepath)
+    
     return demand_df, forecast_df, generators, batteries, instance_data, fiscal_data, cost_data
 
+def read_json_data(filepath):
+    try:
+        data = requests.get(filepath)
+        data = json.loads(data.text)
+    except:
+        with open(filepath) as f:
+            data = json.load(f)
+    return data
 
 def create_objects(generators, batteries, forecast_df, 
                    demand_df, instance_data):
@@ -552,54 +532,19 @@ def read_multiyear_data(demand_filepath,
                         fiscal_filepath,
                         cost_filepath,
                         my_filepath):
-    
+
     forecast_df = pd.read_csv(forecast_filepath)
     demand_df = pd.read_csv(demand_filepath)
-    try:
-        generators_data =  requests.get(units_filepath)
-        generators_data = json.loads(generators_data.text)
-    except:
-        f = open(units_filepath)
-        generators_data = json.load(f)    
 
-    try:
-        generators = generators_data['generators']
-    except:
-        generators = {}
-
-    try:
-        batteries = generators_data['batteries']
-    except: 
-        batteries = {}
-        
-    try:
-        instance_data = requests.get(instance_filepath)
-        instance_data = json.loads(instance_data.text)
-    except:
-        f = open(instance_filepath)
-        instance_data = json.load(f) 
-
-    try:
-        fiscal_data = requests.get(fiscal_filepath)
-        fiscal_data = json.loads(fiscal_data.text)
-    except:
-        f = open(fiscal_filepath)
-        fiscal_data = json.load(f) 
-
-    try:
-        cost_data = requests.get(cost_filepath)
-        cost_data = json.loads(cost_data.text)
-    except:
-        f = open(cost_filepath)
-        cost_data = json.load(f) 
-        
-    try:
-        my_data = requests.get(my_filepath)
-        my_data = json.loads(my_data.text)
-    except:
-        f = open(my_filepath)
-        my_data = json.load(f) 
-        
+    generators_data = read_json_data(units_filepath)
+    generators = generators_data.get('generators', {})
+    batteries = generators_data.get('batteries', {})
+    
+    instance_data = read_json_data(instance_filepath)
+    fiscal_data = read_json_data(fiscal_filepath)
+    cost_data = read_json_data(cost_filepath)
+    my_data = read_json_data(my_filepath)
+   
     return demand_df, forecast_df, generators, batteries, instance_data, fiscal_data, cost_data, my_data
 
 
