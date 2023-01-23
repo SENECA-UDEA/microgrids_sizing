@@ -2,6 +2,37 @@ import json
 import requests
 import copy
 
+'''
+This code is used to create multiple copies of generator and battery data,
+with specific properties modified based on user input, 
+and write them to a new json file.
+ 
+STEPS
+----- 
+This code  uses the requests module to get the data from the file path, 
+loads it into the items_data variable, and then loads it into the json format.
+The code then separates the generators and batteries into their own variables.
+
+The code iterates through the total_transformed variable, which 
+is a combination of generators and batteries. If the technology key of an item 
+in total_transformed equals 'S', the code prompts the user for a max number
+ of cells, a min number of cells, and a step of creation for that generator.
+ It then creates new generators, with the parameters keys modified based
+ on the user input, and appends them to the generators_def list.
+
+If the 'tec' key equals 'W' or 'D', the code prompts the user for a number 
+of equal generators, and creates that number of generators with the id_gen 
+key modified based on the user input, and appends them to the generators_def 
+list.
+
+The code prompts the user for a number of equal batteries, creates that number
+ of batteries with the id_bat key modified based on the user input, 
+ and appends them to the batteries_def list.
+
+Finally, the code creates a new json file and writes the generators_def
+and batteries_def lists to it
+
+'''
 #set the origin of data
 units_filepath = "../../data/pprueba.json"
 

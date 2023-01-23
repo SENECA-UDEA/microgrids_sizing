@@ -13,7 +13,7 @@ import pandas as pd
 import time
 import copy
 
-    
+
 def make_model(generators_dict = None, 
                batteries_dict = None,  
                demand_df = None, 
@@ -35,24 +35,33 @@ def make_model(generators_dict = None,
                    "L4":[1,0]
                    } 
                ):
+    '''
+    make pyomo model- one stage approach
     
-    #generators_dict = dictionary of generators
-    #batteries_dict = dictionary of batteries
-    #demand_df = demand dataframe
-    #technologies_dict = dictionary of technologies
-    #renewables_dict = dictionary of renewable technologies
-    #amax = maximum area
-    #ir = interest rate
-    #nse = maximum allowed not supplied energy
-    #maxtec = maximum number of technologies allowed
-    #mintec = minimum number of technologies allowed
-    #maxbr= maximum brands allowed by each technology
-    #splus_cost = Penalized surplus energy cost
-    #tlpsp = Number of lpsp periods for moving average
-    #delta = tax incentive
-    #inverter = inverter cost
-    #nse_cost = cost to calcalte not supplied load
+    PARAMETERS
+    ----------
+    generators_dict = dictionary of generators
+    batteries_dict = dictionary of batteries
+    demand_df = demand dataframe
+    technologies_dict = dictionary of technologies
+    renewables_dict = dictionary of renewable technologies
+    amax = maximum area
+    ir = interest rate
+    nse = maximum allowed not supplied energy
+    maxtec = maximum number of technologies allowed
+    mintec = minimum number of technologies allowed
+    maxbr= maximum brands allowed by each technology
+    splus_cost = Penalized surplus energy cost
+    tlpsp = Number of lpsp periods for moving average
+    delta = tax incentive
+    inverter = inverter cost
+    nse_cost = cost to calcalte not supplied load
     
+    RETURN
+    -------
+    Model
+    
+    '''
     # Sets
     model = pyo.ConcreteModel(name = "Sizing microgrids - One Stage")
     model.GENERATORS = pyo.Set(initialize = [k for k in generators_dict.keys()])
@@ -382,18 +391,29 @@ def make_model_operational(generators_dict = None,
                               "L2":[0.05,0],
                               "L3":[0.9, 0],
                               "L4":[1,0]}):
-    #generators_dict = dictionary of generators - input (Sizing decision)
-    #batteries_dict = dictionary of batteries - input (Sizing decision)
-    #demand_df = demand dataframe
-    #technologies_dict = dictionary of technologies - input (Sizing decision)
-    #renewables_dict = dictionary of renewable technologies - input (Sizing decision)
-    #nse = maximum allowed not supplied energy
-    #TNPC = Total net present cost - input (Sizing decision)
-    #CRF = Capital recovery factor - input (Sizing decision)
-    #tlpsp = Number of lpsp periods for moving average
-    #lpsp_cost = cost of unsupplied energy
-    #splus_cost = Penalized surplus energy cost
-    #nse_cost = cost to calcalte not supplied load
+    '''
+    Generates the model (operational phase) - two stage approach 
+    
+    PARAMETERS
+    ----------
+    generators_dict = dictionary of generators - input (Sizing decision)
+    batteries_dict = dictionary of batteries - input (Sizing decision)
+    demand_df = demand dataframe
+    technologies_dict = dictionary of technologies - input (Sizing decision)
+    renewables_dict = dictionary of renewable technologies - input (Sizing decision)
+    nse = maximum allowed not supplied energy
+    TNPC = Total net present cost - input (Sizing decision)
+    CRF = Capital recovery factor - input (Sizing decision)
+    tlpsp = Number of lpsp periods for moving average
+    lpsp_cost = cost of unsupplied energy
+    splus_cost = Penalized surplus energy cost
+    nse_cost = cost to calcalte not supplied load
+    
+    RETURNS
+    -------
+    Model
+    '''
+
         
     model = pyo.ConcreteModel(name = "Sizing microgrids Operational")
     
@@ -638,6 +658,23 @@ def make_model_operational(generators_dict = None,
 
 def solve_model(model,
                 Solver_data = {"MIP_GAP":0.01,"TEE_SOLVER":True,"OPT_SOLVER":"gurobi"}):
+    '''
+    Solve the pyomo model with specific optimizer
+
+    Parameters
+    ----------
+    model 
+    Solver_data : 
+        MIP_GAP: GAP accepted for optimality
+        TEE_SOLVER: display optimization status on screen
+        OPT_SOLVER: Optimizer solver, example (Gurobi, CPLEX)
+
+    Returns
+    -------
+    results 
+    term : RESULTS DICTIONARY
+
+    '''
     optimizer = Solver_data["OPT_SOLVER"]
     mipgap = Solver_data["MIP_GAP"]
     tee = Solver_data["TEE_SOLVER"]
@@ -672,6 +709,18 @@ def solve_model(model,
 
 class Results():
     def __init__(self, model, generators_dict, batteries_dict, stage):
+        
+        '''
+        Load the results to the objet associated to thw class results
+
+        Parameters
+        ----------
+        model
+        generators_dictionary
+        batteries_dictionary
+        stage : one or two stage approach
+
+        '''
         
         # Hourly data frame
         demand = pd.DataFrame(model.demand.values(), columns = ['demand'])
@@ -816,6 +865,22 @@ class Results():
         
         
     def generation_graph(self, ini, fin):
+        '''
+        Create a plotly bars graph
+
+        Parameters
+        ----------
+        ini : INTEGER
+        fin : INTEGER
+        
+        Time range in which the bar graph will be generated, by default 
+        it uses all the data but it can be changed according to 
+        the user's interest between the initial and final period.
+
+        Returns
+        -------
+        plot 
+        '''
         df_results = copy.deepcopy(self.df_results.iloc[int(ini):int(fin)])
         bars = []
         for key, value in self.descriptive['generators'].items():

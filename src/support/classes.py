@@ -34,39 +34,70 @@ class Solar(Generator):
                                     cost_r, cost_s, cost_fopm)
 
     def solar_generation(self, t_amb, irr, g_stc, deg = 0): 
-            '''Calculate solar generation at each period'''
-            #G_stc: Standar solar radiation
-            #Calculate generation over the time
-            #irr = total irradiance -> diffuse + horizontal + direct
-            for t in list(irr.index.values):
-                irad_panel = irr['irr'][t] #irradiance in module W/m2
-                
-                if irad_panel <= 0:
-                   self.gen_rule[t] = 0
-                else:
-                    t_ref = t_amb[t] + (self.inoct - 20) * (irad_panel / self.G_noct) #reference temperature
-                    self.gen_rule[t] = self.Ppv_stc * (irad_panel / g_stc) * (1 + self.kt * (t_ref - 25)) * self.fpv
-                    year = math.floor(irr['t'][t] / 8760) 
-                    #degradarion rate
-                    self.gen_rule[t] = self.gen_rule[t] * (1 - deg)**(year)
-            return self.gen_rule
+        '''
+        Calculate total generation of a solar PV overtime
 
-    #calculate operative cost
+        Parameters
+        ----------
+        t_amb : VALUE
+            Ambiental temperature.
+        irr : DATAFRAME
+            total irradiance -> diffuse + horizontal + direct
+        g_stc : VALUE
+            Standar solar radiation
+        deg : VALUE, optional
+            Annual degradation equipment. The default is 0.
+
+        '''
+        
+        for t in list(irr.index.values):
+            irad_panel = irr['irr'][t] #irradiance in module W/m2
+            
+            if irad_panel <= 0:
+               self.gen_rule[t] = 0
+            else:
+                t_ref = t_amb[t] + (self.inoct - 20) * (irad_panel / self.G_noct) #reference temperature
+                self.gen_rule[t] = self.Ppv_stc * (irad_panel / g_stc) * (1 + self.kt * (t_ref - 25)) * self.fpv
+                year = math.floor(irr['t'][t] / 8760) 
+                #degradarion rate
+                self.gen_rule[t] = self.gen_rule[t] * (1 - deg)**(year)
+        return self.gen_rule
+
     def solar_cost(self):
+        '''
+        calculate total operative cost 
+        '''
         aux = self.cost_vopm * sum(self.gen_rule.values())
         self.cost_rule = aux
         return self.cost_rule
                                
     # Temperature model
     def get_inoct(self, caso = 1, w = 1):
-        """caso 1: direct mount
+        '''
+        Calculates inoct from the position of the generator 
+        with respect to the ground and its installation mode 
+
+        Parameters
+        ----------
+        caso : VALUE,
+            The default is 1.
+            caso 1: direct mount
             caso 2: stand-off
-            caso 3: rack mount
+            caso 3: rack mount. 
+            
+        w : VALUE,
+            The default is 1.
             w: distans to mount
             w=1 in > x = 11
             w=3 in > x = 3
             w=6 in > x = -1
-        """
+            
+        Returns
+        -------
+        INOCT : VALUE,
+            "Installed Nominal Operating Cell Temperature" .
+
+        '''
         if caso == 1:
             inoct = self.T_noct + 18.0
         if caso == 2:
@@ -99,8 +130,23 @@ class Eolic(Generator):
                                     cost_r, cost_s, cost_fopm)
     
     def eolic_generation(self, forecastWt, h2, coef_hel, deg = 0): 
-        #Wt = wind speed over the time
-        #Calculate generation over the time
+        '''
+        Calculate total generation of a wind turbine overtime
+
+        Parameters
+        ----------
+        forecastWt : DATAFRAME
+            Wind speed overtime
+        h2 : VALUE
+            turbine height.
+        coef_hel : VALUE
+            Hellman coefficient for correction of the measurement speed
+            with respect to the real one
+        deg : VALUE, optional
+            Annual degradation equipment. The default is 0.
+
+        '''
+
         HELLMANN = (self.h / h2) ** coef_hel
         for t in list(forecastWt.index.values):
             #Calculate Hellmann coefficient
@@ -124,8 +170,11 @@ class Eolic(Generator):
        
         return self.gen_rule
     
-    #calculate operative cost
+    
     def eolic_cost(self):
+        '''
+        calculate operative cost
+        '''
         aux = self.cost_vopm * sum(self.gen_rule.values())
         self.cost_rule = aux
         return self.cost_rule
@@ -163,7 +212,10 @@ class Battery():
         self.soc_min = 0 #Minimum level of energy that must be in the battery
         self.cost_vopm = cost_vopm #variable cost
         
-    def calculate_soc(self): #Calculate soc_min with soc_max and dod_max
+    def calculate_soc(self): 
+        '''
+        Calculate soc_min as relation between soc_max and dod_max
+        '''
         self.soc_min = self.soc_max * (1 - self.dod_max)
         return self.soc_min
 
@@ -186,39 +238,99 @@ class Solution():
 class RandomCreate():
     #crrate random numbers with seed
     def __init__(self, seed = None):
+        """set the seed
+        """
         self.seed = seed
         random.seed(self.seed)
         np.random.seed(self.seed)
         
     def create_rand_number(self): 
+        """create random number
+        """
         number_rand = random.random() 
         return number_rand
     
     def create_rand_list(self, list_rand):
+        """random choice of an element in a list
+        """
         selection = 0
         selection = random.choice(list_rand)
         return selection
 
     def create_rand_int(self, inf, sup):
+        """random integer number
+        """
         selection = 0
         selection = random.randint(inf, sup)
         return selection
 
     def create_rand_sample(self, list_rand, n):
+        """random sample of a list with n elements
+        """
         selection = 0
         selection = random.sample(list_rand, n)
         return selection
 
     def create_rand_shuffle(self, list_rand):
+        """random shuffle of a list
+        """
         random.shuffle(list_rand)
         return list_rand
 
     def create_rand_p_normal(self, means, desv, size):
+        '''
+        create random number(s) with normal distribution
+
+        Parameters
+        ----------
+        means : VALUE
+        desv : VALUE,
+            standard deviation
+        size : VALUE
+            number of random elements to generate
+
+        '''
         selection = 0
         selection = np.random.normal(loc = means, scale = desv, size = size)
         return selection
     
+    def dist_triangular(self, a, b, c):
+        '''
+        This function generates a random number using the triangular distribution
+        of numpy library
+        The function then takes the maximum of that number and 0,
+        ensuring that the returned value is always non-negative. 
+        The returned value is a single float number.        
+
+        Parameters
+        ----------
+        a : lower limit
+        b : mode
+        c : upper limit
+
+        '''
+        rand_generation = np.random.triangular(a, b, c, 1)
+        number = max(0, rand_generation[0])
+        return number
+    
     #distributions for stochasticity
+    '''
+    class that contains several methods that generate random numbers 
+    from different probability distributions. Each method takes in parameter
+    s specific to the distribution it is generating numbers 
+    from, such as location and scale. The methods use the scipy.stats module
+    to generate the random numbers, and they all take in the random_state
+    parameter set to self.seed. The generated numbers are then passed through 
+    the max(0, rand_generation[0]) function, which ensures that the number
+    generated is greater than or equal to 0. 
+    
+    size is always equal to 1 since only one element is required to be generated
+    
+    The location ( loc ) keyword specifies the mean. 
+    The scale ( scale ) keyword specifies the standard deviation. 
+    loc will always be the penultimate parameter entered and scale the last one, 
+    if there are more before these two are proper to the function
+    '''
     def dist_triang(self, a, b, c):
         rand_generation = sc.triang.rvs(a, loc = b, scale = c, size = 1, 
                                         random_state = self.seed)
@@ -309,8 +421,3 @@ class RandomCreate():
         number = max(0, rand_generation[0])
         return number
 
-    #triangular distribution for parameters
-    def dist_triangular(self, a, b, c):
-        rand_generation = np.random.triangular(a, b, c, 1)
-        number = max(0, rand_generation[0])
-        return number
