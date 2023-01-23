@@ -20,7 +20,42 @@ def read_data(demand_filepath,
               instance_filepath,
               fiscal_filepath,
               cost_filepath):
+    '''
+    The codes uses the pd.read_csv() function from the pandas library to read 
+    in the contents of the forecast_filepath and demand_filepath files 
+    into dataframes forecast_df and demand_df respectively.
 
+    It then uses the read_json_data function to read in the contents 
+    of the units_filepath, instance_filepath, fiscal_filepath, 
+    and cost_filepath into variables generators_data, instance_data, 
+    fiscal_data, and cost_data respectively.
+
+    Then it extracts the 'generators' and 'batteries' field from 
+    the generators_data and assigns it to the variables
+    generators and batteries respectively.
+
+    Finally, the function returns the dataframes and variables
+    Parameters
+    ----------
+    demand_filepath : PATH
+        Demand data location
+    forecast_filepath : PATH
+        Forecast data Location (wind speed and irradiation)
+    units_filepath : PATH
+        Batteries and generators data location
+    instance_filepath : PATH
+        Instance paramaters data location
+    fiscal_filepath : PATH
+        Fiscal incentive data location
+    cost_filepath : PATH
+        Auxiliar cost data location - parameters for associated cost
+        
+    Returns
+    -------
+    demand_df, forecast_df : DATAFRAMES
+    generators, batteries : LIST
+    instance_data, fiscal_data, cost_data : DICTIONARIES
+    '''
     forecast_df = pd.read_csv(forecast_filepath)
     demand_df = pd.read_csv(demand_filepath)
 
@@ -34,7 +69,29 @@ def read_data(demand_filepath,
     
     return demand_df, forecast_df, generators, batteries, instance_data, fiscal_data, cost_data
 
+
 def read_json_data(filepath):
+    '''
+    This function takes in a file path as an argument. 
+    The function first attempts to read the file path as a URL 
+    and retrieves the data using the "requests" library and then 
+    loads it as a JSON object. 
+    If this fails (for example, if the file path is not a URL), 
+    the code then attempts to open the file path as a local file 
+    and load it as a JSON object using the "json" library. 
+    If this also fails, the function will return an error. 
+
+    Parameters
+    ----------
+    filepath : PATH
+        Defines the location of the data to create a json
+
+    Returns
+    -------
+    data : JSON
+        Create a json data.
+
+    '''
     try:
         data = requests.get(filepath)
         data = json.loads(data.text)
@@ -43,8 +100,47 @@ def read_json_data(filepath):
             data = json.load(f)
     return data
 
+
 def create_objects(generators, batteries, forecast_df, 
                    demand_df, instance_data):
+    '''
+    This function creates objects for generators and batteries 
+    based on their types (Solar, Eolic, Diesel, and Battery)
+    and initializing them with certain values. 
+
+    For each generator in the "generators" list, the function checks 
+    the "tec" key to determine the type of generator. 
+    If it is of type "S" (Solar), the function creates a Solar object,
+    calls several methods on the object
+    (irradiance_panel, get_inoct, solar_generation, solar_cost)
+    and assigns the object to the key of "id_gen" in the "generators_dict" 
+    If it is of type "W" (Eolic), the function creates an Eolic object, 
+    calls several methods on the object (eolic_generation, eolic_cost) 
+    and assigns the object to the key of "id_gen" in the "generators_dict" 
+    .If it is of type "D" (Diesel) the function creates a Diesel object, 
+    and assigns the object to the key of "id_gen" in the "generators_dict" 
+   
+    For each battery in the "batteries" list, the function creates
+    a Battery object, calls the "calculate_soc" method on the object
+    and assigns the object to the key of "id_bat" in the "batteries_dict" 
+
+    Parameters
+    ----------
+    generators : LIST
+    batteries : LIST
+    forecast_df : DATAFRAME
+    demand_df : DATAFRAME
+    instance_data : DICTIONARY
+
+    Returns
+    -------
+    generators_dict : DICTIONARY
+        Dictionary with generators with their specific class - technology 
+        associated
+    batteries_dict : DICTIONARY
+        Dictionary with batteries, and their attributes of battery class
+
+    '''
     # Create generators and batteries
     generators_dict = {}
     for k in generators:
@@ -74,6 +170,37 @@ def create_objects(generators, batteries, forecast_df,
 
 
 def create_technologies(generators_dict, batteries_dict):
+    '''
+    This function creates two dictionaries of technologies and renewables based 
+    on the generators and batteries dictionaries passed in as arguments.
+
+    The "technologies_dict" is created by iterating through the generators_dict
+    and batteries_dict values, checking if the technology attribute of the generator 
+    or battery is already a key in the technologies_dict. If not, 
+    it creates a new key with the "tec" attribute and adds the "br" attribute 
+    to a set associated with that key. 
+    
+    The "renewables_dict" is created by iterating through the generators_dict,
+    checking if the technology attribute of the generator is renewable,
+    and if so, it checks if the "tec" attribute is already a key 
+    in the renewables_dict. If not, it creates a new key with the "tec" attribute
+    and adds the "br" attribute to a set associated with that key. 
+
+    Parameters
+    ----------
+    generators_dict : DICTIONARY
+    batteries_dict : DICTIONARY
+
+    Returns
+    -------
+    technologies_dict : DICTIONARY
+        dictionary of technologies present in generators,
+        for example [Solar, Wind, Diesel and Batteries]
+    renewables_dict : DICTIONARY
+        dictionary that stores the technologies associated with generators 
+        that are renewable such as solar and wind
+
+    '''
     # Create technologies dictionary
     technologies_dict = dict()
     for bat in batteries_dict.values(): 
@@ -103,59 +230,131 @@ def create_technologies(generators_dict, batteries_dict):
     return technologies_dict, renewables_dict
  
 
-#calculate inverter cost with the instaled generators and batteries
 def calculate_inverter_cost(generators_dict, batteries_dict, inverter_cost):
-            expr = 0
-            
-            for gen in generators_dict.values(): 
-                if (gen.tec == 'D'): 
-                    #cost as percentage of rated size network
-                    expr += gen.DG_max * inverter_cost
-                elif (gen.tec == 'S'):
-                    #cost as percentage of rated size network
-                    expr += gen.Ppv_stc * inverter_cost                    
-                else:
-                    #cost as percentage of rated size network
-                    expr += gen.P_y * inverter_cost
+    '''
+    This function calculates the total cost of inverters based on
+    the generators and batteries information passed in as arguments.
+    
+    checking the technology attribute of each generator and adding the product
+    of the generator's or batteries rated  power with the "inverter_cost" 
 
-            for bat in batteries_dict.values(): 
-                #cost as percentage of rated size network
-                expr += bat.soc_max * inverter_cost
+    Parameters
+    ----------
+    generators_dict : DICTIONARY
+        DESCRIPTION.
+    batteries_dict : DICTIONARY
+        DESCRIPTION.
+    inverter_cost : VALUE
+        associated cost for each kilowatt of nominal capacity of the microgrid
 
-            return expr
+    Returns
+    -------
+    expr : VALUE
+        Total inverter cost
+
+    '''
+    expr = 0
+    
+    for gen in generators_dict.values(): 
+        if (gen.tec == 'D'): 
+            #cost as percentage of rated size network
+            expr += gen.DG_max * inverter_cost
+        elif (gen.tec == 'S'):
+            #cost as percentage of rated size network
+            expr += gen.Ppv_stc * inverter_cost                    
+        else:
+            #cost as percentage of rated size network
+            expr += gen.P_y * inverter_cost
+
+    for bat in batteries_dict.values(): 
+        #cost as percentage of rated size network
+        expr += bat.soc_max * inverter_cost
+
+    return expr
 
 
 #calculate total cost for two stage approach
 def calculate_sizing_cost(generators_dict, batteries_dict, ir, years, 
                           delta, inverter):
+    '''
+    This function calculates the total cost of the two-stage approach based on
+    the generators and batteries information passed in as arguments. 
     
-            expr = 0
-            
-            for gen in generators_dict.values(): 
-                if (gen.tec != 'D'): 
-                    #fiscal incentive if not diesel
-                    expr += gen.cost_up * delta
-                    expr += gen.cost_r  * delta
-                else:
-                    expr += gen.cost_up
-                    expr += gen.cost_r 
-                
-                expr -= gen.cost_s 
-                expr += gen.cost_fopm 
-            
-            for bat in batteries_dict.values(): 
-                expr += bat.cost_up * delta
-                expr += bat.cost_r * delta
-                expr -= bat.cost_s
-                expr += bat.cost_fopm
+    Then iterates through the generators_dict, checking the technology attribute 
+    of each generator. If the generator is renewable, it adds the fiscal incentive
+    to the cost.
+    After, It then subtracts the generator's "cost_salvament".
 
-            crf = (ir * (1 + ir) ** (years)) / ((1 + ir) ** (years) - 1)    
-            #Operative cost doesn't take into account the crf
-            tnpccrf = (expr + inverter) * crf
-            return tnpccrf
+    It then iterates through the batteries_dict and adds their cost
+    
+    Finally, the function calculates the cost of capital recovery factor (CRF) 
+    using the formula: (ir * (1 + ir) ** (years)) / ((1 + ir) ** (years) - 1) 
+    and multiplies the result with the total cost and returns the value.
+
+    Parameters
+    ----------
+    generators_dict : DICTIONARY
+    batteries_dict : DICTIONARY
+    ir : VALUE
+        Interest rate
+    years : VALUE
+        Sizing time horizon
+    delta : VALUE
+        discount rate as a tax incentive for the use of renewable energy
+    inverter : VALUE
+        Inverter cost
+
+    Returns
+    -------
+    tnpccrf : VALUE
+        Investment cost (long term - strategic) 
+        together with the cost of operation make up the LCOE
+
+    '''
+    
+    expr = 0
+    
+    for gen in generators_dict.values(): 
+        if (gen.tec != 'D'): 
+            #fiscal incentive if not diesel
+            expr += gen.cost_up * delta
+            expr += gen.cost_r  * delta
+        else:
+            expr += gen.cost_up
+            expr += gen.cost_r 
+        
+        expr -= gen.cost_s 
+        expr += gen.cost_fopm 
+    
+    for bat in batteries_dict.values(): 
+        expr += bat.cost_up * delta
+        expr += bat.cost_r * delta
+        expr -= bat.cost_s
+        expr += bat.cost_fopm
+
+    crf = (ir * (1 + ir) ** (years)) / ((1 + ir) ** (years) - 1)    
+    #Operative cost doesn't take into account the crf
+    tnpccrf = (expr + inverter) * crf
+    return tnpccrf
 
 
 def calculate_area (solution):
+    '''
+    This function calculates the total area of the solution based on 
+    the generators and batteries information passed in as argument "solution".}
+    Then it iterates through the values of the dictionary with batteries and generators,
+    and for each value, it adds the area attribute.
+
+    Parameters
+    ----------
+    solution : OBJECT OF SOLUTION'S CLASS
+
+    Returns
+    -------
+    area : Value
+        Total area of installed microgrid.
+
+    '''
     dict_actual = {**solution.generators_dict_sol, **solution.batteries_dict_sol}
     area = 0
     for i in dict_actual.values():
@@ -164,108 +363,175 @@ def calculate_area (solution):
     return area
 
 
-#Calculate energy total, for eevery brand, technology or renewable 
+#Calculate energy total, for every brand, technology or renewable 
 def calculate_energy(batteries_dict, generators_dict, model_results, demand_df):  
-   #create auxiliar sets
-   column_data = {}
-   energy_data = {}
-   aux_energy_data = []
-   renew_data = {}
-   aux_renew_data = []
-   total_data = [0] * len(demand_df)
-   aux_total_data = []
-   brand_data = {}
-   aux_brand_data = []
-   for bat in batteries_dict.values(): 
-       #check that the battery is installed
-       if (model_results.descriptive['batteries'][bat.id_bat] == 1):
-           column_data[bat.id_bat + '_%'] = (model_results.df_results[bat.id_bat + '_b-']
-                                             / model_results.df_results['demand'])
-           column_data[bat.id_bat + '_%charge'] = (model_results.df_results[bat.id_bat + '_b+']
-                                                   / model_results.df_results['demand'])
-           aux_total_data = model_results.df_results[bat.id_bat + '_b-']
-           #sum all generation
-           total_data += aux_total_data
-           #check the key for create or continue in the same dict
-           key_energy_total = bat.tec + 'total'
-           key_brand_total = bat.br + 'total'
-           if key_energy_total in energy_data:
-               aux_energy_data = []
-               aux_energy_data = (energy_data[key_energy_total] 
-                                  + model_results.df_results[bat.id_bat + '_b-'])
-               #fill the dictionary
-               energy_data[key_energy_total] = aux_energy_data
-           else:
-               energy_data[key_energy_total] = model_results.df_results[bat.id_bat + '_b-']           
-    
-           if key_brand_total in brand_data:
-               aux_brand_data = []
-               aux_brand_data = (brand_data[key_brand_total] 
-                                 + model_results.df_results[bat.id_bat + '_b-'])
-               #fill the dictionary
-               brand_data[key_brand_total] = aux_brand_data
-           else:
-               brand_data[key_brand_total] = model_results.df_results[bat.id_bat + '_b-']           
-      
-   for gen in generators_dict.values():
-       #check that the generator is installed
-       if (model_results.descriptive['generators'][gen.id_gen] == 1):
-           column_data[gen.id_gen + '_%'] = (model_results.df_results[gen.id_gen] 
-                                            / model_results.df_results['demand'])
-           #check the key for create or continue in the same dict
-           key_energy_total = gen.tec + 'total'
-           key_renew_total = gen.tec + 'total'
-           key_brand_total = gen.br + 'total'
-           #sum all generation
-           total_data += model_results.df_results[gen.id_gen]
-           if key_energy_total in energy_data:
-               aux_energy_data = []
-               aux_energy_data = (energy_data[key_energy_total] 
-                                  + model_results.df_results[gen.id_gen])
-               #fill the dictionary
-               energy_data[key_energy_total] = aux_energy_data
-           else:
-               energy_data[key_energy_total] = model_results.df_results[gen.id_gen]           
-           
-           if key_brand_total in brand_data:
-               aux_brand_data = []
-               aux_brand_data = (brand_data[key_brand_total] 
-                                 + model_results.df_results[gen.id_gen])
-               #fill the dictionary
-               brand_data[key_brand_total] = aux_brand_data
-           else:
-               brand_data[key_brand_total] = model_results.df_results[gen.id_gen]           
-           
-           if (gen.tec == 'S' or gen.tec == 'W'):
-               if key_renew_total in renew_data:
-                   aux_renew_data = []
-                   aux_renew_data = (renew_data[key_renew_total] 
-                                     +  model_results.df_results[gen.id_gen])
-                   #fill the dictionary
-                   renew_data[key_renew_total] = aux_renew_data
-               else:
-                   renew_data[key_renew_total] =  model_results.df_results[gen.id_gen]           
+    '''
+    This function receives the sizing results and from them generates
+    different dataframes that allow for subsequent analysis.
 
-   #Create dataframes
-   percent_df = pd.DataFrame(column_data, columns = [*column_data.keys()])
-   energy_df = pd.DataFrame(energy_data, columns = [*energy_data.keys()])
-   renew_df = pd.DataFrame(renew_data, columns = [*renew_data.keys()])
-   arraydf = np.array(total_data)
-   total_df = pd.DataFrame(arraydf, columns = ['Total energy'])
-   brand_df = pd.DataFrame(brand_data, columns = [*brand_data.keys()])
-   
-   return percent_df, energy_df, renew_df, total_df, brand_df
+    Parameters
+    ----------
+    batteries_dict : DICTIONARY
+    generators_dict : DICTIONARY
+    model_results : OBJECT OF CLASS RESULTS
+        The sizing outputs are stored here
+    demand_df : DATAFRAME
+
+    Returns
+    -------
+    percent_df : DATAFRAME
+        percentage of demand covered by each generator or battery
+    energy_df : DATAFRAME
+        Power generared by each generator or battery
+    renew_df : DATAFRAME
+        Power generated by renewable generations
+    total_df : DATAFRAME
+        sum of total generation, at each period
+    brand_df : DATAFRAME
+        Power generated by each brand of generators or batteries
+
+    '''
+    #create auxiliar sets
+    column_data = {}
+    energy_data = {}
+    aux_energy_data = []
+    renew_data = {}
+    aux_renew_data = []
+    total_data = [0] * len(demand_df)
+    aux_total_data = []
+    brand_data = {}
+    aux_brand_data = []
+    for bat in batteries_dict.values(): 
+        #check that the battery is installed
+        if (model_results.descriptive['batteries'][bat.id_bat] == 1):
+            column_data[bat.id_bat + '_%'] = (model_results.df_results[bat.id_bat + '_b-']
+                                              / model_results.df_results['demand'])
+            column_data[bat.id_bat + '_%charge'] = (model_results.df_results[bat.id_bat + '_b+']
+                                                    / model_results.df_results['demand'])
+            aux_total_data = model_results.df_results[bat.id_bat + '_b-']
+            #sum all generation
+            total_data += aux_total_data
+            #check the key for create or continue in the same dict
+            key_energy_total = bat.tec + 'total'
+            key_brand_total = bat.br + 'total'
+            if key_energy_total in energy_data:
+                aux_energy_data = []
+                aux_energy_data = (energy_data[key_energy_total] 
+                                   + model_results.df_results[bat.id_bat + '_b-'])
+                #fill the dictionary
+                energy_data[key_energy_total] = aux_energy_data
+            else:
+                energy_data[key_energy_total] = model_results.df_results[bat.id_bat + '_b-']           
+     
+            if key_brand_total in brand_data:
+                aux_brand_data = []
+                aux_brand_data = (brand_data[key_brand_total] 
+                                  + model_results.df_results[bat.id_bat + '_b-'])
+                #fill the dictionary
+                brand_data[key_brand_total] = aux_brand_data
+            else:
+                brand_data[key_brand_total] = model_results.df_results[bat.id_bat + '_b-']           
+       
+    for gen in generators_dict.values():
+        #check that the generator is installed
+        if (model_results.descriptive['generators'][gen.id_gen] == 1):
+            column_data[gen.id_gen + '_%'] = (model_results.df_results[gen.id_gen] 
+                                             / model_results.df_results['demand'])
+            #check the key for create or continue in the same dict
+            key_energy_total = gen.tec + 'total'
+            key_renew_total = gen.tec + 'total'
+            key_brand_total = gen.br + 'total'
+            #sum all generation
+            total_data += model_results.df_results[gen.id_gen]
+            if key_energy_total in energy_data:
+                aux_energy_data = []
+                aux_energy_data = (energy_data[key_energy_total] 
+                                   + model_results.df_results[gen.id_gen])
+                #fill the dictionary
+                energy_data[key_energy_total] = aux_energy_data
+            else:
+                energy_data[key_energy_total] = model_results.df_results[gen.id_gen]           
+            
+            if key_brand_total in brand_data:
+                aux_brand_data = []
+                aux_brand_data = (brand_data[key_brand_total] 
+                                  + model_results.df_results[gen.id_gen])
+                #fill the dictionary
+                brand_data[key_brand_total] = aux_brand_data
+            else:
+                brand_data[key_brand_total] = model_results.df_results[gen.id_gen]           
+            
+            if (gen.tec == 'S' or gen.tec == 'W'):
+                if key_renew_total in renew_data:
+                    aux_renew_data = []
+                    aux_renew_data = (renew_data[key_renew_total] 
+                                      +  model_results.df_results[gen.id_gen])
+                    #fill the dictionary
+                    renew_data[key_renew_total] = aux_renew_data
+                else:
+                    renew_data[key_renew_total] =  model_results.df_results[gen.id_gen]           
+ 
+    #Create dataframes
+    percent_df = pd.DataFrame(column_data, columns = [*column_data.keys()])
+    energy_df = pd.DataFrame(energy_data, columns = [*energy_data.keys()])
+    renew_df = pd.DataFrame(renew_data, columns = [*renew_data.keys()])
+    arraydf = np.array(total_data)
+    total_df = pd.DataFrame(arraydf, columns = ['Total energy'])
+    brand_df = pd.DataFrame(brand_data, columns = [*brand_data.keys()])
+    
+    return percent_df, energy_df, renew_df, total_df, brand_df
 
 
 def interest_rate (i_f, inf):
-    #inf = inflation
-    #i_f = nominal rate
+    '''
+    calculates interest rate according to the relationship nominal rate and inflation,
+    formula used in financial engineering
+    
+    Parameters
+    ----------
+    i_f : VALUE
+        Nominal rate
+    inf : VALUE
+        Inflation
+
+    Returns
+    -------
+    ir : Value
+        Interest rate
+
+    '''
+
     ir = (i_f - inf) / (1 + inf)
     return ir
 
 
 def calculate_cost_data(generators, batteries, instance_data,
                         parameters_cost):
+    '''
+    This function calculates the costs associated with a given set 
+    of generators and batteries over a specified number of years. 
+    It first calculates the interest rate based on the given inflation and nominal rate. 
+    Then, it calculates the tax for replacement based on the number of cycles 
+    and the useful life of the generators and batteries. 
+    
+    The function then iterates through the generators and batteries,
+    calculating costs associated with each one, such as replacement cost,
+    salvage cost, fixed and variable operation and maintenance costs. 
+    These costs are stored in new lists and returned at the end of the function.
+
+    Parameters
+    ----------
+    generators : DICTIONARY
+    batteries : DICTIONARY
+    instance_data : DICTIONARY
+    parameters_cost : DICTIONARY
+
+    Returns
+    -------
+    generators_def : DICTIONARY
+    batteries_def : DICTIONARY
+
+    '''
     #inflation
     inf = instance_data['inf']
     #nominal rate
@@ -331,12 +597,38 @@ def calculate_cost_data(generators, batteries, instance_data,
 
 
 def fiscal_incentive (credit, depreciation, corporate_tax, ir, T1, T2):
-    #corporate_tax = effective corporate tax income rate
-    #Credit = investment tax credit
-    #Depreciation -> factor expressed as % of investment cost over T2 year
-    #ir = Interest rate
-    #T1 = Maximum number of years to apply the investment tax credit
-    #T2 = useful life (year) of the power generating facility - depreciation
+    '''
+    This function calculates the fiscal incentives associated with a 
+    power generating facility. It takes in five parameters: 
+    credit, depreciation, corporate tax rate, interest rate, and T1 and T2. 
+    It calculates the tax savings over T1 years by applying the investment tax credit,
+    and over T2 years by applying the depreciation. 
+    
+    It then calculates the overall tax savings using the corporate tax rate 
+    and the savings from the credit and depreciation. The final result is returned as delta.
+
+    Parameters
+    ----------
+    credit : VALUE
+        Investment tax credit
+    depreciation : VALUE
+        Factor expressed as % of investment cost over T2 year
+    corporate_tax : VALUE
+        Effective corporate tax income rate
+    ir : VALUE
+        Interest rate
+    T1 : VALUE
+        Maximum number of years to apply the investment tax credit
+    T2 : VALUE
+        Useful life (year) of the power generating facility - depreciation
+
+    Returns
+    -------
+    delta : VALUE
+        Tax incentive: discount percentage to the investment cost of renewable energies.
+
+    '''
+
     delta = 0
     expr = 0
     for j in range(1, int(T1) + 1):
@@ -351,7 +643,34 @@ def fiscal_incentive (credit, depreciation, corporate_tax, ir, T1, T2):
 
   
 def irradiance_panel (forecast_df, instance_data):
- 
+    '''
+    This function calculates the irradiance for the solar panel 
+    which is a dataframe that contains information such as global horizontal 
+    irradiance (GHI), diffuse horizontal irradiance (DHI), 
+    direct normal irradiance (DNI), and time; and instance_data,
+    which contains information such as the tilted angle of the module,
+    the module azimuth, the time zone, longitude, latitude, and other parameters.
+
+    The function first checks if the sum of GHI and DHI is greater than 0. 
+    If not, it sets the irradiance data to be equal to DNI. If it is greater than 0,
+    the function calculates the total irradiance on the panel by using 
+    a number of intermediate calculations such as solar altitude,
+    solar azimuth, cosine of the incidence angle, sky view factor, 
+    diffuse irradiance, ground irradiance, and direct irradiance. 
+    It then returns the calculated irradiance in a dataframe with columns t and irr.
+
+    Parameters
+    ----------
+    forecast_df : DATAFRAME
+    instance_data : DICTIONARY
+
+    Returns
+    -------
+    irr : DATAFRAME
+        total radiation received by the solar generator, 
+        as the sum of the three radiations. (DHI, DNI, GHI)
+
+    '''
     if (forecast_df['GHI'].sum() <= 0 or forecast_df['DHI'].sum() <= 0):
         #Default only DNI if it is not GHI or DHI
         irr_data = forecast_df['DNI']
@@ -388,8 +707,34 @@ def irradiance_panel (forecast_df, instance_data):
 
 
 def min_to_hms(hm):
-    """conversion min -> (hours, min, sec)
-    """
+    '''
+    This function takes in a single input hm, which represents the number of minutes,
+    and converts it to hours, minutes, and seconds. 
+    
+    It does this by first dividing hm by 60 to get the number of hours, 
+    and then using the modulus operator to get the remaining minutes. 
+    It then converts this decimal value of minutes to an integer value. 
+    It then again uses the decimal value of minutes to get the seconds
+    by multiplying the decimal with 60 and using int to get the integer 
+    value of seconds. 
+    
+
+    Parameters
+    ----------
+    hm : VALUE
+        Minutes
+
+    Returns
+    -------
+    H : VALUE
+        Hours
+    m : VALUE
+        min
+    s : VALUE
+        sec
+
+    '''
+
     H = int(hm / 60)
     M = ((hm / 60) - H) * 60
     m = int(M)
@@ -399,9 +744,31 @@ def min_to_hms(hm):
 
 
 def decimal_hour_to_hms(hd):
-    """decimal time conversion ->
-       (hours,minutes,seconds)
-    """
+    '''
+    This function takes in a single input hd, which represents time in decimal format,
+    and converts it to hours, minutes, and seconds. 
+    It does this by first getting the integer value of hd to get the number of hours,
+    then subtracting that from hd to get the decimal value of minutes. 
+    It then converts this decimal value of minutes to an integer value. 
+    It then again uses the decimal value of minutes to get the seconds 
+    by multiplying the decimal with 60 and using int to get the integer value of seconds.
+
+    Parameters
+    ----------
+    hd : VALUE
+        Decimal hour
+
+    Returns
+    -------
+    H : VALUE
+        Hour.
+    M : VALUE
+        Min.
+    S : VALUE
+        Sec.
+
+    '''
+
     H = int(hd)
     m = (hd - H) * 60
     M = int(m)
@@ -411,16 +778,35 @@ def decimal_hour_to_hms(hd):
 
 
 def get_solar_parameters(LT, TZ, dia, Long, Latit):
-    """LT: local time(hour)
-       TZ: time zone
-       dia: counted from January 1
-       Long: longitude in degrees
-       Latit: latitude in degrees
-       sun position calculation
-       return: Elevation,Azimuth in degrees
-       version: 2019-02-05
-       ref:https://www.pveducation.org/pvcdrom/2-properties-sunlight/suns-position
-    """
+    '''
+    This function calculates the solar parameters, specifically the solar elevation and azimuth, 
+    It first converts the Local Time to minutes and calculates 
+    the Time Correction Factor (TC) based on the longitude and an equation 
+    that uses the day of the year and the solar position. It then calculates
+    the Local Solar Time (LST) by adding the TC to the Local Time in minutes.
+    It then calculates the Hour Angle (HRA) using the LST 
+    and the declination angle(delta) using day of the year and latitude.
+
+    It then calculates the solar elevation using trigonometry and the solar azimuth 
+    using the declination angle and other trigonometry calculation. F
+    Finally, it returns the calculated solar elevation and azimuth in degrees.
+
+    Parameters
+    ----------
+    LT: local time(hour)
+    TZ: time zone
+    dia: counted from January 1
+    Long: longitude in degrees
+    Latit: latitude in degrees
+    sun position calculation
+    ref:https://www.pveducation.org/pvcdrom/2-properties-sunlight/suns-position
+
+    Returns
+    -------
+    Elevation,Azimuth in degrees
+
+    '''
+
     ka = 180 / np.pi
     LSTM = 15 * TZ#Local Standard Time Meridian(LSTM)
     EoT = lambda x:9.87 * np.sin(2 * x) - 7.53 * np.cos(x) - 1.5 * np.sin(x)#x in radians
@@ -450,14 +836,35 @@ def get_solar_parameters(LT, TZ, dia, Long, Latit):
 
 
 #a_s: Sun altitude (grados)//Elevation
-#A_s: Sun Azimuth (grados)
+
+
 def cos_incidence_angle(a_M, A_M, a_s, A_s):
-    """AOI: angle of incidence
-        a_M: Module altitude (degrees)
-        A_M: Module Azimuth (degrees)
-        a_s: Sun altitude (degrees)
-        A_s: Sun Azimuth (degrees)
-        """
+    '''
+    This function calculates the cosine of the incidence angle between
+    the sun and a solar panel. 
+    
+    It then calculates the angle of rotation (Ar) between the module 
+    and sun using their azimuths. It then calculates the cosine of the incidence
+    angle using trigonometry, by taking the dot product of the two unit vectors 
+    representing the sun's and module's direction. 
+
+    Parameters
+    ----------
+    a_M : VALUE
+        Module altitude (degrees)
+    A_M : VALUE
+        Module Azimuth (degrees)
+    a_s : VALUE
+        Sun altitude (degrees)
+    A_s : VALUE
+        Sun Azimuth (degrees)
+
+    Returns
+    -------
+    ct : VALUE
+        Cosine of the incidence angle.
+
+    '''
     Ar = A_M - A_s
     c1 = np.cos(a_M * np.pi / 180) * np.cos(a_s * np.pi / 180) * np.cos(Ar * np.pi / 180)
     c2 = np.sin(a_M * np.pi / 180) * np.sin(a_s * np.pi / 180)
@@ -466,9 +873,21 @@ def cos_incidence_angle(a_M, A_M, a_s, A_s):
 
 
 def get_sky_view_factor(t_M):
-    """t_M: tilted angle of Module (grados)
-        Free Horizont model
-    """
+    '''
+    Free Horizont model, calculates sky view factor     
+
+    Parameters
+    ----------
+    t_M : VALUE
+        tilted angle of Module (Degrees)
+
+    Returns
+    -------
+    svf : VALUE
+        Sky view factor
+
+    '''
+
     svf = (1 + np.cos(t_M * np.pi / 180)) / 2
     return svf
 
@@ -476,7 +895,33 @@ def get_sky_view_factor(t_M):
 
 'MULTIYEAR'
 def calculate_multiyear_data(demand_df, forecast_df, my_data, years):
+    '''
+    It creates two new dataframes called 'demand' and 'forecast'
+    that are multi-year dataframes based on the input dataframes. 
     
+    It first creates empty dataframes with the same columns as the input
+    dataframes and the same number of rows as the number of years passed 
+    in multiplied by 8760 (number of hours in a year). It then populates
+    these dataframes with the data from the input dataframes,
+    adjusting values as necessary (e.g. applying a demand tax) 
+    for each year beyond the first year. 
+    
+    Parameters
+    ----------
+    demand_df : DATAFRAME
+    forecast_df : DATAFRAME
+    my_data : DICTIONARY
+    years : PARAMETER
+        Project time horizon
+
+    Returns
+    -------
+    demand : DATAFRAME
+        Multiyear demand
+    forecast : DATAFRAME
+        Multiyear forecast
+
+    '''
     #total hours
     len_total = 8760 * years
     aux_demand = {k : [0] * (len_total) for k in demand_df}
@@ -532,7 +977,49 @@ def read_multiyear_data(demand_filepath,
                         fiscal_filepath,
                         cost_filepath,
                         my_filepath):
+    '''
+    The codes uses the pd.read_csv() function from the pandas library to read 
+    in the contents of the forecast_filepath and demand_filepath files 
+    into dataframes forecast_df and demand_df respectively.
 
+    It then uses the read_json_data function to read in the contents 
+    of the units_filepath, instance_filepath, fiscal_filepath, my_filepath 
+    and cost_filepath into variables generators_data, instance_data, 
+    fiscal_data, my_data and cost_data respectively.
+
+    Then it extracts the 'generators' and 'batteries' field from 
+    the generators_data and assigns it to the variables
+    generators and batteries respectively.
+
+    Finally, the function returns the dataframes and variables
+    
+    Unlike its similar function, this one has an additional variable
+    as it is used for the multi-year project.
+
+    Parameters
+    ----------
+    demand_filepath : PATH
+        Demand data location
+    forecast_filepath : PATH
+        Forecast data Location (wind speed and irradiation)
+    units_filepath : PATH
+        Batteries and generators data location
+    instance_filepath : PATH
+        Instance paramaters data location
+    fiscal_filepath : PATH
+        Fiscal incentive data location
+    cost_filepath : PATH
+        Auxiliar cost data location - parameters for associated cost
+    my_filepath : PATH
+        Data location for multi-year calculations
+        
+    Returns
+    -------
+    demand_df, forecast_df : DATAFRAMES
+    generators, batteries : LIST
+    instance_data, fiscal_data, cost_data, my_data : DICTIONARIES
+
+    '''
     forecast_df = pd.read_csv(forecast_filepath)
     demand_df = pd.read_csv(demand_filepath)
 
@@ -551,7 +1038,49 @@ def read_multiyear_data(demand_filepath,
 def create_multiyear_objects(generators, batteries, forecast_df, 
                              demand_df, instance_data, my_data):
     
-    '''Create generators and batteries'''
+    '''
+    This function creates objects for generators and batteries 
+    based on their types (Solar, Eolic, Diesel, and Battery)
+    and initializing them with certain values. 
+
+    For each generator in the "generators" list, the function checks 
+    the "tec" key to determine the type of generator. 
+    If it is of type "S" (Solar), the function creates a Solar object,
+    calls several methods on the object
+    (irradiance_panel, get_inoct, solar_generation, solar_cost)
+    and assigns the object to the key of "id_gen" in the "generators_dict" 
+    If it is of type "W" (Eolic), the function creates an Eolic object, 
+    calls several methods on the object (eolic_generation, eolic_cost) 
+    and assigns the object to the key of "id_gen" in the "generators_dict" 
+    .If it is of type "D" (Diesel) the function creates a Diesel object, 
+    and assigns the object to the key of "id_gen" in the "generators_dict" 
+   
+    For each battery in the "batteries" list, the function creates
+    a Battery object, calls the "calculate_soc" method on the object
+    and assigns the object to the key of "id_bat" in the "batteries_dict" 
+   
+    Unlike its similar function, this one has an additional variable
+    as it is used for the multi-year project; 
+    so use equipment degradation rate for each year
+    
+    Parameters
+    ----------
+    generators : LIST
+    batteries : LIST
+    forecast_df : DATAFRAME
+    demand_df : DATAFRAME
+    instance_data : DICTIONARY
+    my_data : DICTIONARY
+
+    Returns
+    -------
+    generators_dict : DICTIONARY
+        Dictionary with generators with their specific class - technology 
+        associated
+    batteries_dict : DICTIONARY
+        Dictionary with batteries, and their attributes of battery class
+
+    '''
     generators_dict = {}
     for k in generators:
       if k['tec'] == 'S':
@@ -583,6 +1112,27 @@ def create_multiyear_objects(generators, batteries, forecast_df,
 
 #create the hourly dataframe
 def hour_data(data):
+    '''
+    This function takes in a dataframe as input, and creates a new dataframe
+    with hourly granularity. 
+    
+    The new dataframe is represented as a dictionary, 
+    where the keys are the hours of the day (0-23) and the values are lists 
+    of data for that hour, one element for each day. The original dataframe's 
+    index is used to determine the hour and day for each data point, 
+    which is then used to populate the appropriate element in the new dataframe. 
+
+    Parameters
+    ----------
+    data : DICTIONARY
+        Year data used
+
+    Returns
+    -------
+    vec : DATAFRAME
+        new hourly dataframe.
+
+    '''
     hours_size = len(data) / 24
     vec = {k : [0] * int(hours_size) for k in range(int(24))}
     
@@ -597,8 +1147,22 @@ def hour_data(data):
     return vec
 
 
-#fix a distribution for each set
+
 def get_best_distribution(vec):
+    '''
+    Fix a distribution for each set
+
+    Parameters
+    ----------
+    vec : DATAFRAME
+
+    Returns
+    -------
+    dist : DICTIONARY
+        To each vector in the data frame returns 
+        the best associated probability distribution
+
+    '''
     #get the total hours
     hours = len(vec)
     dist = {}
@@ -609,8 +1173,31 @@ def get_best_distribution(vec):
     return dist
 
 
-#get the best distribution
 def best_distribution(data):
+    '''
+    This function takes in a data set as input, and attempts to find
+    the best fitting probability distribution for the data. 
+    It does this by iterating through a list of pre-defined distributions 
+    using the SciPy library's "getattr" function and "fit" method. 
+    It then applies the Kolmogorov-Smirnov test to each distribution
+    and gets the p-value. 
+    The function then selects the distribution that has the highest p-value 
+    and returns the name of the distribution, its p-value and its parameters.
+    If the sum of the data is 0 and the standard deviation is also 0,
+    the function returns "No distribution" and None as the best distribution.
+
+    Parameters
+    ----------
+    data : DATAFRAME
+
+    Returns
+    -------
+    best_dist : VALUE
+    best_p : VALUE
+    params[best_dist] : VALUE
+        Parameters associated to the best distribution
+
+    '''
     #available distributions
     dist_names = [
         "exponweib","norm","weibull_max","weibull_min","pareto", 
@@ -643,6 +1230,29 @@ def best_distribution(data):
 
 #create stochastic df
 def calculate_stochasticity_demand(rand_ob, demand_df, dem_dist):
+    '''
+    The function iterates over the time index of the demand_df dataframe.
+    For each time step, it extracts the hour of the day from the index and
+    uses it to look up the appropriate probability distribution from 
+    the dem_dist dictionary. It then generates a random number using
+    the rand_ob object and the selected probability distribution. 
+    The function then updates the demand_df dataframe by adding 
+    the generated random number as a new column at the corresponding time step.
+    Finally, the function returns the updated demand_df dataframe.
+
+    Parameters
+    ----------
+    rand_ob : OBJECT OF RANDOM GENERATOR CLASS
+        Function to calculate random values or sets
+    demand_df : DATAFRAME
+    dem_dist : DICTIONARY
+
+    Returns
+    -------
+    demand_df : DATAFRAME
+        New dataframe
+
+    '''
     for t in demand_df['t']:
         #get the hour for the distribution
         hour = t % 24
@@ -655,7 +1265,37 @@ def calculate_stochasticity_demand(rand_ob, demand_df, dem_dist):
 
 def calculate_stochasticity_forecast(rand_ob, forecast_df, wind_dist,
                                      sol_distdni, sol_distdhi, sol_distghi):
-    
+    '''
+    The function iterates over the time index of the forecast_df dataframe.
+    For each time step, it extracts the hour of the day from the index 
+    and uses it to look up the appropriate probability distributions 
+    from the wind_dist, sol_distdni, sol_distdhi, and sol_distghi dictionaries.
+    It then generates a random number using the rand_ob object 
+    and the selected probability distributions. 
+    The function then updates the forecast_df dataframe by adding 
+    the generated random numbers as new columns at the corresponding time step. 
+
+    Parameters
+    ----------
+    rand_ob : OBJECT OF RANDOM GENERATOR CLASS
+        Function to calculate random values or sets
+    forecast_df : DATAFRAME
+    wind_dist : DICTIONARY
+        For Wind speed.
+    sol_distdni : DICTIONARY
+        For Direct normal Irradiance
+    sol_distdhi : DICTIONARY
+        For Diffuse Horizontal Irradiance
+    sol_distghi : DICTIONARY
+        For Global horizontal Irradiance
+
+    Returns
+    -------
+    forecast_df : DATAFRAME
+        New dataframe
+
+    '''
+
     for t in forecast_df['t']:
         #get the hour for the distribution
         hour = t % 24
@@ -675,6 +1315,28 @@ def calculate_stochasticity_forecast(rand_ob, forecast_df, wind_dist,
 
 #generate one random number with distribution
 def generate_random(rand_ob, dist):
+    '''
+    The function first checks the name of the distribution from dist[0], 
+    It then checks different probability distributions and call 
+    the appropriate method of rand_ob and pass the parameters if the name
+    of the distribution is matched.
+    
+    If the distribution name is not matched with any of the names it returns 0.
+    Finally, the function returns the generated random number.
+
+    Parameters
+    ----------
+    rand_ob : TYPE
+        DESCRIPTION.
+    dist : DICTIONARY
+        Contains the name of the distribution and its parameters
+
+    Returns
+    -------
+    Number : VALUE
+        Random number generated
+
+    '''
     if (dist[0] == 'norm'):
         number = rand_ob.dist_norm(dist[2][0], dist[2][1])
     elif (dist[0] == 'uniform'):
@@ -709,11 +1371,29 @@ def generate_random(rand_ob, dist):
         number = rand_ob.dist_pearson3(dist[2][0], dist[2][1], dist[2][2])        
     else:
         number = 0
-    return(number)
+    return number
 
 
-#generate triangular distribution for parameters like fuel cost
+
 def generate_number_distribution(rand_ob, param, limit):
+    '''
+    Generates triangular distribution for parameters like fuel cost
+    
+    Parameters
+    ----------
+    rand_ob : OBJECT OF RANDOM GENERATOR CLASS
+        Function to calculate random values or sets
+    param : VALUE
+        mean value for triangular distribution
+    limit : VALUE
+        deviation for triangular distribution (left and right symmetric)
+
+    Returns
+    -------
+    number : VALUE
+        Random number generated
+
+    '''
     #simetric triangular
     a = param * (1 - limit)
     b = param
