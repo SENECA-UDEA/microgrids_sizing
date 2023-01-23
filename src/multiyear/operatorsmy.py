@@ -31,6 +31,8 @@ list_ds_dies_batt_renew = [
     ]
 
 class SolConstructor():
+    """class that generates the solutions for the model
+    """
     def __init__(self, generators_dict, batteries_dict, demand_df, forecast_df):
         self.generators_dict = generators_dict
         self.batteries_dict = batteries_dict
@@ -46,7 +48,61 @@ class SolConstructor():
                           cost_data,
                           my_data,
                           ir): 
-    
+        '''
+        This function is an initial solution generator for the simulation
+        two stage - approach with dispacth strategy and multiyear data.
+        
+        The function creates two empty dictionaries, generators_dict_sol 
+        and batteries_dict_sol, to store the generator and battery 
+        solutions respectively. The function then uses the instance data
+        and technologies dictionary to determine the maximum capacity 
+        of the diesel generators and batteries. 
+        The function then sorts the generators by capacity and shortlists
+        a certain number of candidates randomly. 
+        
+        The function then uses the shortlisted candidates to determine 
+        the maximum demand that can be covered by the generator and checks
+        if the generator can fit within the available area.
+        If the generator can fit, the function adds it to the solution 
+        and updates the demand to be covered. 
+        
+        The function continues this process until all demand is covered
+        or there are no more generators to consider. 
+        
+        The function also checks for the use of solar and wind generators,
+        and batteries in case of unavailability of diesel generators. 
+        
+        The generated solution is returned as a dictionary
+        containing the selected generators and batteries that represent
+        the initial feasible solution for the model,
+        if there is no feasible solution, create a fictitious diesel 
+        generator with high capacity but at the same time an exorbitant cost
+
+        Parameters
+        ----------
+        instance_data : DICTIONARY
+            Instance parameteres
+        technologies_dict : DICTIONARY
+            technologies in the instance
+        renewables_dict : DICTIONARY
+            renewable technologies in the instance
+        delta : NUMBER - PERCENTAGE
+            tax incentive
+        rand_ob : OBJECT OF CLASS RAND
+            generate random numbers and lists
+        cost_data : DICTIONARY
+            stores information to calculate costs such as investment
+        my_data : DICTIONARY
+            stores information to calculate multiyear function such as
+            degradation or fuel cost variance
+        ir : NUMBER - PERCENTAGE
+            Interest rate
+        Returns
+        -------
+        sol_initial : OBJECT OF CLASS SOLUTION
+            export the initial solution
+
+        '''
         generators_dict_sol = {}
         batteries_dict_sol = {}
         #create auxiliar dict for the iterations
@@ -244,6 +300,8 @@ class SolConstructor():
 
 
 class SearchOperator():
+    """class that performs the search strategies for the ILS
+    """
     def __init__(self, generators_dict, batteries_dict, demand_df, forecast_df):
         self.generators_dict = generators_dict
         self.batteries_dict = batteries_dict
@@ -251,7 +309,41 @@ class SearchOperator():
         self.forecast_df = forecast_df
         
     def remove_object(self, sol_actual, delta, rand_ob): 
-        '''remove one generator or battery'''
+        '''
+        This function is used to remove one generator or battery 
+        from a given solution. 
+        
+        The function iterates through the dictionary of generators 
+        and batteries and for each one, calculates their operation cost, 
+        investment cost, and generation. Then it calculates the relation 
+        of generation to costs, and compares it to the current minimum relation, 
+        updating the minimum relation and the list of worst 
+        generators/batteries accordingly.
+
+        Finally, the function selects one of the worst generators
+        or batteries randomly using the "rand_ob" object,
+        removes it from the solution, updates the solution's technologies 
+        and renewables dictionaries, and returns the updated solution 
+        and a report of the removed generator or battery's generation.
+
+        Parameters
+        ----------
+        sol_actual : OBJECT OF CLASS SOLUTION
+            Current solution of the model
+        delta : NUMBER - PERCENTAGE
+            tax incentive
+        rand_ob : OBJECT OF CLASS RAND
+            generate random numbers and lists
+
+        Returns
+        -------
+        solution : OBJECT OF CLASS SOLUTION
+            export the generated solution
+        remove_report : ARRAY - PANDAS SERIE
+            array that stores the power generated by the removed object
+            in the time horizon
+
+        '''
         solution = copy.deepcopy(sol_actual)
         dict_actual = {**solution.generators_dict_sol, **solution.batteries_dict_sol}
         min_relation = math.inf
@@ -326,7 +418,62 @@ class SearchOperator():
     
     def add_object(self, sol_actual, available_bat, available_gen, 
                    list_tec_gen, remove_report, fuel_cost, rand_ob, delta):
-        '''add generator or battery'''
+        '''
+        This function is used to add a new generator or battery to the 
+        given energy solution. 
+
+        The function uses the dictionary of removed objects to find 
+        the maximum generation in the period of the removed object 
+        and selects one of the positions with that maximum value at random.
+
+        The function then checks if batteries or generators are available
+        and selects one at random. If batteries are selected, a random battery 
+        from the available options is chosen and added to the solution. 
+        
+        If generators are selected, the function selects a generator at random
+        from the available options of the same technology random selected.
+        It then checks if the selected generator has a higher generation 
+        than the removed object and if it meets the capacity requirements. 
+        The function calculates the levelized cost of electricity (LCOE)
+        and the variable operation and maintenance cost (VOPM) for the new 
+        addition and compares  it to the previous costs.
+        The generator with the lowest LCOE and VOPM is chosen and added to 
+        the candidates solution.
+        Then randomly chooses which of the four criteria to use
+        (lcoe, operating cost, capacity or that it is of the same technology) 
+        and chooses the best one from the selected list
+        
+        The function then returns the modified solution.
+
+        Parameters
+        ----------
+        sol_actual : OBJECT OF CLASS SOLUTION
+            Current solution of the model
+        available_bat : LIST
+            list of batteries that can be selected to install in the solution
+        available_gen : LIST
+            list of generators that can be selected to install in the solution
+        list_tec_gen : LIST
+            list of technologies that are present in the available lists
+        remove_report : ARRAY - PANDAS SERIE
+            array that stores the power generated by the removed object and
+            previously installed objects that still make the function infeasible
+            in the time horizon
+        fuel_cost : NUMBER
+        rand_ob : OBJECT OF CLASS RAND
+            generate random numbers and lists
+        delta : NUMBER - PERCENTAGE
+            tax incentive
+
+        Returns
+        -------
+        solution : OBJECT OF CLASS SOLUTION
+            export the generated solution
+        remove_report : ARRAY - PANDAS SERIE
+            remove-report updated, adding the demand supplied 
+            by the added generator or battery
+
+        '''
     
         solution = copy.deepcopy(sol_actual)
         #get the maximum generation of removed object
@@ -445,9 +592,90 @@ class SearchOperator():
         return solution, remove_report
     
     
+    def remove_random_object(self, sol_actual, rand_ob): 
+        '''
+        This function removes a random generator or battery from a given solution.
+        The function starts by creating a dictionary of all generators 
+        and batteries in the solution. Next, it randomly selects an object
+        (either a generator or a battery) and removes it from the solution. 
+        After removing the object, the function updates the solution's
+        technologies and renewables dictionaries.
+        It also creates a dictionary object called remove_report which is the 
+        report of the generator or battery that was removed from the solution.
+        It returns the updated solution and the remove_report dictionary.
+        
+        Parameters
+        ----------
+        sol_actual : OBJECT OF CLASS SOLUTION
+            Current solution of the model
+        rand_ob : OBJECT OF CLASS RAND
+            generate random numbers and lists
+
+        Returns
+        -------
+        solution : OBJECT OF CLASS SOLUTION
+            export the generated solution
+        remove_report : ARRAY - PANDAS SERIE
+            array that stores the power generated by the removed object
+            in the time horizon
+
+        '''
+        solution = copy.deepcopy(sol_actual)
+        dict_actual = {**solution.generators_dict_sol, **solution.batteries_dict_sol} 
+        select_ob = rand_ob.create_rand_list(list(dict_actual.keys()))
+        #delete select object
+        if dict_actual[select_ob].tec == 'B':
+            remove_report = pd.Series(solution.results.df_results[select_ob + '_b-'].values,
+                                      index = solution.results.df_results[select_ob + '_b-'].keys()).to_dict()
+            
+            solution.batteries_dict_sol.pop(select_ob)
+        else:
+            remove_report = pd.Series(solution.results.df_results[select_ob].values,
+                                      index = solution.results.df_results[select_ob].keys()).to_dict()
+            
+            solution.generators_dict_sol.pop(select_ob)
+        
+        solution.technologies_dict_sol, solution.renewables_dict_sol = create_technologies (solution.generators_dict_sol,
+                                                                                            solution.batteries_dict_sol)
+
+        
+        return solution, remove_report
+    
     def add_random_object(self, sol_actual, available_bat, available_gen,
                           list_tec_gen, rand_ob): 
-        '''add random generator or battery'''
+        '''
+        This function adds a random generator or battery to a given solution. 
+        
+        The function creates a dictionary of all generators and batteries.
+        Next, it randomly selects either a generator or a battery to be added 
+        to the solution. If there are no available batteries,
+        it will select a generator, and if there are no available generators, 
+        it will select a battery. If both are available,
+        it will randomly select either. The function then proceeds to select 
+        a specific battery or generator based on the random selection,
+        and adds it to the solution. Lastly, the function updates 
+        the solution's technologies and renewables dictionaries 
+        and returns the updated solution.
+
+        Parameters
+        ----------
+        sol_actual : OBJECT OF CLASS SOLUTION
+            Current solution of the model
+        available_bat : LIST
+            list of batteries that can be selected to install in the solution
+        available_gen : LIST
+            list of generators that can be selected to install in the solution
+        list_tec_gen : LIST
+            list of technologies that are present in the available lists
+        rand_ob : OBJECT OF CLASS RAND
+            generate random numbers and lists
+
+        Returns
+        -------
+        solution : OBJECT OF CLASS SOLUTION
+            export the generated solution
+
+        '''
     
         solution = copy.deepcopy(sol_actual)
         dict_total = {**self.generators_dict, **self.batteries_dict}
@@ -480,33 +708,45 @@ class SearchOperator():
        
         
         return solution
-    
-    
-    def remove_random_object(self, sol_actual, rand_ob): 
-        '''remove random generator or battery'''
-        solution = copy.deepcopy(sol_actual)
-        dict_actual = {**solution.generators_dict_sol, **solution.batteries_dict_sol} 
-        select_ob = rand_ob.create_rand_list(list(dict_actual.keys()))
-        #delete select object
-        if dict_actual[select_ob].tec == 'B':
-            remove_report = pd.Series(solution.results.df_results[select_ob + '_b-'].values,
-                                      index = solution.results.df_results[select_ob + '_b-'].keys()).to_dict()
-            
-            solution.batteries_dict_sol.pop(select_ob)
-        else:
-            remove_report = pd.Series(solution.results.df_results[select_ob].values,
-                                      index = solution.results.df_results[select_ob].keys()).to_dict()
-            
-            solution.generators_dict_sol.pop(select_ob)
-        
-        solution.technologies_dict_sol, solution.renewables_dict_sol = create_technologies (solution.generators_dict_sol,
-                                                                                            solution.batteries_dict_sol)
 
-        
-        return solution, remove_report
 
     def available_items(self, sol_actual, amax):
-        '''review what is available that is not installed'''
+        '''
+        This function reviews what items are available that are not 
+        currently installed. 
+        
+        It starts by calculating the available area by subtracting 
+        the current area used from the maximum available area. 
+        
+        It then creates two dictionaries, "dict_total" and "dict_actual",
+        which contain all generators and batteries as well as the generators
+        and batteries currently installed in the solution, respectively. 
+        
+        The function then uses set operations to find the items that are
+        in "dict_total" but not in "dict_actual" and store them 
+        in the list "non_actual". The function then iterates over "non_actual"
+        and checks if the area of each item is less than or equal 
+        to the available area. If it is, it checks the technology of the item,
+        and adds the id to the list of batteries or generators
+        and also adds the technology associated
+        
+        Parameters
+        ----------
+        sol_actual : OBJECT OF CLASS SOLUTION
+            Current solution of the model
+        amax : VALUE
+            maximum area available.
+
+        Returns
+        -------
+        available_bat : LIST
+            list of batteries that can be selected to install in the solution
+        available_gen : LIST
+            list of generators that can be selected to install in the solution
+        list_tec_gen : LIST
+            list of technologies that are present in the available lists
+
+        '''
         solution = copy.deepcopy(sol_actual)
         available_area = amax - sol_actual.results.descriptive['area']
         list_available_gen = []
