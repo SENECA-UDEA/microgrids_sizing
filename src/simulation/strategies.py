@@ -10,7 +10,32 @@ pio.renderers.default = 'browser'
 
 
 def select_strategy (batteries_dict, generators_dict):
+
+    '''
+    This function takes in two dictionaries, one for batteries and one for generators,
+    as inputs. The function initializes four variables, "d", "s", "b", and "w", 
+    to keep track of the presence of the technologies (diesel, solar, 
+                                                       battery, and wind) 
+    It then iterates through the generators dictionary and checks the 
+    technology attribute of each generator, updating the corresponding variable
+    if the technology is present. 
+
+    Afterwards, the function creates a string called "dispatch" 
+    to store the strategy name based on the presence of the technologies.
     
+    Finally, the function returns the "dispatch" string, 
+    which is the strategy name based on the technologies present.
+    
+    Parameters
+    ----------
+    batteries_dict : DICTIONARY
+    generators_dict : DICTIONARY
+
+    Returns
+    -------
+    dispatch : STRING
+
+    '''    
     #diesel
     d = 0
     #solar
@@ -55,9 +80,40 @@ def select_strategy (batteries_dict, generators_dict):
 #diesel dispatch strategy
 def ds_diesel (solution, demand_df, instance_data, cost_data, CRF):
     '''
-    Dispatch Strategy with only diesel generators
+    This function calculates the dispatch strategy according to the 
+    "load-following" rules, when there are only Diesel generators, 
+    it receives the necessary input parameters and returns the lcoe 
+    of the configuration, the dataframe of the results as generation, 
+    energy not supplied and surplus, demand.
+    Whether or not it is optimal, the execution time and
+    the number of hours not served
+
+    Source:  https://bibliotecadigital.udea.edu.co/
+    bitstream/10495/14038/1/ArraezOswaldo_2019_MethodologySizingHybrid.pdf
+
+    Parameters
+    ----------
+    solution : OBJECT OF CLASS SOLUTION
+    demand_df : DATAFRAME
+    instance_data : DICTIONARY
+    cost_data : DICTIONARY
+    CRF : NUMBER
+        percentage to annualize costs
+
+    Returns
+    -------
+    lcoe_cost : NUMBER
+        lcoe of the configuration
+    df_results : DATAFRAME
+        results as generation, energy not supplied and surplus, demand.
+    state : STRING
+        Feasible or not
+    time_f : NUMBER
+        Total function time.
+    nsh : NUMBER
+        Total not served hours
+
     '''
-    
     #initial parameters 
     time_i = time.time()
     aux_dict = {}
@@ -192,8 +248,43 @@ def ds_diesel (solution, demand_df, instance_data, cost_data, CRF):
 def ds_diesel_renewable (solution, demand_df, instance_data, 
                          cost_data, CRF, delta):    
     '''
-    dispatch strategy -> Diesel plus renewable (Solar or Wind or both)
+    This function calculates the dispatch strategy according to the 
+    "load-following" rules, when there are Diesel generators and 
+    renewable generators (solar panel PV - or Eolic turbine or both), 
+    it receives the necessary input parameters and returns the lcoe 
+    of the configuration, the dataframe of the results as generation, 
+    energy not supplied and surplus, demand.
+    Whether or not it is optimal, the execution time and
+    the number of hours not served
+
+    Source:  https://bibliotecadigital.udea.edu.co/
+    bitstream/10495/14038/1/ArraezOswaldo_2019_MethodologySizingHybrid.pdf
+
+    Parameters
+    ----------
+    solution : OBJECT OF CLASS SOLUTION
+    demand_df : DATAFRAME
+    instance_data : DICTIONARY
+    cost_data : DICTIONARY
+    CRF : NUMBER
+        percentage to annualize costs
+    delta: NUMBER
+        percentage - fiscal incentive
+    Returns
+    -------
+    lcoe_cost : NUMBER
+        lcoe of the configuration
+    df_results : DATAFRAME
+        results as generation, energy not supplied and surplus, demand.
+    state : STRING
+        Feasible or not
+    time_f : NUMBER
+        Total function time.
+    nsh : NUMBER
+        Total not served hours
+
     '''
+
     #initial parameters 
     time_i = time.time()
     aux_dict = {}
@@ -389,7 +480,44 @@ def ds_diesel_renewable (solution, demand_df, instance_data,
 def ds_battery_renewable  (solution, demand_df, instance_data, 
                            cost_data, CRF, delta, rand_ob):    
     '''
-    Dispatch strategy -> battery with renewable (Solar - Eolic or both)
+    This function calculates the dispatch strategy according to the 
+    "load-following" rules, when there are batteries and 
+    renewable generators (solar panel PV - or Eolic turbine or both), 
+    it receives the necessary input parameters and returns the lcoe 
+    of the configuration, the dataframe of the results as generation, 
+    energy not supplied and surplus, demand.
+    Whether or not it is optimal, the execution time and
+    the number of hours not served
+
+    Source:  https://bibliotecadigital.udea.edu.co/
+    bitstream/10495/14038/1/ArraezOswaldo_2019_MethodologySizingHybrid.pdf
+
+    Parameters
+    ----------
+    solution : OBJECT OF CLASS SOLUTION
+    demand_df : DATAFRAME
+    instance_data : DICTIONARY
+    cost_data : DICTIONARY
+    CRF : NUMBER
+        percentage to annualize costs
+    delta: NUMBER
+        percentage - fiscal incentive
+    rand_ob : OBJECT OF CLASS RANDOM
+        generates random numbers, samples, etc
+
+    Returns
+    -------
+    lcoe_cost : NUMBER
+        lcoe of the configuration
+    df_results : DATAFRAME
+        results as generation, energy not supplied and surplus, demand.
+    state : STRING
+        Feasible or not
+    time_f : NUMBER
+        Total function time.
+    nsh : NUMBER
+        Total not served hours
+
     '''
     
     #initial parameters 
@@ -574,7 +702,44 @@ def ds_battery_renewable  (solution, demand_df, instance_data,
 def ds_dies_batt_renew(solution, demand_df, instance_data, 
                        cost_data, CRF, delta, rand_ob):
     '''
-    Dispatch strategy diesel and battery and renewable (Solar or Eolic or both)
+    This function calculates the dispatch strategy according to the 
+    "load-following" rules, when there are batteries, diesel generators and 
+    renewable generators (solar panel PV - or Eolic turbine or both), 
+    it receives the necessary input parameters and returns the lcoe 
+    of the configuration, the dataframe of the results as generation, 
+    energy not supplied and surplus, demand.
+    Whether or not it is optimal, the execution time and
+    the number of hours not served
+
+    Source:  https://bibliotecadigital.udea.edu.co/
+    bitstream/10495/14038/1/ArraezOswaldo_2019_MethodologySizingHybrid.pdf
+
+    Parameters
+    ----------
+    solution : OBJECT OF CLASS SOLUTION
+    demand_df : DATAFRAME
+    instance_data : DICTIONARY
+    cost_data : DICTIONARY
+    CRF : NUMBER
+        percentage to annualize costs
+    delta: NUMBER
+        percentage - fiscal incentive
+    rand_ob : OBJECT OF CLASS RANDOM
+        generates random numbers, samples, etc
+
+    Returns
+    -------
+    lcoe_cost : NUMBER
+        lcoe of the configuration
+    df_results : DATAFRAME
+        results as generation, energy not supplied and surplus, demand.
+    state : STRING
+        Feasible or not
+    time_f : NUMBER
+        Total function time.
+    nsh : NUMBER
+        Total not served hours
+
     '''
     #initial parameters 
     time_i = time.time()
@@ -883,7 +1048,17 @@ def ds_dies_batt_renew(solution, demand_df, instance_data,
    
 
 class Results():
-    def __init__(self, solution, df_results, lcoe):        
+    def __init__(self, solution, df_results, lcoe):  
+        '''
+        Load the results to the object associated to the class results
+
+        Parameters
+        ----------
+        solution
+        df_results
+        lcoe
+
+        '''
         self.df_results = df_results 
         # general descriptives of the solution
         self.descriptive = {}
@@ -933,6 +1108,22 @@ class Results():
         self.descriptive['LCOE'] = lcoe
         
     def generation_graph(self, ini, fin):
+        '''
+        Create a plotly bars graph
+
+        Parameters
+        ----------
+        ini : INTEGER
+        fin : INTEGER
+        
+        Time range in which the bar graph will be generated, by default 
+        it uses all the data but it can be changed according to 
+        the user's interest between the initial and final period.
+
+        Returns
+        -------
+        plot 
+        '''
         df_results = copy.deepcopy(self.df_results.iloc[int(ini):int(fin)])
         bars = []
         for key, value in self.descriptive['generators'].items():

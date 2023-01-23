@@ -711,7 +711,7 @@ class Results():
     def __init__(self, model, generators_dict, batteries_dict, stage):
         
         '''
-        Load the results to the objet associated to thw class results
+        Load the results to the object associated to the class results
 
         Parameters
         ----------
