@@ -1,6 +1,26 @@
 # -*- coding: utf-8 -*-
 """
-Created on Wed Apr 20 11:14:21 2022
+This code imports several modules and sets up file paths for data files 
+that are used to create and optimize a microgrid sizing system; for the
+one-stage approach, total optimization.
+
+The code reads in demand, forecast, and generators and batteries data,
+as well as instance and fiscal data, and uses them to calculate costs, 
+create objects, and define generation rules. 
+ 
+It then uses this data to create technologies and renewables sets, 
+and calculates the interest rate and fiscal incentives.
+
+Finally, it creates an optimization model using a solver (Gurobi), 
+and sets the MIP gap.
+
+The code also uses plotly to create offline plots with the optimization results 
+
+The code allows to change to different locations by uncommenting 
+the appropriate lines.
+
+It also has other tools such as generating Excel files or calculating the cost
+ according to the representative market rate.
 
 """
 

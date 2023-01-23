@@ -1,7 +1,30 @@
 # -*- coding: utf-8 -*-
 """
-Created on Wed Apr 20 11:14:21 2022
+This Python script uses several imported modules and functions to perform
+microgrid sizing optimization; according to the two-stage formulation, 
+where iterated local search is done to install the elements, 
+and dispatch strategies to evaluate the performance, 
+in addition, the multi-year functionality is added
 
+It starts by importing several modules, as well as several functions 
+
+It specifies some parameters such as the seed for random and the location 
+Then it defines several lists of strategies for the optimization process.
+
+The script then goes on to perform microgrid optimization using the imported 
+functions and the data read in earlier. 
+
+It solves the model with the ILS and the dispatch strategy, with an aggregation 
+and disaggregation strategy and verifying feasibility.
+
+Finally, it uses the plotly library to create visualizations of the results of
+the best solution
+
+The code allows to change to different locations by uncommenting 
+the appropriate lines.
+
+It also has other tools such as generating Excel files or calculating the cost
+ according to the representative market rate.
 """
 from src.support.utilities import read_multiyear_data, create_technologies
 from src.support.utilities import calculate_area, calculate_energy

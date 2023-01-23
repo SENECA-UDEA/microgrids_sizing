@@ -1,6 +1,40 @@
 # -*- coding: utf-8 -*-
 """
-Created on Wed Apr 20 11:14:21 2022
+This Python script uses several imported modules and functions to perform
+microgrid sizing optimization; according to the two-stage formulation, 
+where iterated local search is done to install the elements, 
+and dispatch strategies to evaluate the performance and add stochasticity 
+to go from a deterministic model to one with uncertainty
+
+It starts by importing several modules, as well as several functions 
+
+It specifies some parameters such as the seed for random and the location 
+Then it defines several lists of strategies for the optimization process.
+likewise, calculate the CRF to annualize the costs
+
+The script then goes on to perform microgrid optimization using the imported 
+functions and the data read in earlier. 
+
+Solve the model for each scenario and then determine the best solution
+that fits the generated scenarios, in this case, the solution
+ that is repeated the most and if there is none,
+ the one that fits the original data.
+ 
+to solve, It uses the ILS and the dispatch strategy, with an aggregation 
+and disaggregation strategy and verifying feasibility.
+
+Finally, it uses the plotly library to create visualizations of the results of
+the best solution
+
+the code creates different scenarios from the probability distribution
+associated with each hourly interval of the data.
+
+The code allows to change to different locations by uncommenting 
+the appropriate lines.
+
+It also has other tools such as generating Excel files or calculating the cost
+ according to the representative market rate.
+
 
 """
 from src.support.utilities import read_data, create_technologies
