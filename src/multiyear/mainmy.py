@@ -123,21 +123,10 @@ demand_df_i, forecast_df_i, generators, batteries, instance_data, fisc_data, cos
 
 
 
-while True:
-    user_input = input('Calculate multiyear data (yes/no): ')
-    if user_input.lower() in yes_choices:
-        #calculate multiyear data
-        demand_df, forecast_df = calculate_multiyear_data(demand_df_i, forecast_df_i,
-                                                          my_data, instance_data['years'])        
-        break
-    elif user_input.lower() in no_choices:
-        demand_df = copy.deepcopy(demand_df_i)
-        forecast_df = copy.deepcopy(forecast_df_i)
-        break
-    else:
-        print('Type yes or no')
-        continue
-    
+
+demand_df, forecast_df = calculate_multiyear_data(demand_df_i, forecast_df_i,
+                                                  my_data, instance_data['years'])        
+
 
 
 #calulate parameters

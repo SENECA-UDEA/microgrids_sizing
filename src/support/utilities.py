@@ -894,81 +894,6 @@ def get_sky_view_factor(t_M):
 
 
 'MULTIYEAR'
-def calculate_multiyear_data(demand_df, forecast_df, my_data, years):
-    '''
-    It creates two new dataframes called 'demand' and 'forecast'
-    that are multi-year dataframes based on the input dataframes. 
-    
-    It first creates empty dataframes with the same columns as the input
-    dataframes and the same number of rows as the number of years passed 
-    in multiplied by 8760 (number of hours in a year). It then populates
-    these dataframes with the data from the input dataframes,
-    adjusting values as necessary (e.g. applying a demand tax) 
-    for each year beyond the first year. 
-    
-    Parameters
-    ----------
-    demand_df : DATAFRAME
-    forecast_df : DATAFRAME
-    my_data : DICTIONARY
-    years : PARAMETER
-        Project time horizon
-
-    Returns
-    -------
-    demand : DATAFRAME
-        Multiyear demand
-    forecast : DATAFRAME
-        Multiyear forecast
-
-    '''
-    #total hours
-    len_total = 8760 * years
-    aux_demand = {k : [0] * (len_total) for k in demand_df}
-    aux_forecast = {k : [0] * (len_total) for k in forecast_df}
-    
-    for i in range(len_total):
-        aux_demand['t'][i] = i
-        aux_forecast['t'][i] = i
-        #first year same 
-        if (i < 8760):    
-            aux_demand['demand'][i]= demand_df['demand'][i]
-            aux_forecast['DNI'][i] = forecast_df['DNI'][i]
-            aux_forecast['t_ambt'][i] = forecast_df['t_ambt'][i]
-            aux_forecast['Wt'][i] = forecast_df['Wt'][i]
-            aux_forecast['Qt'][i] = forecast_df['Qt'][i]
-            aux_forecast['GHI'][i] = forecast_df['GHI'][i]
-            aux_forecast['day'][i] = forecast_df['day'][i]
-            aux_forecast['SF'][i] = forecast_df['SF'][i]
-            aux_forecast['DHI'][i] = forecast_df['DHI'][i]
-        #others years
-        else:
-            #get the year
-            k = math.floor(i / 8760)
-            #apply tax
-            val = demand_df['demand'][i - 8760 * k] * (1 + my_data["demand_tax"]) ** k
-            #asign value
-            aux_demand['demand'][i] = val
-            #forecast is the same that first year
-            val2 = forecast_df['DNI'][i - 8760 * k]
-            aux_forecast['DNI'][i] = val2
-            aux_forecast['t_ambt'][i] = forecast_df['t_ambt'][i - 8760 * k]
-            val3 = forecast_df['Wt'][i - 8760 * k]
-            aux_forecast['Wt'][i] = val3
-            aux_forecast['Qt'][i] = forecast_df['Qt'][i - 8760 * k]
-            val4 = forecast_df['GHI'][i - 8760 * k]
-            aux_forecast['GHI'][i] = val4
-            aux_forecast['day'][i] = forecast_df['day'][i - 8760 * k]
-            aux_forecast['SF'][i] = forecast_df['SF'][i - 8760 * k]
-            val5 = forecast_df['DHI'][i - 8760 * k]
-            aux_forecast['DHI'][i] = val5      
-            
-    #create dataframe
-    demand = pd.DataFrame(aux_demand, columns=['t','demand'])
-    forecast = pd.DataFrame(aux_forecast, columns=['t','DNI','t_ambt','Wt', 
-                                           'Qt','GHI','day','SF','DHI'])
-        
-    return demand, forecast
 
 def read_multiyear_data(demand_filepath, 
                         forecast_filepath,
@@ -1106,6 +1031,99 @@ def create_multiyear_objects(generators, batteries, forecast_df,
         batteries_dict[l['id_bat']] = obj_aux
         batteries_dict[l['id_bat']].calculate_soc()
     return generators_dict, batteries_dict
+
+def calculate_multiyear_data(demand_df, forecast_df, my_data, years):
+    '''
+    It creates two new dataframes called 'demand' and 'forecast'
+    that are multi-year dataframes based on the input dataframes. 
+    
+    It first creates empty dataframes with the same columns as the input
+    dataframes and the same number of rows as the number of years passed 
+    in multiplied by 8760 (number of hours in a year). It then populates
+    these dataframes with the data from the input dataframes,
+    adjusting values as necessary (e.g. applying a demand tax) 
+    for each year beyond the first year. 
+    
+    It has the binary option of using the default data or not,
+    If 1 is placed, the data entered by the user that already contains 
+    all the years is used
+    If 0 is placed, the program makes the projection 
+    from the first year to the other years.
+    
+    Example default data
+    --------------------
+            1 = do not do calculations, the user already has the entire time horizon
+            0 = do the calculations as a first year projection
+    
+    Parameters
+    ----------
+    demand_df : DATAFRAME
+    forecast_df : DATAFRAME
+    my_data : DICTIONARY
+    years : PARAMETER
+        Project time horizon
+
+    Returns
+    -------
+    demand : DATAFRAME
+        Multiyear demand
+    forecast : DATAFRAME
+        Multiyear forecast
+
+    '''
+    #check default data
+    default_data = my_data['default_data']
+    if (default_data == 1):
+        demand = copy.deepcopy(demand_df)
+        forecast = copy.deepcopy(forecast_df)
+    else:
+        #total hours
+        len_total = 8760 * years
+        aux_demand = {k : [0] * (len_total) for k in demand_df}
+        aux_forecast = {k : [0] * (len_total) for k in forecast_df}
+        
+        for i in range(len_total):
+            aux_demand['t'][i] = i
+            aux_forecast['t'][i] = i
+            #first year same 
+            if (i < 8760):    
+                aux_demand['demand'][i]= demand_df['demand'][i]
+                aux_forecast['DNI'][i] = forecast_df['DNI'][i]
+                aux_forecast['t_ambt'][i] = forecast_df['t_ambt'][i]
+                aux_forecast['Wt'][i] = forecast_df['Wt'][i]
+                aux_forecast['Qt'][i] = forecast_df['Qt'][i]
+                aux_forecast['GHI'][i] = forecast_df['GHI'][i]
+                aux_forecast['day'][i] = forecast_df['day'][i]
+                aux_forecast['SF'][i] = forecast_df['SF'][i]
+                aux_forecast['DHI'][i] = forecast_df['DHI'][i]
+            #others years
+            else:
+                #get the year
+                k = math.floor(i / 8760)
+                #apply tax
+                val = demand_df['demand'][i - 8760 * k] * (1 + my_data["demand_tax"]) ** k
+                #asign value
+                aux_demand['demand'][i] = val
+                #forecast is the same that first year
+                val2 = forecast_df['DNI'][i - 8760 * k]
+                aux_forecast['DNI'][i] = val2
+                aux_forecast['t_ambt'][i] = forecast_df['t_ambt'][i - 8760 * k]
+                val3 = forecast_df['Wt'][i - 8760 * k]
+                aux_forecast['Wt'][i] = val3
+                aux_forecast['Qt'][i] = forecast_df['Qt'][i - 8760 * k]
+                val4 = forecast_df['GHI'][i - 8760 * k]
+                aux_forecast['GHI'][i] = val4
+                aux_forecast['day'][i] = forecast_df['day'][i - 8760 * k]
+                aux_forecast['SF'][i] = forecast_df['SF'][i - 8760 * k]
+                val5 = forecast_df['DHI'][i - 8760 * k]
+                aux_forecast['DHI'][i] = val5      
+                
+        #create dataframe
+        demand = pd.DataFrame(aux_demand, columns=['t','demand'])
+        forecast = pd.DataFrame(aux_forecast, columns=['t','DNI','t_ambt','Wt', 
+                                               'Qt','GHI','day','SF','DHI'])
+        
+    return demand, forecast
 
 
 'STOCHASTICITY'

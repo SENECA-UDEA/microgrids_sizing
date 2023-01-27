@@ -4,5 +4,6 @@
     "diesel_deg":0.01,
     "bat_deg":0.01,
     "demand_tax":0.05,
-    "fuel_tax":0.02
+    "fuel_tax":0.02,
+    "default_data": 0
 }
