@@ -1205,11 +1205,11 @@ def week_vector_data(data, year, first_day=1):
     #first day of the year
     first_january = dt.date(year, 1, 1)
     #check the day of the fist day of the data
-    initial_day = dt.timedelta(first_day - 1) + first_january
+    initial_day = dt.timedelta(int(first_day) - 1) + first_january
     initial_day_number = int(initial_day.strftime("%w"))
     #get the last day
     hours_size = len(data) / 24
-    final_day = dt.timedelta(hours_size) + initial_day
+    final_day = dt.timedelta(int(hours_size)) + initial_day
     
     #number of week and weekend days
     day_number = initial_day_number
@@ -1360,7 +1360,7 @@ def calculate_stochasticity_demand(rand_ob, demand_df, week_dist, weekend_dist,
     #first day of the year
     first_january = dt.date(year, 1, 1)
     #check the day of the fist day of the data
-    initial_day = dt.timedelta(first_day - 1) + first_january
+    initial_day = dt.timedelta(int(first_day) - 1) + first_january
     initial_day_number = int(initial_day.strftime("%w"))
     
     #number of week and weekend days
