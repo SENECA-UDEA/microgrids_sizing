@@ -12,6 +12,7 @@ import numpy as np
 import copy
 import scipy.stats as st
 import math
+import datetime as dt
 
 
 def read_data(demand_filepath, 
@@ -1166,6 +1167,82 @@ def hour_data(data):
 
 
 
+def week_vector_data(data, year, first_day=1):
+    """
+    This function separates data into separate dataframes
+    for weekdays and weekends. The input "data" is a dataframe containing data 
+    that the user wants to separate by weekdays and weekends. 
+    The input "year" is an integer specifying the year the data is from, 
+    and "first_day" is an integer specifying the first day of the data,
+    with a default value of 1 (January 1st). The function then calculates
+    the initial and final days of the data, and uses the number of weekdays
+    and weekends to create two dataframes "dem_week_vec" and "dem_weekend_vec"
+    with the data separated by weekday and weekend respectively.
+    The function then returns the two dataframes.
+
+    Parameters
+    ----------
+    data : DATAFRAME
+        Data from which the time separation between week and weekend 
+        will be made, for example the demand.
+    year : INTEGER
+        year from which the data is taken, for example 2018
+    first_day : INTEGER
+        first day of the database, by default it starts on the first of January, 
+        a number between 1 and 365 is placed, 
+        the number 32 would correspond to the first of February
+
+    Returns
+    -------
+    dem_week_vec : DATAFRAME
+        Hourly Dataframe, and for each day fill it with the demand data 
+        that is not a weekend
+    dem_weekend_vec : DATAFRAME
+        Hourly Dataframe, and for each day fill it with the demand data 
+        that is a weekend
+
+    """
+    #first day of the year
+    first_january = dt.date(year, 1, 1)
+    #check the day of the fist day of the data
+    initial_day = dt.timedelta(first_day - 1) + first_january
+    initial_day_number = int(initial_day.strftime("%w"))
+    #get the last day
+    hours_size = len(data) / 24
+    final_day = dt.timedelta(hours_size) + initial_day
+    
+    #number of week and weekend days
+    day_number = initial_day_number
+    end = final_day
+    start = initial_day
+    days = np.busday_count(start, end)
+
+    dem_week_vec = {k : [0] * int(days) for k in range(int(24))}
+    dem_weekend_vec = {k : [0] * int(hours_size - days) for k in range(int(24))}
+    day_week = -1
+    day_weekend = -1
+    
+    for t in data.index.tolist():
+        #get the hour
+        hour_day = t%24
+        #calculate the week day
+        if ((hour_day == 0) and (day_number == 6) and (t != 0)):
+            day_number = 0
+        elif ((hour_day == 0) and (t != 0)):
+            day_number += 1
+        
+        
+        if (day_number != 6 and day_number != 0):
+            #create data
+            dem_week_vec[hour_day][day_week] = data[t]
+            if (hour_day == 0):
+                day_week += 1
+        else:
+            dem_weekend_vec[hour_day][day_weekend] = data[t]
+            if (hour_day == 0):
+                day_weekend += 1
+    return dem_week_vec, dem_weekend_vec
+
 def get_best_distribution(vec):
     '''
     Fix a distribution for each set
@@ -1247,12 +1324,15 @@ def best_distribution(data):
 
 
 #create stochastic df
-def calculate_stochasticity_demand(rand_ob, demand_df, dem_dist):
+def calculate_stochasticity_demand(rand_ob, demand_df, week_dist, weekend_dist,
+                                   year, first_day=1):
     '''
     The function iterates over the time index of the demand_df dataframe.
     For each time step, it extracts the hour of the day from the index and
     uses it to look up the appropriate probability distribution from 
-    the dem_dist dictionary. It then generates a random number using
+    the dem_dist dictionary. Previously, the model checks whether it should use
+    the weekly or weekend distribution, depending on the corresponding day
+    of the week. It then generates a random number using
     the rand_ob object and the selected probability distribution. 
     The function then updates the demand_df dataframe by adding 
     the generated random number as a new column at the corresponding time step.
@@ -1263,21 +1343,46 @@ def calculate_stochasticity_demand(rand_ob, demand_df, dem_dist):
     rand_ob : OBJECT OF RANDOM GENERATOR CLASS
         Function to calculate random values or sets
     demand_df : DATAFRAME
-    dem_dist : DICTIONARY
-
+    week_dist : DICTIONARY
+    weekend_dist : DICTIONARY
     Returns
+    year : INTEGER
+        year from which the data is taken, for example 2018
+    first_day : INTEGER
+        first day of the database, by default it starts on the first of January, 
+        a number between 1 and 365 is placed, 
+        the number 32 would correspond to the first of February
     -------
     demand_df : DATAFRAME
         New dataframe
 
     '''
+    #first day of the year
+    first_january = dt.date(year, 1, 1)
+    #check the day of the fist day of the data
+    initial_day = dt.timedelta(first_day - 1) + first_january
+    initial_day_number = int(initial_day.strftime("%w"))
+    
+    #number of week and weekend days
+    day_number = initial_day_number
+
+                
     for t in demand_df['t']:
         #get the hour for the distribution
         hour = t % 24
-        #generate one random number for each hour 
-        obj = generate_random(rand_ob, dem_dist[hour])
-        demand_df.loc[t] = [t,obj]
-        
+        #calculate the week day
+        if ((hour == 0) and (day_number == 6) and (t != 0)):
+            day_number = 0
+        elif ((hour == 0) and (t != 0)):
+            day_number += 1
+        #generate one random number for each hour, select week or weekend
+        if (day_number != 6 and day_number != 0):  
+            obj = generate_random(rand_ob, week_dist[hour])
+            demand_df.loc[t] = [t,obj]
+        else:
+            obj = generate_random(rand_ob, weekend_dist[hour])
+            demand_df.loc[t] = [t,obj]            
+  
     return demand_df
     
 

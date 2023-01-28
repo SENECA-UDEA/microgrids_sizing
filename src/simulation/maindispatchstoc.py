@@ -29,6 +29,9 @@ the best solution
 the code creates different scenarios from the probability distribution
 associated with each hourly interval of the data.
 
+To make the projection of demand, a distinction is made 
+between weekends and weekdays.
+
 The code allows to change to different locations by uncommenting 
 the appropriate lines.
 
@@ -46,6 +49,7 @@ from src.support.utilities import generate_number_distribution
 from src.support.utilities import calculate_stochasticity_demand
 from src.support.utilities import create_objects, calculate_area
 from src.support.utilities import  get_best_distribution, hour_data
+from src.support.utilities import  week_vector_data
 
 from src.support.classes import RandomCreate
 import pandas as pd 
@@ -175,13 +179,15 @@ forecast_d = forecast_df_i['DNI']
 forecast_h = forecast_df_i['DHI']
 forecast_g = forecast_df_i['GHI']
 #Get the vector df od each hour
-dem_vec = hour_data(demand_d)
+dem_week_vec, dem_weekend_vec = week_vector_data(demand_d,
+                                                 instance_data["year_of_data"], forecast_df_i["day"][0])
 wind_vec = hour_data(forecast_w)
 sol_vecdni = hour_data(forecast_d)
 sol_vecdhi = hour_data(forecast_h)
 sol_vecghi = hour_data(forecast_g)
 #get the best distribution for each previous df   
-dem_dist = get_best_distribution(dem_vec) 
+dem_week_dist = get_best_distribution(dem_week_vec) 
+dem_weekend_dist = get_best_distribution(dem_weekend_vec) 
 wind_dist = get_best_distribution(wind_vec) 
 sol_distdni = get_best_distribution(sol_vecdni) 
 sol_distdhi = get_best_distribution(sol_vecdhi) 
@@ -207,7 +213,9 @@ for scn in range(N_SCENARIOS):
         forecast_df = forecast_df_i
     else:
         #create stochastic df with distriburions
-        demand_df = calculate_stochasticity_demand(rand_ob, demand_p, dem_dist)
+        demand_df = calculate_stochasticity_demand(rand_ob, demand_p, 
+                                                   dem_week_dist, dem_weekend_dist,
+                                                   instance_data["year_of_data"], forecast_df_i["day"][0])
         forecast_df = calculate_stochasticity_forecast(rand_ob, forecast_p, wind_dist, 
                                                        sol_distdni, sol_distdhi, sol_distghi)
     

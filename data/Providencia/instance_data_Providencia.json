@@ -5,6 +5,7 @@
     "nse" : 0.12, 
     "demand_covered": 0.01,
     "years" : 20,
+    "year_of_data" : 2018,
     "tlpsp" : 1,
     "splus_cost": 0.2,
     "inverter_cost": 100,
