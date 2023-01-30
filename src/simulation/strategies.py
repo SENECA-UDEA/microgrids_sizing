@@ -837,7 +837,7 @@ def ds_dies_batt_renew(solution, demand_df, instance_data,
         generation_ren = sum(solution.generators_dict_sol[i].gen_rule[t] 
                              for i in list_ren)
         ptot += generation_ren
-        #surplus enery
+        #surplus energy
         if generation_ren > demand_tobe_covered:
             #supply the load and charge batteries in order, until extra generation finish
             extra_generation = generation_ren - demand_tobe_covered
@@ -929,7 +929,7 @@ def ds_dies_batt_renew(solution, demand_df, instance_data,
 
         #not enough renewable energy
         else:
-            #check if the demand can supply all the demand
+            #check if the batteries can supply all the demand
             for i in sorted_batteries:
                 bat = solution.batteries_dict_sol[i]
                 aux_demand += (soc[i + '_soc'][t] - bat.soc_min) * bat.efd
