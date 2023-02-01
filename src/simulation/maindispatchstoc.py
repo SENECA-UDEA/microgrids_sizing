@@ -236,6 +236,8 @@ for scn in range(N_SCENARIOS):
         aux_fuel_cost = generate_number_distribution(rand_ob, param, limit)
         instance_data['fuel_cost'] = aux_fuel_cost
         fuel_scenarios[scn] = aux_fuel_cost
+    else:
+        fuel_scenarios[scn] = instance_data['fuel_cost']
         
     #check diesel or batteries and at least one generator, for feasibility
     if ('D' in technologies_dict.keys() or 'B' 
