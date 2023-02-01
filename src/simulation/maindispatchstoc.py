@@ -15,10 +15,9 @@ likewise, calculate the CRF to annualize the costs
 The script then goes on to perform microgrid optimization using the imported 
 functions and the data read in earlier. 
 
-Solve the model for each scenario and then determine the best solution
-that fits the generated scenarios, in this case, the solution
- that is repeated the most and if there is none,
- the one that fits the original data.
+Solve the model for each scenario and then determine the best solution, 
+testing all the solutions in the scenarios to determine which is the most 
+robust and most economical
  
 to solve, It uses the ILS and the dispatch strategy, with an aggregation 
 and disaggregation strategy and verifying feasibility.
@@ -49,7 +48,7 @@ from src.support.utilities import generate_number_distribution
 from src.support.utilities import calculate_stochasticity_demand
 from src.support.utilities import create_objects, calculate_area
 from src.support.utilities import  get_best_distribution, hour_data
-from src.support.utilities import  week_vector_data
+from src.support.utilities import  week_vector_data, update_forecast
 
 from src.support.classes import RandomCreate
 import pandas as pd 
@@ -377,8 +376,6 @@ for scn in range(N_SCENARIOS):
                 
             if ('aux_diesel' in sol_best.generators_dict_sol.keys()):
                 print('Not Feasible solutions')
-                #save the solution
-                solutions[scn] = 'No Feasible solutions'
             else:
                 #df with the feasible solutions
                 df_iterations = pd.DataFrame(rows_df, columns=["i","feasible","area", 
@@ -395,89 +392,93 @@ for scn in range(N_SCENARIOS):
     del demand_df
     del forecast_df
 
-best_sol = None
 
-#the fist feasible solution is going to be the best
-#by default the solution with the original data
-for j in solutions.keys():
-    if (solutions[j] != 'No Feasible solutions'):
-        best_sol = solutions[j]
-        position_sol = j
-        break
 
-if (best_sol == None):
-    #any feasible solution in all scenarios
-    print('No Feasible solutions')
-
+#get a sample if number of scenarios is higger than 50    
+if (len(solutions.keys()) >= 50):
+    #select the best solutions - lowest LCOE
+    list_scn = sorted(solutions.keys(), key = lambda scn: solutions[scn].results.descriptive['LCOE'])
+    list_scn = list_scn[:50]
 else:
-    #get the feasible solutions
-    total_data = {}
-    count = {}
-    lcoe_count = {}
-    no_feasible = 0
-    for i in solutions.keys():
-        #count no feasible solutions
-        if (solutions[i] == 'No Feasible solutions'):
-            no_feasible += 1
+    list_scn = list(solutions.keys())
+
+#create matrix to save solutions
+best_solutions = {k : [0] * int(len(solutions.keys())) for k in range(int(len(solutions.keys())))}
+
+#solve each solution in each scenario
+for scn in list_scn:
+    #get the strategy
+    strategy_def = select_strategy(generators_dict = solutions[scn].generators_dict_sol,
+                                   batteries_dict = solutions[scn].batteries_dict_sol) 
+    print("defined strategy")
+    #test current solution in all scenarios
+    for scn2 in solutions.keys():
+        generators = solutions[scn].generators_dict_sol
+        #update generation solar and wind
+        solutions[scn].generators_dict_sol = update_forecast(generators, 
+                                                             forecast_scenarios[scn2], instance_data)
+        #run the dispatch strategy
+        if (strategy_def in list_ds_diesel):
+            lcoe_cost, df_results, state, time_f, nsh = ds_diesel(solutions[scn], 
+                                                                  demand_scenarios[scn2], instance_data, cost_data, CRF)
+        elif (strategy_def in list_ds_diesel_renewable):
+            lcoe_cost, df_results, state, time_f, nsh = ds_diesel_renewable(solutions[scn],
+                                                                            demand_scenarios[scn2], instance_data, cost_data,CRF, delta)
+        elif (strategy_def in list_ds_battery_renewable):
+            lcoe_cost, df_results, state, time_f, nsh = ds_battery_renewable (solutions[scn], 
+                                                                              demand_scenarios[scn2], instance_data, cost_data, CRF, delta, rand_ob)
+        elif (strategy_def in list_ds_dies_batt_renew):
+            lcoe_cost, df_results, state, time_f, nsh = ds_dies_batt_renew(solutions[scn],
+                                                                           demand_scenarios[scn2], instance_data, cost_data, CRF, delta, rand_ob)
+        #save the results
+        if state == 'optimal':
+            sol_current = copy.deepcopy(solutions[scn])
+            sol_current.results = Results(sol_current, df_results, lcoe_cost)
+            best_solutions[scn][scn2] = ['optimal',sol_current.results.descriptive['LCOE'] ]  
         else:
-            #get the generatos, lcoe and batteries of each solution
-            gen_list = list(solutions[i].generators_dict_sol.keys())
-            bat_list = list(solutions[i].batteries_dict_sol.keys())
-            lcoe = solutions[i].results.descriptive['LCOE']
-            total_data[i] = gen_list + bat_list
-            #auxiliar dictionaries
-            count[i]=1
-            lcoe_count[i] = lcoe
-    
-    sum_lcoe = {}
-    #count the times that a solution is equal to others (same gen and bat)
-    for i in total_data.keys():
-        sum_lcoe[i] = 0
-        #compare with all solutions
-        for j in total_data.keys():
-            #count repeated values
-            if ((total_data[i] == total_data[j]) and (i != j)):
-                count[i] += 1
-                #sum lcoe of each equal solutions, similar to an average lcoe
-                sum_lcoe[i] += lcoe_count[i]
+            best_solutions[scn][scn2] = ['No feasible', math.inf] 
 
-    #count the times that exist and repeated solution
-    #if all = 1, return the solution of original data or first feasible
-    max_repetition = max(count.values())
-    if (max_repetition > 1):
-        #extract the solutions with more repetitions
-        list_rep = [k for k, v in count.items() if v == max_repetition]
-        min_sol = math.inf
-        
-        #evaluate the lowest average lcoe of all solutions, 
-        #sum is equal to average because have equal denominator
-        
-        for i in list_rep:
-            if sum_lcoe[i] < min_sol:
-               best_sol = solutions[i]
-               min_sol = sum_lcoe[i]
-               position_sol = i
+average = {}
+robust_solutions = {}
 
-    #return the selected solution
-    print(best_sol.results.descriptive)
-    print(best_sol.results.df_results)
-    #return number of no feasible solutions
-    print('number of no feasible scenarios: ' + str(no_feasible))
-    generation_graph = best_sol.results.generation_graph(0, len(demand_df_i))
-    plot(generation_graph)
-    
-    try:
-        #stats
-        percent_df, energy_df, renew_df, total_df, brand_df = calculate_energy(best_sol.batteries_dict_sol, 
-                                                                               best_sol.generators_dict_sol, best_sol.results, demand_scenarios[position_sol])
-    except KeyError:
-        pass
-    
-    #calculate current COP   
-    lcoe_cop = TRM * best_sol.results.descriptive['LCOE']
-    #create Excel
-    '''
-    sol_best.results.df_results.to_excel("resultsolarbat.xlsx")         
-    percent_df.to_excel("percentresultssolarbat.xlsx")
+#select the robust solutions
+#elects only those that have a proportion of "optimal" 
+#solutions greater than or equal to 0.6.
+robust_solutions = {i: best_solutions[i] for i in range(len(best_solutions)) 
+                    if sum([1 for sub_sol in best_solutions[i] 
+                            if sub_sol[0] == "optimal"]) / len(best_solutions[i]) >= 0.6}
 
-    '''
+#select the best solutions - average lowest cost
+
+for i in robust_solutions.keys():
+    optimal_solutions = [best_solutions[i][j][1] for j in robust_solutions.keys() 
+                         if best_solutions[i][j][0] == "optimal"]
+    average[i] = sum(optimal_solutions) / len(optimal_solutions)
+
+#select the best solution
+best_sol_position = min(average, key=average.get)       
+
+best_sol = solutions[best_sol_position]
+
+#return the selected solution
+print(best_sol.results.descriptive)
+print(best_sol.results.df_results)
+#return number of no feasible solutions
+generation_graph = best_sol.results.generation_graph(0, len(demand_df_i))
+plot(generation_graph)
+
+try:
+    #stats
+    percent_df, energy_df, renew_df, total_df, brand_df = calculate_energy(best_sol.batteries_dict_sol, 
+                                                                           best_sol.generators_dict_sol, best_sol.results, demand_scenarios[best_sol_position])
+except KeyError:
+    pass
+
+#calculate current COP   
+lcoe_cop = TRM * best_sol.results.descriptive['LCOE']
+'''
+#create Excel
+sol_best.results.df_results.to_excel("resultsolarbat.xlsx")         
+percent_df.to_excel("percentresultssolarbat.xlsx")
+
+'''

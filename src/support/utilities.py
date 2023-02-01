@@ -1523,3 +1523,34 @@ def generate_number_distribution(rand_ob, param, limit):
     c = param * (1 + limit)
     number = rand_ob.dist_triangular(a,b,c)
     return number
+
+def update_forecast(generators, forecast_df, instance_data):
+    """
+   This function is used to update the hourly generation and variable
+   cost data for renewable energies when there is a change in the forecast 
+
+    Parameters
+    ----------
+    generators : DICTIONARY
+    forecast_df : DATAFRAME
+    instance_data : DICTIONARY
+
+
+    Returns
+    -------
+    generators_dict : DICTIONARY UPDATED
+
+    """
+    generators_dict = copy.deepcopy(generators)
+    irr = irradiance_panel (forecast_df, instance_data)
+    for gen in generators_dict.values():
+        if (gen.tec == 'S'):
+            gen.solar_generation( forecast_df['t_ambt'], irr, instance_data["G_stc"], 0)
+            gen.solar_cost()
+        if (gen.tec == 'W'):
+            gen.eolic_generation(forecast_df['Wt'], instance_data["h2"],
+                                     instance_data["coef_hel"], 0)
+            gen.eolic_cost()
+
+ 
+    return generators_dict
