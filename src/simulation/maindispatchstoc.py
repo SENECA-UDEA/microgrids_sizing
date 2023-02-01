@@ -198,7 +198,7 @@ solutions = {}
 #save demand and forecast to best solution
 demand_scenarios = {}
 forecast_scenarios = {}
-
+fuel_scenarios = {}
 #scenarios       
 for scn in range(N_SCENARIOS):
     '''
@@ -233,7 +233,10 @@ for scn in range(N_SCENARIOS):
     if (scn >= 1):
         #calculate triangular to fuel cost
         #if scn = 1 use original data
-        instance_data['fuel_cost'] = generate_number_distribution(rand_ob, param, limit)
+        aux_fuel_cost = generate_number_distribution(rand_ob, param, limit)
+        instance_data['fuel_cost'] = aux_fuel_cost
+        fuel_scenarios[scn] = aux_fuel_cost
+        
     #check diesel or batteries and at least one generator, for feasibility
     if ('D' in technologies_dict.keys() or 'B' 
         in technologies_dict.keys() and generators_dict != {}):
@@ -417,6 +420,8 @@ for scn in list_scn:
         #update generation solar and wind
         solutions[scn].generators_dict_sol = update_forecast(generators, 
                                                              forecast_scenarios[scn2], instance_data)
+        #update fuel cost
+        instance_data['fuel_cost'] = fuel_scenarios[scn2]
         #run the dispatch strategy
         if (strategy_def in list_ds_diesel):
             lcoe_cost, df_results, state, time_f, nsh = ds_diesel(solutions[scn], 
