@@ -3,14 +3,13 @@
 This Python script uses several imported modules and functions to perform
 microgrid sizing optimization; according to the two-stage formulation, 
 where iterated local search is done to install the elements, 
-and dispatch strategies to evaluate the performance and add stochasticity 
-to go from a deterministic model to one with uncertainty
+and dispatch strategies to evaluate the performance, 
+in addition, the multi-year functionality is added
 
 It starts by importing several modules, as well as several functions 
 
 It specifies some parameters such as the seed for random and the location 
 Then it defines several lists of strategies for the optimization process.
-likewise, calculate the CRF to annualize the costs
 
 The script then goes on to perform microgrid optimization using the imported 
 functions and the data read in earlier. 
@@ -37,29 +36,25 @@ the appropriate lines.
 It also has other tools such as generating Excel files or calculating the cost
  according to the representative market rate.
 
-
 """
-from src.support.utilities import read_data, create_technologies
-from src.support.utilities import calculate_energy, interest_rate
+from src.support.utilities import read_multiyear_data, create_technologies
+from src.support.utilities import calculate_area, calculate_energy
 from src.support.utilities import fiscal_incentive, calculate_cost_data
+from src.support.utilities import calculate_multiyear_data, interest_rate
 from src.support.utilities import calculate_inverter_cost
+from src.support.utilities import create_multiyear_objects
 from src.support.utilities import calculate_stochasticity_forecast
 from src.support.utilities import generate_number_distribution
 from src.support.utilities import calculate_stochasticity_demand
-from src.support.utilities import create_objects, calculate_area
 from src.support.utilities import  get_best_distribution, hour_data
 from src.support.utilities import  week_vector_data, update_forecast
-
 from src.support.classes import RandomCreate
 import pandas as pd 
-from src.simulation.operatorsdispatch import SolConstructor, SearchOperator
+from src.multiyear.operatorsmy import SolConstructor, SearchOperator
 from plotly.offline import plot
-from src.simulation.strategies import select_strategy
-from src.simulation.strategies import ds_diesel
-from src.simulation.strategies import ds_dies_batt_renew
-from src.simulation.strategies import ds_diesel_renewable
-from src.simulation.strategies import ds_battery_renewable 
-from src.simulation.strategies import Results
+from src.multiyear.strategiesmy import select_strategy, ds_battery_renewable
+from src.multiyear.strategiesmy import ds_diesel_renewable, ds_diesel 
+from src.multiyear.strategiesmy import Results, ds_dies_batt_renew
 import copy
 import math
 pd.options.display.max_columns = None
@@ -72,12 +67,12 @@ SEED = None
 
 rand_ob = RandomCreate(seed = SEED)
 
+#range for triangular distribution fuel cost
+limit = 0.1
+
 #add and remove funtion
 ADD_FUNCTION = 'GRASP'
 REMOVE_FUNCTION = 'RANDOM'
-
-#time not served best solution
-best_nsh = 0
 
 #data PLACE
 PLACE = 'Providencia'
@@ -87,13 +82,10 @@ PLACE = 'San_Andres'
 PLACE = 'Puerto_Nar'
 PLACE = 'Leticia'
 '''
-
 #trm to current COP
 TRM = 3910
-
-
-#range for triangular distribution fuel cost
-limit = 0.1
+#time not served best solution
+best_nsh = 0
 
 #Strategy list for select
 list_ds_diesel = ["diesel"]
@@ -111,6 +103,9 @@ list_ds_dies_batt_renew = [
     "battery - diesel - wind","battery - diesel - solar", 
     "battery - diesel - solar - wind"
     ]
+
+yes_choices = ['yes', 'y']
+no_choices = ['no', 'n']
 
 loc_file = '/SENECA-UDEA/microgrids_sizing/development/data/'
 github_rute = 'https://raw.githubusercontent.com' + loc_file
@@ -134,14 +129,25 @@ fiscalData_filepath = "../../data/auxiliar/fiscal_incentive.json"
 #cost Data
 costData_filepath = "../../data/auxiliar/parameters_cost.json"
 
+#multiyear Data
+myearData_filepath = "../../data/auxiliar/multiyear.json"
 
 # read data
-demand_df_i, forecast_df_i, generators, batteries, instance_data, fisc_data, cost_data = read_data(demand_filepath,
-                                                                                                forecast_filepath,
-                                                                                                units_filepath,
-                                                                                                instanceData_filepath,
-                                                                                                fiscalData_filepath,
-                                                                                                costData_filepath)
+demand_df_year, forecast_df_year, generators, batteries, instance_data, fisc_data, cost_data, my_data = read_multiyear_data(demand_filepath,
+                                                                                                                      forecast_filepath,
+                                                                                                                      units_filepath,
+                                                                                                                      instanceData_filepath,
+                                                                                                                      fiscalData_filepath,
+                                                                                                                      costData_filepath,
+                                                                                                                      myearData_filepath)
+
+
+
+
+demand_df_i, forecast_df_i = calculate_multiyear_data(demand_df_year, forecast_df_year,
+                                                      my_data, instance_data['years'])        
+
+
 
 #calulate parameters
 AMAX = instance_data['amax'] 
@@ -156,11 +162,7 @@ demand_df_i['demand'] = instance_data['demand_covered'] * demand_df_i['demand']
 
 #Calculate interest rate
 ir = interest_rate(instance_data['i_f'], instance_data['inf'])
-#Calculate CRF
-CRF = (ir * (1 + ir)**(instance_data['years'])) / ((1 + ir)**
-                                                  (instance_data['years']) - 1)  
-
-
+ 
 #Calculate fiscal incentives
 delta = fiscal_incentive(fisc_data['credit'], 
                          fisc_data['depreciation'],
@@ -168,6 +170,7 @@ delta = fiscal_incentive(fisc_data['credit'],
                          ir,
                          fisc_data['T1'],
                          fisc_data['T2'])
+
 
 #STOCHASTICITY
 
@@ -199,7 +202,9 @@ solutions = {}
 demand_scenarios = {}
 forecast_scenarios = {}
 fuel_scenarios = {}
-#scenarios       
+#scenarios  
+
+
 for scn in range(N_SCENARIOS):
     '''
     Simulation by scenarios
@@ -221,15 +226,19 @@ for scn in range(N_SCENARIOS):
     demand_scenarios[scn] = demand_df
     forecast_scenarios[scn] = forecast_df
     # Create objects and generation rule
-    generators_dict, batteries_dict = create_objects(generators,
-                                                     batteries,  
-                                                     forecast_df,
-                                                     demand_df,
-                                                     instance_data)
 
+
+    # Create objects and generation rule
+    generators_dict, batteries_dict = create_multiyear_objects(generators,
+                                                               batteries,  
+                                                               forecast_df,
+                                                               demand_df,
+                                                               instance_data,
+                                                               my_data)
     #create technologies
     technologies_dict, renewables_dict = create_technologies (generators_dict,
                                                               batteries_dict)
+
     if (scn >= 1):
         #calculate triangular to fuel cost
         #if scn = 1 use original data
@@ -238,11 +247,10 @@ for scn in range(N_SCENARIOS):
         fuel_scenarios[scn] = aux_fuel_cost
     else:
         fuel_scenarios[scn] = instance_data['fuel_cost']
-        
+
     #check diesel or batteries and at least one generator, for feasibility
-    if ('D' in technologies_dict.keys() or 'B' 
-        in technologies_dict.keys() and generators_dict != {}):
-        
+    if ('D' in technologies_dict.keys() or 'B' in technologies_dict.keys() 
+        and generators_dict != {}):
         #create the initial solution operator
         sol_constructor = SolConstructor(generators_dict, 
                                          batteries_dict,
@@ -254,9 +262,10 @@ for scn in range(N_SCENARIOS):
                                                        technologies_dict, 
                                                        renewables_dict,
                                                        delta,
-                                                       CRF,
                                                        rand_ob,
-                                                       cost_data)
+                                                       cost_data,
+                                                       my_data,
+                                                       ir)
         
         #if use aux_diesel asigns a big area to avoid select it again
         if ('aux_diesel' in sol_feasible.generators_dict_sol.keys()):
@@ -294,65 +303,72 @@ for scn in range(N_SCENARIOS):
                                 sol_current.results.descriptive['area'], 
                                 sol_current.results.descriptive['LCOE'], 
                                 sol_best.results.descriptive['LCOE'], movement])
+                
                 if sol_current.feasible:     
                     # save copy as the last solution feasible seen
                     sol_feasible = copy.deepcopy(sol_current) 
                     # Remove a generator or battery from the current solution
-                    if (REMOVE_FUNCTION == 'GRASP'):                        
-                        sol_try, remove_report = search_operator.remove_object(sol_current, 
-                                                                               CRF, delta, rand_ob)
+                    if (REMOVE_FUNCTION == 'GRASP'):
+                        sol_try, remove_report = search_operator.remove_object(sol_current, delta, rand_ob)
                     elif (REMOVE_FUNCTION == 'RANDOM'):
-                        sol_try, remove_report = search_operator.remove_random_object(sol_current, rand_ob)
+                        sol_try, remove_report = search_operator.remove_random_object(sol_current,
+                                                                                      rand_ob)
         
                     movement = "Remove"
                 else:
                     #  Create list of generators that could be added
-                    list_available_bat, list_available_gen, list_tec_gen  = search_operator.available_items(sol_current, AMAX)
+                    list_available_bat, list_available_gen, list_tec_gen = search_operator.available_items(sol_current
+                                                                                                           , AMAX)
+                    
                     if (list_available_gen != [] or list_available_bat != []):
                         # Add a generator or battery to the current solution
                         if (ADD_FUNCTION == 'GRASP'):
                             sol_try, remove_report = search_operator.add_object(sol_current, 
-                                                                                list_available_bat, list_available_gen, list_tec_gen, remove_report,  CRF, 
-                                                                                instance_data['fuel_cost'], rand_ob, delta)
+                                                                                list_available_bat, list_available_gen, list_tec_gen, 
+                                                                                remove_report, instance_data['fuel_cost'], rand_ob, delta)
+                        
                         elif (ADD_FUNCTION == 'RANDOM'):
                             sol_try = search_operator.add_random_object(sol_current, 
                                                                         list_available_bat, list_available_gen, list_tec_gen, rand_ob)
+                        
                         movement = "Add"
                     else:
                         # return to the last feasible solution
                         sol_current = copy.deepcopy(sol_feasible)
                         continue # Skip running the model and go to the begining of the for loop
         
-                #calculate inverter cost with installed generators
-                #val = instance_data['inverter_cost']#first of the functions
-                #instance_data['inverter cost'] = calculate_inverter_cost(sol_try.generators_dict_sol,
-                #sol_try.batteries_dict_sol,val)
-            
                 #defines which dispatch strategy to use
                 strategy_def = select_strategy(generators_dict = sol_try.generators_dict_sol,
                                                batteries_dict = sol_try.batteries_dict_sol) 
                 
+                #calculate inverter cost with installed generators
+                #val = instance_data['inverter_cost']#first of the functions
+                #instance_data['inverter cost'] = calculate_inverter_cost(sol_try.generators_dict_sol,sol_try.batteries_dict_sol,val)
+        
                 print("defined strategy")
-                
                 #run the dispatch strategy
                 if (strategy_def in list_ds_diesel):
-                    lcoe_cost, df_results, state, time_f, nsh = ds_diesel(sol_try, 
-                                                                          demand_df, instance_data, cost_data, CRF)
+                    lcoe_cost, df_results, state, time_f, nsh = ds_diesel(sol_try, demand_df, 
+                                                                          instance_data, cost_data, my_data, ir)
+                    
                 elif (strategy_def in list_ds_diesel_renewable):
-                    lcoe_cost, df_results, state, time_f, nsh = ds_diesel_renewable(sol_try,
-                                                                                    demand_df, instance_data, cost_data,CRF, delta)
+                    lcoe_cost, df_results, state, time_f, nsh = ds_diesel_renewable(sol_try, 
+                                                                                    demand_df, instance_data, cost_data, delta, my_data, ir)
+                    
                 elif (strategy_def in list_ds_battery_renewable):
                     lcoe_cost, df_results, state, time_f, nsh = ds_battery_renewable (sol_try, 
-                                                                                      demand_df, instance_data, cost_data, CRF, delta, rand_ob)
+                                                                                      demand_df, instance_data, cost_data, delta, rand_ob, my_data, ir)
+                    
                 elif (strategy_def in list_ds_dies_batt_renew):
                     lcoe_cost, df_results, state, time_f, nsh = ds_dies_batt_renew(sol_try, 
-                                                                                   demand_df, instance_data, cost_data, CRF, delta, rand_ob)
- 
+                                                                                   demand_df, instance_data, cost_data, delta, rand_ob, my_data, ir)
+                    
                 else:
                     #no feasible combination
                     state = 'no feasible'
                     df_results = []
                 
+        
                 print("finish simulation - state: " + state)
                 #Create results
                 if state == 'optimal':
@@ -366,6 +382,7 @@ for scn in range(N_SCENARIOS):
                         #save sol_best
                         sol_best = copy.deepcopy(sol_try)   
                         best_nsh = nsh
+                        
                 else:
                     sol_try.feasible = False
                     df_results = []
@@ -383,12 +400,11 @@ for scn in range(N_SCENARIOS):
                 print('Not Feasible solutions')
             else:
                 #df with the feasible solutions
-                df_iterations = pd.DataFrame(rows_df, columns=["i","feasible","area", 
-                                                               "LCOE_actual","LCOE_Best","Movement"])
+                df_iterations = pd.DataFrame(rows_df, columns=["i","feasible",
+                                                               "area", "LCOE_actual","LCOE_Best","Movement"])
                 #print results best solution
                 print(sol_best.results.descriptive)
                 print(sol_best.results.df_results)
-                #save the solution
                 solutions[scn] = sol_best
         else:
             print('No feasible solution, review data')
@@ -396,7 +412,6 @@ for scn in range(N_SCENARIOS):
         print('No feasible solution, solution need diesel generators or batteries')
     del demand_df
     del forecast_df
-
 
 
 #get a sample if number of scenarios is higger than 50    
@@ -425,18 +440,19 @@ for scn in list_scn:
         #update fuel cost
         instance_data['fuel_cost'] = fuel_scenarios[scn2]
         #run the dispatch strategy
+        
         if (strategy_def in list_ds_diesel):
             lcoe_cost, df_results, state, time_f, nsh = ds_diesel(solutions[scn], 
-                                                                  demand_scenarios[scn2], instance_data, cost_data, CRF)
+                                                                  demand_scenarios[scn2], instance_data, cost_data, my_data, ir, my_data, ir)
         elif (strategy_def in list_ds_diesel_renewable):
             lcoe_cost, df_results, state, time_f, nsh = ds_diesel_renewable(solutions[scn],
-                                                                            demand_scenarios[scn2], instance_data, cost_data,CRF, delta)
+                                                                            demand_scenarios[scn2], instance_data, cost_data, delta)
         elif (strategy_def in list_ds_battery_renewable):
             lcoe_cost, df_results, state, time_f, nsh = ds_battery_renewable (solutions[scn], 
-                                                                              demand_scenarios[scn2], instance_data, cost_data, CRF, delta, rand_ob)
+                                                                              demand_scenarios[scn2], instance_data, cost_data, delta, rand_ob,  my_data, ir)
         elif (strategy_def in list_ds_dies_batt_renew):
             lcoe_cost, df_results, state, time_f, nsh = ds_dies_batt_renew(solutions[scn],
-                                                                           demand_scenarios[scn2], instance_data, cost_data, CRF, delta, rand_ob)
+                                                                           demand_scenarios[scn2], instance_data, cost_data, delta, rand_ob,  my_data, ir)
         #save the results
         if state == 'optimal':
             sol_current = copy.deepcopy(solutions[scn])

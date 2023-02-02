@@ -23,5 +23,6 @@
     "longitude": -3.76286,
     "latitude": -70.3745,
     "alpha_albedo": 0.2,
-    "shading factor": 1
+    "shading factor": 1,
+    "n-scenarios": 10
 }
