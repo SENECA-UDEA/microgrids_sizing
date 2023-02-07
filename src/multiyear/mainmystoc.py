@@ -142,13 +142,6 @@ demand_df_year, forecast_df_year, generators, batteries, instance_data, fisc_dat
                                                                                                                       myearData_filepath)
 
 
-
-
-demand_df_i, forecast_df_i = calculate_multiyear_data(demand_df_year, forecast_df_year,
-                                                      my_data, instance_data['years'])        
-
-
-
 #calulate parameters
 AMAX = instance_data['amax'] 
 N_ITERATIONS = instance_data['N_iterations']
@@ -158,7 +151,8 @@ N_SCENARIOS = instance_data['n-scenarios']
 generators, batteries = calculate_cost_data(generators, batteries, 
                                             instance_data, cost_data)
 #Demand to be covered
-demand_df_i['demand'] = instance_data['demand_covered'] * demand_df_i['demand'] 
+demand_df_year['demand'] = instance_data['demand_covered'] * demand_df_year['demand']
+
 
 #Calculate interest rate
 ir = interest_rate(instance_data['i_f'], instance_data['inf'])
@@ -175,14 +169,14 @@ delta = fiscal_incentive(fisc_data['credit'],
 #STOCHASTICITY
 
 #get the df for each hour and each data
-demand_d = demand_df_i['demand']
-forecast_w = forecast_df_i['Wt']
-forecast_d = forecast_df_i['DNI']
-forecast_h = forecast_df_i['DHI']
-forecast_g = forecast_df_i['GHI']
+demand_d = demand_df_year['demand']
+forecast_w = forecast_df_year['Wt']
+forecast_d = forecast_df_year['DNI']
+forecast_h = forecast_df_year['DHI']
+forecast_g = forecast_df_year['GHI']
 #Get the vector df od each hour
 dem_week_vec, dem_weekend_vec = week_vector_data(demand_d,
-                                                 instance_data["year_of_data"], forecast_df_i["day"][0])
+                                                 instance_data["year_of_data"], forecast_df_year["day"][0])
 wind_vec = hour_data(forecast_w)
 sol_vecdni = hour_data(forecast_d)
 sol_vecdhi = hour_data(forecast_h)
@@ -208,26 +202,36 @@ fuel_scenarios = {}
 for scn in range(N_SCENARIOS):
     '''
     Simulation by scenarios
-    '''
-    demand_p = copy.deepcopy(demand_df_i)
-    forecast_p = copy.deepcopy(forecast_df_i)
+    '''    
+    demand_p = copy.deepcopy(demand_df_year)
+    forecast_p = copy.deepcopy(forecast_df_year)
     #initial run is the original data
     if (scn == 0):
-        demand_df = demand_df_i
-        forecast_df = forecast_df_i
+        demand_df_i = demand_df_year
+        forecast_df_i = forecast_df_year
     else:
         #create stochastic df with distriburions
-        demand_df = calculate_stochasticity_demand(rand_ob, demand_p, 
+        demand_df_i = calculate_stochasticity_demand(rand_ob, demand_p, 
                                                    dem_week_dist, dem_weekend_dist,
-                                                   instance_data["year_of_data"], forecast_df_i["day"][0])
-        forecast_df = calculate_stochasticity_forecast(rand_ob, forecast_p, wind_dist, 
+                                                   instance_data["year_of_data"], forecast_df_year["day"][0])
+        forecast_df_i = calculate_stochasticity_forecast(rand_ob, forecast_p, wind_dist, 
                                                        sol_distdni, sol_distdhi, sol_distghi)
     
+    demand_df, forecast_df = calculate_multiyear_data(demand_df_i, forecast_df_i,
+                                                      my_data, instance_data['years']) 
     demand_scenarios[scn] = demand_df
     forecast_scenarios[scn] = forecast_df
     # Create objects and generation rule
 
-
+    if (scn >= 1):
+        #calculate triangular to fuel cost
+        #if scn = 1 use original data
+        aux_fuel_cost = generate_number_distribution(rand_ob, param, limit)
+        instance_data['fuel_cost'] = aux_fuel_cost
+        fuel_scenarios[scn] = aux_fuel_cost
+    else:
+        fuel_scenarios[scn] = instance_data['fuel_cost']
+        
     # Create objects and generation rule
     generators_dict, batteries_dict = create_multiyear_objects(generators,
                                                                batteries,  
@@ -239,14 +243,6 @@ for scn in range(N_SCENARIOS):
     technologies_dict, renewables_dict = create_technologies (generators_dict,
                                                               batteries_dict)
 
-    if (scn >= 1):
-        #calculate triangular to fuel cost
-        #if scn = 1 use original data
-        aux_fuel_cost = generate_number_distribution(rand_ob, param, limit)
-        instance_data['fuel_cost'] = aux_fuel_cost
-        fuel_scenarios[scn] = aux_fuel_cost
-    else:
-        fuel_scenarios[scn] = instance_data['fuel_cost']
 
     #check diesel or batteries and at least one generator, for feasibility
     if ('D' in technologies_dict.keys() or 'B' in technologies_dict.keys() 
@@ -446,7 +442,7 @@ for scn in list_scn:
                                                                   demand_scenarios[scn2], instance_data, cost_data, my_data, ir, my_data, ir)
         elif (strategy_def in list_ds_diesel_renewable):
             lcoe_cost, df_results, state, time_f, nsh = ds_diesel_renewable(solutions[scn],
-                                                                            demand_scenarios[scn2], instance_data, cost_data, delta)
+                                                                            demand_scenarios[scn2], instance_data, cost_data, delta, my_data, ir)
         elif (strategy_def in list_ds_battery_renewable):
             lcoe_cost, df_results, state, time_f, nsh = ds_battery_renewable (solutions[scn], 
                                                                               demand_scenarios[scn2], instance_data, cost_data, delta, rand_ob,  my_data, ir)
@@ -499,6 +495,59 @@ except KeyError:
 
 #calculate current COP   
 lcoe_cop = TRM * best_sol.results.descriptive['LCOE']
+
+
+'''get the best solution in original data'''
+
+#get the strategy
+strategy_def = select_strategy(generators_dict = 
+                               solutions[best_sol_position].generators_dict_sol,
+                               batteries_dict = 
+                               solutions[best_sol_position].batteries_dict_sol) 
+print("defined strategy")
+#test current solution in all scenarios
+
+generators = solutions[best_sol_position].generators_dict_sol
+#update generation solar and wind
+solutions[best_sol_position].generators_dict_sol = update_forecast(generators, 
+                                                     forecast_scenarios[0], instance_data)
+#update fuel cost
+instance_data['fuel_cost'] = fuel_scenarios[0]
+
+#run the dispatch strategy
+if (strategy_def in list_ds_diesel):
+    lcoe_cost, df_results, state, time_f, nsh = ds_diesel(solutions[best_sol_position], 
+                                                          demand_scenarios[0], instance_data, cost_data, my_data, ir)
+elif (strategy_def in list_ds_diesel_renewable):
+    lcoe_cost, df_results, state, time_f, nsh = ds_diesel_renewable(solutions[best_sol_position],
+                                                                    demand_scenarios[0], instance_data, cost_data, delta, my_data, ir)
+elif (strategy_def in list_ds_battery_renewable):
+    lcoe_cost, df_results, state, time_f, nsh = ds_battery_renewable (solutions[best_sol_position], 
+                                                                      demand_scenarios[0], instance_data, cost_data, delta, rand_ob, my_data, ir)
+elif (strategy_def in list_ds_dies_batt_renew):
+    lcoe_cost, df_results, state, time_f, nsh = ds_dies_batt_renew(solutions[best_sol_position],
+                                                                   demand_scenarios[0], instance_data, cost_data, delta, rand_ob, my_data, ir)
+#save the results
+if state == 'optimal':
+    best_sol0 = copy.deepcopy(solutions[best_sol_position])
+    best_sol0.results = Results(best_sol0, df_results, lcoe_cost)
+    best0_nsh = nsh
+   
+    print(best_sol0.results.descriptive)
+    print(best_sol0.results.df_results)
+    #return number of no feasible solutions
+    generation_graph = best_sol0.results.generation_graph(0, len(demand_scenarios[0]))
+    plot(generation_graph)
+    
+    try:
+        #stats
+        percent_df, energy_df, renew_df, total_df, brand_df = calculate_energy(best_sol0.batteries_dict_sol, 
+                                                                               best_sol0.generators_dict_sol, best_sol0.results, demand_scenarios[0])
+    except KeyError:
+        pass
+else:
+    print("Not feasible in original data")
+
 '''
 #create Excel
 sol_best.results.df_results.to_excel("resultsolarbat.xlsx")         

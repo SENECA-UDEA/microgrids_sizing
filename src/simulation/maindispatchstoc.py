@@ -483,6 +483,55 @@ except KeyError:
 
 #calculate current COP   
 lcoe_cop = TRM * best_sol.results.descriptive['LCOE']
+
+'''get the best solution in original data'''
+#get the strategy
+strategy_def = select_strategy(generators_dict = 
+                               solutions[best_sol_position].generators_dict_sol,
+                               batteries_dict = 
+                               solutions[best_sol_position].batteries_dict_sol) 
+print("defined strategy")
+#test current solution in all scenarios
+
+generators = solutions[best_sol_position].generators_dict_sol
+#update generation solar and wind
+solutions[best_sol_position].generators_dict_sol = update_forecast(generators, 
+                                                     forecast_scenarios[0], instance_data)
+#update fuel cost
+instance_data['fuel_cost'] = fuel_scenarios[0]
+#run the dispatch strategy
+if (strategy_def in list_ds_diesel):
+    lcoe_cost, df_results, state, time_f, nsh = ds_diesel(solutions[best_sol_position], 
+                                                          demand_scenarios[0], instance_data, cost_data, CRF)
+elif (strategy_def in list_ds_diesel_renewable):
+    lcoe_cost, df_results, state, time_f, nsh = ds_diesel_renewable(solutions[best_sol_position],
+                                                                    demand_scenarios[0], instance_data, cost_data,CRF, delta)
+elif (strategy_def in list_ds_battery_renewable):
+    lcoe_cost, df_results, state, time_f, nsh = ds_battery_renewable (solutions[best_sol_position], 
+                                                                      demand_scenarios[0], instance_data, cost_data, CRF, delta, rand_ob)
+elif (strategy_def in list_ds_dies_batt_renew):
+    lcoe_cost, df_results, state, time_f, nsh = ds_dies_batt_renew(solutions[best_sol_position],
+                                                                   demand_scenarios[0], instance_data, cost_data, CRF, delta, rand_ob)
+#save the results
+if state == 'optimal':
+    best_sol0 = copy.deepcopy(solutions[best_sol_position])
+    best_sol0.results = Results(best_sol0, df_results, lcoe_cost)
+    best0_nsh = nsh
+   
+    print(best_sol0.results.descriptive)
+    print(best_sol0.results.df_results)
+    #return number of no feasible solutions
+    generation_graph = best_sol0.results.generation_graph(0, len(demand_scenarios[0]))
+    plot(generation_graph)
+    
+    try:
+        #stats
+        percent_df, energy_df, renew_df, total_df, brand_df = calculate_energy(best_sol0.batteries_dict_sol, 
+                                                                               best_sol0.generators_dict_sol, best_sol0.results, demand_scenarios[0])
+    except KeyError:
+        pass
+else:
+    print("Not feasible in original data")
 '''
 #create Excel
 sol_best.results.df_results.to_excel("resultsolarbat.xlsx")         
