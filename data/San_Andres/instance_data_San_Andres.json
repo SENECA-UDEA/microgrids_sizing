@@ -24,5 +24,8 @@
     "latitude":12.58317,
     "alpha_albedo": 0.2,
     "shading factor": 1,
-    "n-scenarios": 10
+    "n-scenarios": 10,
+    "stochastic_fuel_cost": 0.1,
+    "percent_robustness": 0.6,
+    "sample_escenarios": 50
 }
