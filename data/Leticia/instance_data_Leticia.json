@@ -16,7 +16,7 @@
     "G_stc": 800,
     "fuel_cost": 0.556,
     "Alpha_shortlist": 0.3,
-    "N_iterations": 100,
+    "N_iterations": 200,
     "tilted_angle" : 10,
     "module_azimuth": 20,
     "time_zone": -5,

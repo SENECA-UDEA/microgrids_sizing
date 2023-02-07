@@ -438,6 +438,8 @@ def calculate_energy(batteries_dict, generators_dict, model_results, demand_df):
         if (model_results.descriptive['generators'][gen.id_gen] == 1):
             column_data[gen.id_gen + '_%'] = (model_results.df_results[gen.id_gen] 
                                              / model_results.df_results['demand'])
+            column_data[gen.id_gen + '_%'].where(column_data[gen.id_gen + '_%'] 
+                                                 != np.inf, 0, inplace=True)
             #check the key for create or continue in the same dict
             key_energy_total = gen.tec + 'total'
             key_renew_total = gen.tec + 'total'
