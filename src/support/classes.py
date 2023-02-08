@@ -332,92 +332,77 @@ class RandomCreate():
     if there are more before these two are proper to the function
     '''
     def dist_triang(self, a, b, c):
-        rand_generation = sc.triang.rvs(a, loc = b, scale = c, size = 1, 
-                                        random_state = self.seed)
+        rand_generation = sc.triang.rvs(a, loc = b, scale = c, size = 1) 
         number = max(0, rand_generation[0])
         return number
 
     def dist_uniform(self, a, b):
-        rand_generation = sc.uniform.rvs(loc = a, scale = b, size = 1,
-                                         random_state = self.seed)
+        rand_generation = sc.uniform.rvs(loc = a, scale = b, size = 1)
         number = max(0, rand_generation[0])
         return number
 
     def dist_norm(self, a, b):
-        rand_generation = sc.norm.rvs(loc = a, scale = b, size = 1,
-                                      random_state = self.seed)
+        rand_generation = sc.norm.rvs(loc = a, scale = b, size = 1)
         number = max(0, rand_generation[0])
         return number
 
     def dist_exponweib(self,a, b, c, d):
-        rand_generation = sc.exponweib.rvs(a, b, loc = c, scale = d, size = 1, 
-                                           random_state = self.seed)
+        rand_generation = sc.exponweib.rvs(a, b, loc = c, scale = d, size = 1) 
         number = max(0, rand_generation[0])
         return number
 
     def dist_weibull_max(self, a, b, c):
-        rand_generation = sc.weibull_max.rvs(a, loc = b, scale = c, size = 1, 
-                                             random_state = self.seed)
+        rand_generation = sc.weibull_max.rvs(a, loc = b, scale = c, size = 1) 
         number = max(0, rand_generation[0])
         return number
 
     def dist_weibull_min(self, a, b, c):
-        rand_generation = sc.weibull_min.rvs(a, loc = b, scale = c, size = 1, 
-                                             random_state = self.seed)
+        rand_generation = sc.weibull_min.rvs(a, loc = b, scale = c, size = 1) 
         number = max(0, rand_generation[0])
         return number
 
     def dist_pareto(self, a, b, c):
-        rand_generation = sc.pareto.rvs(a, loc = b, scale = c, size = 1, 
-                                        random_state = self.seed)
+        rand_generation = sc.pareto.rvs(a, loc = b, scale = c, size = 1) 
         number = max(0, rand_generation[0])
         return number
 
     def dist_genextreme(self, a, b, c):
-        rand_generation = sc.genextreme.rvs(a, loc = b, scale = c, size = 1, 
-                                            random_state = self.seed)
+        rand_generation = sc.genextreme.rvs(a, loc = b, scale = c, size = 1) 
         number = max(0, rand_generation[0])
         return number
 
     def dist_gamma(self, a, b, c):
-        rand_generation = sc.gamma.rvs(a, loc = b, scale = c, size = 1, 
-                                       random_state = self.seed)
+        rand_generation = sc.gamma.rvs(a, loc = b, scale = c, size = 1) 
         number = max(0, rand_generation[0])
         return number
 
     def dist_beta(self, a, b, c, d):
-        rand_generation = sc.beta.rvs(a, b, loc = c, scale = d, size = 1, 
-                                      random_state = self.seed)
+        rand_generation = sc.beta.rvs(a, b, loc = c, scale = d, size = 1) 
         number = max(0, rand_generation[0])
         return number
 
     def dist_rayleigh(self, a, b):
-        rand_generation = sc.rayleigh.rvs(loc = a, scale = b, size = 1,
-                                          random_state = self.seed)
+        rand_generation = sc.rayleigh.rvs(loc = a, scale = b, size = 1)
         number = max(0, rand_generation[0])
         return number
 
     def dist_invgauss(self, a, b, c):
-        rand_generation = sc.invgauss.rvs(a, loc = b, scale = c, size = 1, 
-                                          random_state = self.seed)
+        rand_generation = sc.invgauss.rvs(a, loc = b, scale = c, size = 1) 
         number = max(0, rand_generation[0])
         return number
 
     def dist_expon(self, a, b):
-        rand_generation = sc.expon.rvs(loc = a, scale = b, size = 1,
-                                       random_state = self.seed)
+        rand_generation = sc.expon.rvs(loc = a, scale = b, size = 1)
         number = max(0, rand_generation[0])
         return number
 
     def dist_lognorm(self, a, b, c):
-        rand_generation = sc.lognorm.rvs(a, loc = b, scale = c, size = 1, 
-                                         random_state = self.seed)
+        rand_generation = sc.lognorm.rvs(a, loc = b, scale = c, size = 1)
         number = max(0, rand_generation[0])
         return number
 
     def dist_pearson3(self, a, b, c):
-        rand_generation = sc.pearson3.rvs(a, loc = b, scale = c, size = 1, 
-                                          random_state = self.seed)
+        rand_generation = sc.pearson3.rvs(a, loc = b, scale = c, size = 1) 
         number = max(0, rand_generation[0])
         return number
 
