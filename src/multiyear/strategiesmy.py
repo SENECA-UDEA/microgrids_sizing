@@ -1060,7 +1060,58 @@ def ds_dies_batt_renew(solution, demand_df, instance_data,
     
     time_f = time.time() - time_i
     return lcoe_cost, df_results, state, time_f, nsh
-   
+
+    
+def dispatch_my_strategy(sol_try, demand_df, instance_data, cost_data, delta, rand_ob, my_data, ir):
+    
+    list_ds_diesel = ["diesel"]
+    list_ds_diesel_renewable = [
+        "diesel - solar","diesel - wind", 
+        "diesel - solar - wind"
+        ]
+    
+    list_ds_battery_renewable = [
+        "battery - solar","battery - wind",
+        "battery - solar - wind"
+        ]
+    
+    list_ds_dies_batt_renew = [
+        "battery - diesel - wind","battery - diesel - solar", 
+        "battery - diesel - solar - wind"
+        ]
+
+    #define which dispatch strategy to use 
+    strategy_def = select_strategy(generators_dict = sol_try.generators_dict_sol,
+                                   batteries_dict = sol_try.batteries_dict_sol) 
+    
+    print("defined strategy")
+    #run the dispatch strategy
+    if (strategy_def in list_ds_diesel):
+        lcoe_cost, df_results, state, time_f, nsh = ds_diesel(sol_try, demand_df, 
+                                                              instance_data, cost_data, my_data, ir)
+        
+    elif (strategy_def in list_ds_diesel_renewable):
+        lcoe_cost, df_results, state, time_f, nsh = ds_diesel_renewable(sol_try, 
+                                                                        demand_df, instance_data, cost_data, delta, my_data, ir)
+        
+    elif (strategy_def in list_ds_battery_renewable):
+        lcoe_cost, df_results, state, time_f, nsh = ds_battery_renewable (sol_try, 
+                                                                          demand_df, instance_data, cost_data, delta, rand_ob, my_data, ir)
+        
+    elif (strategy_def in list_ds_dies_batt_renew):
+        lcoe_cost, df_results, state, time_f, nsh = ds_dies_batt_renew(sol_try, 
+                                                                       demand_df, instance_data, cost_data, delta, rand_ob, my_data, ir)
+    
+    else:
+        #no feasible combination
+        state = 'no feasible'
+        df_results = []
+        time_f = 0
+        nsh = math.inf
+        lcoe_cost = math.inf
+
+
+    return lcoe_cost, df_results, state, time_f, nsh
 
 class Results():
     def __init__(self, solution, df_results, lcoe): 

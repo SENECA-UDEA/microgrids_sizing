@@ -35,12 +35,7 @@ from src.support.classes import RandomCreate
 import pandas as pd 
 from src.simulation.operatorsdispatch import SolConstructor, SearchOperator
 from plotly.offline import plot
-from src.simulation.strategies import select_strategy
-from src.simulation.strategies import ds_diesel
-from src.simulation.strategies import ds_dies_batt_renew
-from src.simulation.strategies import ds_diesel_renewable
-from src.simulation.strategies import ds_battery_renewable 
-from src.simulation.strategies import Results
+from src.simulation.strategies import dispatch_strategy, Results
 import copy
 pd.options.display.max_columns = None
 
@@ -64,23 +59,6 @@ PLACE = 'San_Andres'
 PLACE = 'Puerto_Nar'
 PLACE = 'Leticia'
 '''
-
-#Strategy list for select
-list_ds_diesel = ["diesel"]
-list_ds_diesel_renewable = [
-    "diesel - solar","diesel - wind", 
-    "diesel - solar - wind"
-    ]
-
-list_ds_battery_renewable = [
-    "battery - solar","battery - wind",
-    "battery - solar - wind"
-    ]
-
-list_ds_dies_batt_renew = [
-    "battery - diesel - wind","battery - diesel - solar", 
-    "battery - diesel - solar - wind"
-    ]
 
 #trm to current COP
 TRM = 3910
@@ -239,28 +217,9 @@ if ('D' in technologies_dict.keys() or 'B' in technologies_dict.keys()
                     sol_current = copy.deepcopy(sol_feasible)
                     continue # Skip running the model and go to the begining of the for loop
     
-            #define which dispatch strategy to use 
-            strategy_def = select_strategy(generators_dict = sol_try.generators_dict_sol,
-                                           batteries_dict = sol_try.batteries_dict_sol) 
-            
-            print("defined strategy")
-            #run the dispatch strategy
-            if (strategy_def in list_ds_diesel):
-                lcoe_cost, df_results, state, time_f, nsh = ds_diesel(sol_try, 
-                                                                      demand_df, instance_data, cost_data, CRF)
-            elif (strategy_def in list_ds_diesel_renewable):
-                lcoe_cost, df_results, state, time_f, nsh = ds_diesel_renewable(sol_try,
-                                                                                demand_df, instance_data, cost_data,CRF, delta)
-            elif (strategy_def in list_ds_battery_renewable):
-                lcoe_cost, df_results, state, time_f, nsh = ds_battery_renewable (sol_try, 
-                                                                                  demand_df, instance_data, cost_data, CRF, delta, rand_ob)
-            elif (strategy_def in list_ds_dies_batt_renew):
-                lcoe_cost, df_results, state, time_f, nsh = ds_dies_batt_renew(sol_try, 
-                                                                               demand_df, instance_data, cost_data, CRF, delta, rand_ob)
-            else:
-                #no feasible combination
-                state = 'no feasible'
-                df_results = []
+            #Run the dispatch strategy process
+            lcoe_cost, df_results, state, time_f, nsh = dispatch_strategy(sol_try, demand_df,
+                                                                          instance_data, cost_data, CRF, delta, rand_ob)
              
             print("finish simulation - state: " + state)
             #Create results

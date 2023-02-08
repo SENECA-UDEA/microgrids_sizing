@@ -54,12 +54,7 @@ from src.support.classes import RandomCreate
 import pandas as pd 
 from src.simulation.operatorsdispatch import SolConstructor, SearchOperator
 from plotly.offline import plot
-from src.simulation.strategies import select_strategy
-from src.simulation.strategies import ds_diesel
-from src.simulation.strategies import ds_dies_batt_renew
-from src.simulation.strategies import ds_diesel_renewable
-from src.simulation.strategies import ds_battery_renewable 
-from src.simulation.strategies import Results
+from src.simulation.strategies import dispatch_strategy, Results
 import copy
 import math
 pd.options.display.max_columns = None
@@ -90,25 +85,6 @@ PLACE = 'Leticia'
 
 #trm to current COP
 TRM = 3910
-
-
-
-#Strategy list for select
-list_ds_diesel = ["diesel"]
-list_ds_diesel_renewable = [
-    "diesel - solar","diesel - wind", 
-    "diesel - solar - wind"
-    ]
-
-list_ds_battery_renewable = [
-    "battery - solar","battery - wind",
-    "battery - solar - wind"
-    ]
-
-list_ds_dies_batt_renew = [
-    "battery - diesel - wind","battery - diesel - solar", 
-    "battery - diesel - solar - wind"
-    ]
 
 loc_file = '/SENECA-UDEA/microgrids_sizing/development/data/'
 github_rute = 'https://raw.githubusercontent.com' + loc_file
@@ -335,31 +311,10 @@ for scn in range(N_SCENARIOS):
                 #instance_data['inverter cost'] = calculate_inverter_cost(sol_try.generators_dict_sol,
                 #sol_try.batteries_dict_sol,val)
             
-                #defines which dispatch strategy to use
-                strategy_def = select_strategy(generators_dict = sol_try.generators_dict_sol,
-                                               batteries_dict = sol_try.batteries_dict_sol) 
-                
-                print("defined strategy")
-                
-                #run the dispatch strategy
-                if (strategy_def in list_ds_diesel):
-                    lcoe_cost, df_results, state, time_f, nsh = ds_diesel(sol_try, 
-                                                                          demand_df, instance_data, cost_data, CRF)
-                elif (strategy_def in list_ds_diesel_renewable):
-                    lcoe_cost, df_results, state, time_f, nsh = ds_diesel_renewable(sol_try,
-                                                                                    demand_df, instance_data, cost_data,CRF, delta)
-                elif (strategy_def in list_ds_battery_renewable):
-                    lcoe_cost, df_results, state, time_f, nsh = ds_battery_renewable (sol_try, 
-                                                                                      demand_df, instance_data, cost_data, CRF, delta, rand_ob)
-                elif (strategy_def in list_ds_dies_batt_renew):
-                    lcoe_cost, df_results, state, time_f, nsh = ds_dies_batt_renew(sol_try, 
-                                                                                   demand_df, instance_data, cost_data, CRF, delta, rand_ob)
- 
-                else:
-                    #no feasible combination
-                    state = 'no feasible'
-                    df_results = []
-                
+                #Run the dispatch strategy process
+                lcoe_cost, df_results, state, time_f, nsh = dispatch_strategy(sol_try, demand_df,
+                                                                              instance_data, cost_data, CRF, delta, rand_ob)
+                             
                 print("finish simulation - state: " + state)
                 #Create results
                 if state == 'optimal':
@@ -422,10 +377,6 @@ else:
     
     #solve each solution in each scenario
     for scn in list_scn:
-        #get the strategy
-        strategy_def = select_strategy(generators_dict = solutions[scn].generators_dict_sol,
-                                       batteries_dict = solutions[scn].batteries_dict_sol) 
-        print("defined strategy")
         #test current solution in all scenarios
         for scn2 in solutions.keys():
             generators = solutions[scn].generators_dict_sol
@@ -434,19 +385,10 @@ else:
                                                                  forecast_scenarios[scn2], instance_data)
             #update fuel cost
             instance_data['fuel_cost'] = fuel_scenarios[scn2]
-            #run the dispatch strategy
-            if (strategy_def in list_ds_diesel):
-                lcoe_cost, df_results, state, time_f, nsh = ds_diesel(solutions[scn], 
-                                                                      demand_scenarios[scn2], instance_data, cost_data, CRF)
-            elif (strategy_def in list_ds_diesel_renewable):
-                lcoe_cost, df_results, state, time_f, nsh = ds_diesel_renewable(solutions[scn],
-                                                                                demand_scenarios[scn2], instance_data, cost_data,CRF, delta)
-            elif (strategy_def in list_ds_battery_renewable):
-                lcoe_cost, df_results, state, time_f, nsh = ds_battery_renewable (solutions[scn], 
-                                                                                  demand_scenarios[scn2], instance_data, cost_data, CRF, delta, rand_ob)
-            elif (strategy_def in list_ds_dies_batt_renew):
-                lcoe_cost, df_results, state, time_f, nsh = ds_dies_batt_renew(solutions[scn],
-                                                                               demand_scenarios[scn2], instance_data, cost_data, CRF, delta, rand_ob)
+
+            #Run the dispatch strategy process
+            lcoe_cost, df_results, state, time_f, nsh = dispatch_strategy(solutions[scn], 
+                                                                          demand_scenarios[scn2], instance_data, cost_data, CRF, delta, rand_ob)
             #save the results
             if state == 'optimal':
                 sol_current = copy.deepcopy(solutions[scn])
@@ -497,32 +439,17 @@ else:
         lcoe_cop = TRM * best_sol.results.descriptive['LCOE']
         
         '''get the best solution in original data'''
-        #get the strategy
-        strategy_def = select_strategy(generators_dict = 
-                                       solutions[best_sol_position].generators_dict_sol,
-                                       batteries_dict = 
-                                       solutions[best_sol_position].batteries_dict_sol) 
-
-        
         generators = solutions[best_sol_position].generators_dict_sol
         #update generation solar and wind
         solutions[best_sol_position].generators_dict_sol = update_forecast(generators, 
                                                              forecast_scenarios[0], instance_data)
+       
         #update fuel cost
         instance_data['fuel_cost'] = fuel_scenarios[0]
-        #run the dispatch strategy
-        if (strategy_def in list_ds_diesel):
-            lcoe_cost, df_results, state, time_f, nsh = ds_diesel(solutions[best_sol_position], 
-                                                                  demand_scenarios[0], instance_data, cost_data, CRF)
-        elif (strategy_def in list_ds_diesel_renewable):
-            lcoe_cost, df_results, state, time_f, nsh = ds_diesel_renewable(solutions[best_sol_position],
-                                                                            demand_scenarios[0], instance_data, cost_data,CRF, delta)
-        elif (strategy_def in list_ds_battery_renewable):
-            lcoe_cost, df_results, state, time_f, nsh = ds_battery_renewable (solutions[best_sol_position], 
-                                                                              demand_scenarios[0], instance_data, cost_data, CRF, delta, rand_ob)
-        elif (strategy_def in list_ds_dies_batt_renew):
-            lcoe_cost, df_results, state, time_f, nsh = ds_dies_batt_renew(solutions[best_sol_position],
-                                                                           demand_scenarios[0], instance_data, cost_data, CRF, delta, rand_ob)
+        
+        #Run the dispatch strategy process
+        lcoe_cost, df_results, state, time_f, nsh = dispatch_strategy(solutions[best_sol_position], 
+                                                                      demand_scenarios[0], instance_data, cost_data, CRF, delta, rand_ob)
         #save the results
         if state == 'optimal':
             print('The best solution is feasible in the original data')
