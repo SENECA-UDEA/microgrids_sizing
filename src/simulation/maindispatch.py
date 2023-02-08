@@ -30,12 +30,11 @@ It also has other tools such as generating Excel files or calculating the cost
 from src.support.utilities import read_data, create_technologies 
 from src.support.utilities import calculate_area, calculate_energy
 from src.support.utilities import fiscal_incentive, calculate_cost_data
-from src.support.utilities import create_objects, interest_rate
+from src.support.utilities import create_objects, interest_rate, ils
 from src.support.classes import RandomCreate
 import pandas as pd 
 from src.simulation.operatorsdispatch import SolConstructor, SearchOperator
 from plotly.offline import plot
-from src.simulation.strategies import dispatch_strategy, Results
 import copy
 pd.options.display.max_columns = None
 
@@ -141,13 +140,13 @@ if ('D' in technologies_dict.keys() or 'B' in technologies_dict.keys()
                                      forecast_df)
     
     #create a default solution
-    sol_feasible = sol_constructor.initial_solution(instance_data,
-                                                   technologies_dict, 
-                                                   renewables_dict,
-                                                   delta,
-                                                   CRF,
-                                                   rand_ob,
-                                                   cost_data)
+    sol_feasible, best_nsh = sol_constructor.initial_solution(instance_data,
+                                                              technologies_dict, 
+                                                              renewables_dict,
+                                                              delta,
+                                                              CRF,
+                                                              rand_ob,
+                                                              cost_data)
     
     #if use aux_diesel asigns a big area to avoid select it again
     if ('aux_diesel' in sol_feasible.generators_dict_sol.keys()):
@@ -176,77 +175,10 @@ if ('D' in technologies_dict.keys() or 'B' in technologies_dict.keys()
     
     #check that first solution is feasible
     if (sol_best.results != None):
-        for i in range(N_ITERATIONS):
-            '''
-            ILS Procedure
-            '''
-            #create df to export results
-            rows_df.append([i, sol_current.feasible, 
-                            sol_current.results.descriptive['area'], 
-                            sol_current.results.descriptive['LCOE'], 
-                            sol_best.results.descriptive['LCOE'], movement])
-
-            if sol_current.feasible:     
-                # save copy as the last solution feasible seen
-                sol_feasible = copy.deepcopy(sol_current) 
-                # Remove a generator or battery from the current solution
-                if (REMOVE_FUNCTION == 'GRASP'):
-                    sol_try, remove_report = search_operator.remove_object(sol_current, 
-                                                                           CRF, delta, rand_ob)
-                elif (REMOVE_FUNCTION == 'RANDOM'):
-                    sol_try, remove_report = search_operator.remove_random_object(sol_current, 
-                                                                                  rand_ob)
-    
-                movement = "Remove"
-            else:
-                #  Create list of generators that could be added
-                list_available_bat, list_available_gen, list_tec_gen  = search_operator.available_items(sol_current, AMAX)
-                if (list_available_gen != [] or list_available_bat != []):
-                    # Add a generator or battery to the current solution
-                    if (ADD_FUNCTION == 'GRASP'):                        
-                        sol_try, remove_report = search_operator.add_object(sol_current, 
-                                                                            list_available_bat, list_available_gen, list_tec_gen, remove_report,  
-                                                                            CRF, instance_data['fuel_cost'], rand_ob, delta)
-                    elif (ADD_FUNCTION == 'RANDOM'):
-                        sol_try = search_operator.add_random_object(sol_current, 
-                                                                    list_available_bat, list_available_gen, list_tec_gen,rand_ob)
-                    movement = "Add"
-
-                else:
-                    # return to the last feasible solution
-                    sol_current = copy.deepcopy(sol_feasible)
-                    continue # Skip running the model and go to the begining of the for loop
-    
-            #Run the dispatch strategy process
-            lcoe_cost, df_results, state, time_f, nsh = dispatch_strategy(sol_try, demand_df,
-                                                                          instance_data, cost_data, CRF, delta, rand_ob)
-             
-            print("finish simulation - state: " + state)
-            #Create results
-            if state == 'optimal':
-                sol_try.results = Results(sol_try, df_results, lcoe_cost)
-                sol_try.feasible = True
-                sol_current = copy.deepcopy(sol_try)
-                #Search the best solution
-                if sol_try.results.descriptive['LCOE'] <= sol_best.results.descriptive['LCOE']:
-                    #calculate area
-                    sol_try.results.descriptive['area'] = calculate_area(sol_try)
-                    #save sol_best
-                    sol_best = copy.deepcopy(sol_try)   
-                    best_nsh = nsh
-
-            else:
-                sol_try.feasible = False
-                df_results = []
-                lcoe_cost = None
-                sol_try.results = Results(sol_try, df_results, lcoe_cost)
-                sol_current = copy.deepcopy(sol_try)
-            
-            #calculate area
-            sol_current.results.descriptive['area'] = calculate_area(sol_current)
-            #delete to avoid overwriting
-            del df_results
-            del sol_try
+        sol_best, best_nsh, rows_df = ils(N_ITERATIONS, sol_current, sol_best,
+                                          search_operator, REMOVE_FUNCTION, 
+                                          ADD_FUNCTION,delta, rand_ob, instance_data, AMAX,
+                                          demand_df, cost_data,'ILS-DS', best_nsh, CRF, 0, {})
             
         if ('aux_diesel' in sol_best.generators_dict_sol.keys()):
             print('Not Feasible solutions')

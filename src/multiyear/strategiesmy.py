@@ -1063,7 +1063,37 @@ def ds_dies_batt_renew(solution, demand_df, instance_data,
 
     
 def dispatch_my_strategy(sol_try, demand_df, instance_data, cost_data, delta, rand_ob, my_data, ir):
-    
+    '''
+    this function determines which dispatch strategy to use according to 
+    the generators and batteries, and then with this information simulates
+    the model according to the selected strategy, returning the best solution
+    with its results and if it is feasible or not
+
+    Parameters
+    ----------
+    sol_try : OBJECT OF SOLUTION CLASS
+    demand_df : DATAFRAME
+    instance_data : DICTIONARY
+    cost_data : DICTIONARY
+    delta : NUMBER - PERCENT
+    rand_ob : OBJECT OF RANDOM CLASS
+    my_data : DICTIONARY
+    ir : NUMBER - PERCENT
+
+    Returns
+    -------
+    lcoe_cost : NUMBER - DBL
+        LCOE of the solution
+    df_results : DATAFRAME
+        Dataframe with the hourly solution
+    state : STRING
+        Feasible or not
+    time_f : NUMBER - DBL
+        Running time
+    nsh : NUMBER - DBL
+        Total of not served hour 
+
+    '''
     list_ds_diesel = ["diesel"]
     list_ds_diesel_renewable = [
         "diesel - solar","diesel - wind", 
@@ -1113,7 +1143,7 @@ def dispatch_my_strategy(sol_try, demand_df, instance_data, cost_data, delta, ra
 
     return lcoe_cost, df_results, state, time_f, nsh
 
-class Results():
+class Results_my():
     def __init__(self, solution, df_results, lcoe): 
         '''
         Load the results to the object associated to the class results

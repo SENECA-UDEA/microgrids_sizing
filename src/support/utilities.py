@@ -5,6 +5,8 @@ Created on Wed Apr 20 13:51:07 2022
 @author: scastellanos
 """
 from src.support.classes import Solar, Eolic, Diesel, Battery
+from src.simulation.strategies import dispatch_strategy, Results
+from src.multiyear.strategiesmy import Results_my, dispatch_my_strategy
 import pandas as pd
 import requests
 import json 
@@ -1556,3 +1558,162 @@ def update_forecast(generators, forecast_df, instance_data):
 
  
     return generators_dict
+
+
+
+'''ILS'''
+
+def ils(N_ITERATIONS, sol_current, sol_best, search_operator,
+        REMOVE_FUNCTION, ADD_FUNCTION,delta, rand_ob, instance_data, AMAX,
+        demand_df, cost_data, type_model, best_nsh, CRF = 0, ir = 0, my_data = {}):
+    '''
+    This function performs the iterated local search, creates a dataframe 
+    to save the report of each iteration, part of a current solution and a 
+    better solution, which at the beginning are the same, depending on the
+    solution that is handling whether it is feasible or not, determines
+    whether to do the function add or the function remove, it is also checked
+    if the ils have to do grasp or random. As there are different models, 
+    the model has slight variations if it is multi-year or not.
+    If the solution is feasible it saves it and generates the results,
+    and if it has the lowest lcoe it saves it as the best solution and counts
+    the number of hours not served for this solution.
+    
+    At the end it calculates the area of the solution to check
+    in the next iteration if there is more space or not and at the end
+    it has the report of the best solution together with its results.
+
+    Parameters
+    ----------
+    N_ITERATIONS : NUMBER - INTEGER
+    sol_current : OBJECT OF SOLUTION CLASS
+    sol_best : OBJECT OF SOLUTION CLASS
+    search_operator : OBJECT OF OPERATORS
+    REMOVE_FUNCTION : STRING
+        GRASP or RANDOM
+    ADD_FUNCTION : STRING
+        GRASP or RANDOM
+    delta : NUMBER - PERCENT
+    rand_ob : OBJECT OF RANDOM CLASS
+    instance_data : NUMBER - PERCENT
+    AMAX : NUMBER - DF
+    demand_df : DATAFRAME
+    cost_data : DICTIONARY
+    type_model : String
+        ILS-DS = Iterated local search + Dispatch Strategy
+        ILS-DS-MY = Iterated local search + Dispatch Strategy + Multiyear
+    best_nsh : VALUE - INTEGER
+        initial best not served hours of initial best solution
+    CRF : NUMBER - PERCENT, optional
+        Used only in not multiyear model. The default is 0, to avoid errors
+    ir : NUMBER - PERCENT, optional
+        Used only in multiyear model. The default is 0, to avoid errors
+    my_data : DICTIONATY, optional
+        Used only in multiyear model.. The default is {}, to avoid errors
+
+    Returns
+    -------
+    sol_best : OBJECT OF SOLUTION CLASS
+        Best solution that solves the model - lowest LCOE
+    best_nsh : NUMBER - INTEGER
+        Number of not served hours in the best solution
+    rows_df : DATAFRAME
+        Iterations report
+
+    '''
+
+    rows_df = []
+    movement = "initial solution"
+    for i in range(N_ITERATIONS):
+        #create df to export results
+        rows_df.append([i, sol_current.feasible, 
+                        sol_current.results.descriptive['area'], 
+                        sol_current.results.descriptive['LCOE'], 
+                        sol_best.results.descriptive['LCOE'], movement])
+        
+        if sol_current.feasible:     
+        # save copy as the last solution feasible seen
+            sol_feasible = copy.deepcopy(sol_current) 
+            # Remove a generator or battery from the current solution
+            if (REMOVE_FUNCTION == 'GRASP'): 
+                if (type_model == 'ILS-DS'):                       
+                    sol_try, remove_report = search_operator.remove_object(sol_current, 
+                                                                           CRF, delta, rand_ob)
+                elif (type_model == 'ILS-DS-MY'):
+                    sol_try, remove_report = search_operator.remove_object(sol_current, delta, rand_ob)
+            elif (REMOVE_FUNCTION == 'RANDOM'):
+                sol_try, remove_report = search_operator.remove_random_object(sol_current, rand_ob)
+    
+            movement = "Remove"
+        else:
+            #  Create list of generators that could be added
+            list_available_bat, list_available_gen, list_tec_gen  = search_operator.available_items(sol_current, AMAX)
+            if (list_available_gen != [] or list_available_bat != []):
+                # Add a generator or battery to the current solution
+                if (ADD_FUNCTION == 'GRASP'):
+                    if (type_model == 'ILS-DS'): 
+                        sol_try, remove_report = search_operator.add_object(sol_current, 
+                                                                            list_available_bat, list_available_gen, list_tec_gen, remove_report,  CRF, 
+                                                                            instance_data['fuel_cost'], rand_ob, delta)
+                    
+                    elif (type_model == 'ILS-DS-MY'):
+                        sol_try, remove_report = search_operator.add_object(sol_current, 
+                                                                            list_available_bat, list_available_gen, list_tec_gen, 
+                                                                            remove_report, instance_data['fuel_cost'], rand_ob, delta)
+                elif (ADD_FUNCTION == 'RANDOM'):
+                    sol_try = search_operator.add_random_object(sol_current, 
+                                                                list_available_bat, list_available_gen, list_tec_gen, rand_ob)
+                movement = "Add"
+            else:
+                # return to the last feasible solution
+                sol_current = copy.deepcopy(sol_feasible)
+                continue # Skip running the model and go to the begining of the for loop
+
+        #calculate inverter cost with installed generators
+        #val = instance_data['inverter_cost']#first of the functions
+        #instance_data['inverter cost'] = calculate_inverter_cost(sol_try.generators_dict_sol,
+        #sol_try.batteries_dict_sol,val)
+        
+        #Run the dispatch strategy process
+        if (type_model == 'ILS-DS'):
+            lcoe_cost, df_results, state, time_f, nsh = dispatch_strategy(sol_try, demand_df,
+                                                                          instance_data, cost_data, CRF, delta, rand_ob)
+        elif (type_model == 'ILS-DS-MY'):
+            lcoe_cost, df_results, state, time_f, nsh = dispatch_my_strategy(sol_try, demand_df, 
+                                                                             instance_data, cost_data, delta, rand_ob, my_data, ir)
+        print("finish simulation - state: " + state)
+        #Create results
+        if state == 'optimal':
+            if (type_model == 'ILS-DS'):
+                sol_try.results = Results(sol_try, df_results, lcoe_cost)
+            elif (type_model == 'ILS-DS-MY'):
+                sol_try.results = Results_my(sol_try, df_results, lcoe_cost)
+            sol_try.feasible = True
+            sol_current = copy.deepcopy(sol_try)
+            #Search the best solution
+            if sol_try.results.descriptive['LCOE'] <= sol_best.results.descriptive['LCOE']:
+                #calculate area
+                sol_try.results.descriptive['area'] = calculate_area(sol_try)
+                #save sol_best
+                sol_best = copy.deepcopy(sol_try)   
+                best_nsh = nsh
+    
+        else:
+            sol_try.feasible = False
+            df_results = []
+            lcoe_cost = None
+            if (type_model == 'ILS-DS'):
+                sol_try.results = Results(sol_try, df_results, lcoe_cost)
+            elif (type_model == 'ILS-DS-MY'):
+                sol_try.results = Results_my(sol_try, df_results, lcoe_cost)
+            sol_current = copy.deepcopy(sol_try)
+        
+        #calculate area
+        sol_current.results.descriptive['area'] = calculate_area(sol_current)
+        #delete to avoid overwriting
+        del df_results
+        del sol_try
+        
+    return sol_best, best_nsh, rows_df    
+
+
+

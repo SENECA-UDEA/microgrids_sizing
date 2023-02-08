@@ -9,26 +9,8 @@ from src.support.classes import Solution, Diesel
 import copy
 import math
 import pandas as pd
-from  src.multiyear.strategiesmy import select_strategy, ds_battery_renewable 
-from  src.multiyear.strategiesmy import ds_diesel_renewable, ds_diesel
-from  src.multiyear.strategiesmy import Results, ds_dies_batt_renew
+from  src.multiyear.strategiesmy import dispatch_my_strategy, Results_my
 
-#Strategy list for select
-list_ds_diesel = ["diesel"]
-list_ds_diesel_renewable = [
-    "diesel - solar","diesel - wind", 
-    "diesel - solar - wind"
-    ]
-
-list_ds_battery_renewable = [
-    "battery - solar","battery - wind",
-    "battery - solar - wind"
-    ]
-
-list_ds_dies_batt_renew = [
-    "battery - diesel - wind","battery - diesel - solar", 
-    "battery - diesel - solar - wind"
-    ]
 
 class SolConstructor():
     """class that generates the solutions for the model
@@ -206,10 +188,6 @@ class SolConstructor():
         #create the initial solution solved
         technologies_dict_sol, renewables_dict_sol = create_technologies (generators_dict_sol, 
                                                                           batteries_dict_sol)
- 
-        #check strategy to be used
-        check_strategy = select_strategy(generators_dict = generators_dict_sol,
-                                       batteries_dict = batteries_dict_sol) 
         
         #default solution to use dispatch strategy
         sol_results = None
@@ -221,28 +199,10 @@ class SolConstructor():
         #calculate inverter cost with installed generators
         #val = instance_data['inverter_cost']#first of the functions
         #instance_data['inverter cost'] = calculate_inverter_cost(sol_try.generators_dict_sol,sol_try.batteries_dict_sol,val)
-        #run dispatch strategy
-            
-        if (check_strategy in list_ds_diesel):
-            lcoe_cost, df_results, state, time_f, nsh = ds_diesel(sol_try, 
-                                                                  self.demand_df, instance_data, cost_data, my_data, ir)
-            
-        elif (check_strategy in list_ds_diesel_renewable):
-            lcoe_cost, df_results, state, time_f, nsh = ds_diesel_renewable(sol_try, 
-                                                                            self.demand_df, instance_data, cost_data,delta, my_data, ir)
-            
-        elif (check_strategy in list_ds_battery_renewable):
-            lcoe_cost, df_results, state, time_f, nsh = ds_battery_renewable (sol_try, 
-                                                                              self.demand_df, instance_data, cost_data, delta, rand_ob, my_data, ir)
-            
-        elif (check_strategy in list_ds_dies_batt_renew):
-            lcoe_cost, df_results, state, time_f, nsh = ds_dies_batt_renew(sol_try, 
-                                                                           self.demand_df, instance_data, cost_data, delta, rand_ob, my_data, ir)
-            
-        else:
-            #no feasible combination
-            state = 'no feasible'
         
+        #Run the dispatch strategy process
+        lcoe_cost, df_results, state, time_f, nsh = dispatch_my_strategy(sol_try, 
+                                                                         self.demand_df, instance_data, cost_data, delta, rand_ob, my_data, ir)         
         if state != 'optimal': 
         #create a false Diesel auxiliar
             k = {
@@ -265,10 +225,7 @@ class SolConstructor():
             generators_dict_sol['aux_diesel'] = obj_aux
             technologies_dict_sol, renewables_dict_sol = create_technologies (generators_dict_sol, 
                                                                               batteries_dict_sol)
-            
-            #check solution strategy
-            check_strategy = select_strategy(generators_dict = generators_dict_sol,
-                                           batteries_dict = batteries_dict_sol) 
+
             #fefault solution to run
             sol_try = Solution(generators_dict_sol, 
                                batteries_dict_sol, 
@@ -279,11 +236,10 @@ class SolConstructor():
             #val = instance_data['inverter_cost']#first of the functions
             #instance_data['inverter cost'] = calculate_inverter_cost(sol_try.generators_dict_sol,sol_try.batteries_dict_sol,val) 
             #run dispatch strategy with false diesel
-            if (check_strategy in list_ds_diesel):
-                lcoe_cost, df_results, state, time_f, nsh = ds_diesel(sol_try, 
-                                                                      self.demand_df, instance_data, cost_data, my_data, ir)
-            else:
-                state = 'no feasible'
+            
+            lcoe_cost, df_results, state, time_f, nsh = dispatch_my_strategy(sol_try, 
+                                                                             self.demand_df, instance_data, cost_data, delta, rand_ob, my_data, ir)  
+
 
         #create initial solution
         sol_initial = Solution(generators_dict_sol, 
@@ -293,10 +249,10 @@ class SolConstructor():
                                sol_results) 
         
         #if state == 'optimal': 
-        sol_initial.results = Results(sol_initial, df_results, lcoe_cost)
+        sol_initial.results = Results_my(sol_initial, df_results, lcoe_cost)
         sol_initial.feasible = True
         
-        return sol_initial
+        return sol_initial, nsh
 
 
 class SearchOperator():
