@@ -487,6 +487,113 @@ def calculate_energy(batteries_dict, generators_dict, model_results, demand_df):
     return percent_df, energy_df, renew_df, total_df, brand_df
 
 
+def calculate_percent_tec (sol_best, percent_df):
+    """
+    This function provides the average percentage that each technology 
+    provides to the microgrid
+
+    Parameters
+    ----------
+    sol_best : OBJECT OF SOLUTION CLASS
+    percent_df : DATAFAME
+
+    Returns
+    -------
+    mean_total_d : PERCENT
+        Average percentage of load satisfied by diesel generation
+    mean_total_s : PERCENT
+        Average percentage of load satisfied by solar generation
+    mean_total_w : PERCENT
+        Average percentage of load satisfied by eolic generation
+    mean_total_b : PERCENT
+        Average percentage of load satisfied by diesel generation
+
+    """
+    list_d, list_s, list_w, list_b = [], [], [], []
+    for i in sol_best.generators_dict_sol.values():
+        if i.tec == 'S':
+            list_s.append(i.id_gen)
+        elif i.tec == 'D':
+            list_d.append(i.id_gen)
+        elif i.tec == 'W':
+            list_w.append(i.id_gen)
+    for i in sol_best.batteries_dict_sol.values():
+        list_b.append(i.id_bat)
+    
+    mean_total_d = sum(percent_df[f"{i}_%"].mean() for i in list_d)
+    mean_total_s = sum(percent_df[f"{i}_%"].mean() for i in list_s)
+    mean_total_w = sum(percent_df[f"{i}_%"].mean() for i in list_w)
+    mean_total_b = sum(percent_df[f"{i}_%"].mean() for i in list_b if f"{i}_%" in percent_df)
+
+    return mean_total_d, mean_total_s, mean_total_w, mean_total_b
+
+
+def create_excel(sol_best, percent_df, name_file, lcoe_scn = 0, robust_scn = 0, type_model = 0):
+    """
+    This function creates a excel file with the most relevant results
+
+    Parameters
+    ----------
+    sol_best : SOLUTION OBJECT.
+    percent_df : DATAFRAME
+    name_file : STRING
+    lcoe_scn : VALUE, optional
+        Average best scenario lcoe
+    robust_scn : VALUE, optional
+        Average robustness best scenario
+    type_model: BINARY, default = 0
+        0 = deterministic
+        1 = stochastic
+    """
+    lcoe = sol_best.results.descriptive['LCOE']
+    area = sol_best.results.descriptive['area']
+    lpsp_mean = sol_best.results.df_results['LPSP'].mean()
+    wasted_mean = sol_best.results.df_results['Wasted Energy'].mean()
+    mean_total_d, mean_total_s, mean_total_w, mean_total_b = calculate_percent_tec (sol_best,
+                                                                                  percent_df)
+    dict_tecs = {}
+    generators = sol_best.generators_dict_sol.items()
+    batteries = sol_best.batteries_dict_sol.items()
+    
+    for id_gen, generator in generators:
+        dict_tecs[generator.id_gen] = generator.tec
+    
+    for id_bat, battery in batteries:
+        dict_tecs[battery.id_bat] = battery.tec
+    
+    pd_tecs = pd.DataFrame.from_dict(dict_tecs, orient='index', columns=["tec"])
+    
+    if (type_model == 0):
+        rows_df_results = [[lcoe, area, lpsp_mean, wasted_mean,
+                                mean_total_d, mean_total_w, mean_total_s,
+                                mean_total_b]]
+        
+        results_report = pd.DataFrame(rows_df_results, columns=[ "Lcoe","area","lpsp mean",
+                                                                "mean surplus","mean diesel generation", "mean eolic generation",
+                                                                "mean solar generation","mean batteries generation"])
+    elif (type_model == 1):
+        rows_df_results = [[lcoe, area, lpsp_mean, wasted_mean,
+                                mean_total_d, mean_total_w, mean_total_s,
+                                mean_total_b, lcoe_scn, robust_scn]]
+        
+        results_report = pd.DataFrame(rows_df_results, columns=[ "Lcoe","area","lpsp mean",
+                                                                "mean surplus","mean diesel generation", "mean eolic generation",
+                                                                "mean solar generation","mean batteries generation",
+                                                                "average lcoe best solution", "robustness best solution"])
+
+        
+    results_report = results_report.T     
+    results_report.rename(columns = {0:'Results'}, inplace = True)
+    name_excel = str(name_file) + '.xlsx' 
+    writer = pd.ExcelWriter(name_excel, engine='xlsxwriter')
+    results_report.to_excel(writer, sheet_name='descriptive results', startrow = 0 , startcol = 0)
+    pd_tecs.to_excel(writer, sheet_name='descriptive results', startrow = 0 , startcol = 3)
+    sol_best.results.df_results.to_excel(writer, sheet_name='Results')
+    percent_df.to_excel(writer, sheet_name='Percent')            
+    writer.close()  
+    
+    return 
+    
 def interest_rate (i_f, inf):
     '''
     calculates interest rate according to the relationship nominal rate and inflation,

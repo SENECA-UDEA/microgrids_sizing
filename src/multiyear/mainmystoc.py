@@ -41,7 +41,7 @@ from src.support.utilities import read_multiyear_data, create_technologies
 from src.support.utilities import calculate_area, calculate_energy, ils
 from src.support.utilities import fiscal_incentive, calculate_cost_data
 from src.support.utilities import calculate_multiyear_data, interest_rate
-from src.support.utilities import calculate_inverter_cost
+from src.support.utilities import calculate_inverter_cost, create_excel
 from src.support.utilities import create_multiyear_objects
 from src.support.utilities import calculate_stochasticity_forecast
 from src.support.utilities import generate_number_distribution
@@ -337,6 +337,7 @@ else:
     
     average = {}
     robust_solutions = {}
+    optimal_len = {}
     
     #select the robust solutions
     #elects only those that have a proportion of "optimal" 
@@ -354,11 +355,15 @@ else:
             optimal_solutions = [best_solutions[i][j][1] for j in robust_solutions.keys() 
                                  if best_solutions[i][j][0] == "optimal"]
             average[i] = sum(optimal_solutions) / len(optimal_solutions)
+            optimal_len[i] = len(optimal_solutions)/N_SCENARIOS
         
         #select the best solution
         best_sol_position = min(average, key=average.get)       
         
         best_sol = solutions[best_sol_position]
+        average_lcoe_best = average[best_sol_position]
+        average_optimal_sol = optimal_len[best_sol_position]
+        
         
         #return the selected solution
         print(best_sol.results.descriptive)
@@ -373,6 +378,10 @@ else:
                                                                                    best_sol.generators_dict_sol, best_sol.results, demand_scenarios[best_sol_position])
         except KeyError:
             pass
+        
+        #create excel
+        create_excel(best_sol, percent_df, "stochastic", average_lcoe_best,
+                     average_optimal_sol, 1)
         
         #calculate current COP   
         lcoe_cop = TRM * best_sol.results.descriptive['LCOE']
@@ -406,10 +415,12 @@ else:
             
             try:
                 #stats
-                percent_df, energy_df, renew_df, total_df, brand_df = calculate_energy(best_sol0.batteries_dict_sol, 
+                percent_df0, energy_df, renew_df, total_df, brand_df = calculate_energy(best_sol0.batteries_dict_sol, 
                                                                                        best_sol0.generators_dict_sol, best_sol0.results, demand_scenarios[0])
             except KeyError:
                 pass
+            create_excel(best_sol0, percent_df0, "stochastic_origin",
+                         average_lcoe_best, average_optimal_sol, 1)
         else:
             print("The best solution is not feasible in original data")
         

@@ -31,6 +31,7 @@ from src.support.utilities import read_data, create_technologies
 from src.support.utilities import calculate_area, calculate_energy
 from src.support.utilities import fiscal_incentive, calculate_cost_data
 from src.support.utilities import create_objects, interest_rate, ils
+from src.support.utilities import create_excel
 from src.support.classes import RandomCreate
 import pandas as pd 
 from src.simulation.operatorsdispatch import SolConstructor, SearchOperator
@@ -203,11 +204,10 @@ if ('D' in technologies_dict.keys() or 'B' in technologies_dict.keys()
 
             lcoe_cop = TRM * sol_best.results.descriptive['LCOE']
             
-            #create Excel
-            '''
-            sol_best.results.df_results.to_excel("resultsdf.xlsx")    
             
-            '''
+            create_excel(sol_best, percent_df, "deterministic",0 ,0 ,0)
+            
+
     else:
         print('No feasible solution, review data')
 else:
