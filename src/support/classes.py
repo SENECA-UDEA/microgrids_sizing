@@ -203,7 +203,7 @@ class Battery():
         self.eb_zero = eb_zero #Energy that the battery has stored at time 0
         self.soc_max = soc_max #Maximum capacity that the battery can storage
         self.dod_max = dod_max #Maximum depth of discharge
-        self.alpha = alpha #Energy dissipation rate
+        self.alpha = alpha #self-discharge coefficient
         self.area = area #Area
         self.cost_up = cost_up #Investment cost
         self.cost_fopm = cost_fopm #Operation & Maintenance cost
