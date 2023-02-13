@@ -380,7 +380,7 @@ else:
             pass
         
         #create excel
-        create_excel(best_sol, percent_df, "stochastic", average_lcoe_best,
+        create_excel(best_sol, percent_df, "stochasticmy", average_lcoe_best,
                      average_optimal_sol, 1)
         
         #calculate current COP   
@@ -419,7 +419,7 @@ else:
                                                                                        best_sol0.generators_dict_sol, best_sol0.results, demand_scenarios[0])
             except KeyError:
                 pass
-            create_excel(best_sol0, percent_df0, "stochastic_origin",
+            create_excel(best_sol0, percent_df0, "stochasticmy_origin",
                          average_lcoe_best, average_optimal_sol, 1)
         else:
             print("The best solution is not feasible in original data")
