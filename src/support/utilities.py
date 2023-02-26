@@ -4,6 +4,8 @@ Created on Wed Apr 20 13:51:07 2022
 
 @author: scastellanos
 """
+import sys
+sys.path.append('../../')
 from src.support.classes import Solar, Eolic, Diesel, Battery
 from src.simulation.strategies import dispatch_strategy, Results
 from src.multiyear.strategiesmy import Results_my, dispatch_my_strategy

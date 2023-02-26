@@ -3,6 +3,8 @@
 Created on Wed May 11 10:23:49 2022
 @author: scastellanos
 """
+import sys
+sys.path.append('../../')
 from src.support.utilities import create_technologies
 from src.support.utilities import calculate_sizing_cost, interest_rate
 import src.optimization.opt as opt

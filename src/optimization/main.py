@@ -23,7 +23,8 @@ It also has other tools such as generating Excel files or calculating the cost
  according to the representative market rate.
 
 """
-
+import sys
+sys.path.append('../../')
 from src.support.utilities import read_data, create_objects, interest_rate
 from src.support.utilities import calculate_energy, create_technologies
 from src.support.utilities import fiscal_incentive, calculate_cost_data

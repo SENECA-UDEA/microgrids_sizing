@@ -27,6 +27,8 @@ It also has other tools such as generating Excel files or calculating the cost
 
 @author: scastellanos
 """
+import sys
+sys.path.append('../../')
 from src.support.utilities import read_data, calculate_sizing_cost
 from src.support.utilities import create_objects, calculate_area
 from src.support.utilities import create_technologies, calculate_energy
