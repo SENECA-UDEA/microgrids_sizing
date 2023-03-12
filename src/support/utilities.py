@@ -1201,7 +1201,7 @@ def calculate_multiyear_data(demand_df, forecast_df, my_data, years):
             aux_forecast['t'][i] = i
             #first year same 
             if (i < 8760):    
-                aux_demand['demand'][i]= demand_df['demand'][i]
+                aux_demand['demand'][i] = demand_df['demand'][i]
                 aux_forecast['DNI'][i] = forecast_df['DNI'][i]
                 aux_forecast['t_ambt'][i] = forecast_df['t_ambt'][i]
                 aux_forecast['Wt'][i] = forecast_df['Wt'][i]
@@ -1408,8 +1408,8 @@ def best_distribution(data):
     '''
     #available distributions
     dist_names = [
-        "exponweib","norm","weibull_max","weibull_min","pareto", 
-        "genextreme","gamma","beta","rayleigh","invgauss",
+        "norm","weibull_max","weibull_min","pareto", 
+        "gamma","beta","rayleigh","invgauss",
         "uniform","expon", "lognorm","pearson3","triang"
         ]
     dist_results = []
@@ -1437,7 +1437,7 @@ def best_distribution(data):
 
 
 #create stochastic df
-def calculate_stochasticity_demand(rand_ob, demand_df, week_dist, weekend_dist,
+def calculate_stochasticity_demand(rand_ob, demand_df_i, week_dist, weekend_dist,
                                    year, first_day=1):
     '''
     The function iterates over the time index of the demand_df dataframe.
@@ -1455,7 +1455,7 @@ def calculate_stochasticity_demand(rand_ob, demand_df, week_dist, weekend_dist,
     ----------
     rand_ob : OBJECT OF RANDOM GENERATOR CLASS
         Function to calculate random values or sets
-    demand_df : DATAFRAME
+    demand_df_i : DATAFRAME
     week_dist : DICTIONARY
     weekend_dist : DICTIONARY
     Returns
@@ -1470,6 +1470,7 @@ def calculate_stochasticity_demand(rand_ob, demand_df, week_dist, weekend_dist,
         New dataframe
 
     '''
+    demand_df = copy.deepcopy(demand_df_i)
     #first day of the year
     first_january = dt.date(year, 1, 1)
     #check the day of the fist day of the data
@@ -1499,7 +1500,7 @@ def calculate_stochasticity_demand(rand_ob, demand_df, week_dist, weekend_dist,
     return demand_df
     
 
-def calculate_stochasticity_forecast(rand_ob, forecast_df, wind_dist,
+def calculate_stochasticity_forecast(rand_ob, forecast_df_i, wind_dist,
                                      sol_distdni, sol_distdhi, sol_distghi):
     '''
     The function iterates over the time index of the forecast_df dataframe.
@@ -1531,7 +1532,7 @@ def calculate_stochasticity_forecast(rand_ob, forecast_df, wind_dist,
         New dataframe
 
     '''
-
+    forecast_df = copy.deepcopy(forecast_df_i)
     for t in forecast_df['t']:
         #get the hour for the distribution
         hour = t % 24
@@ -1581,16 +1582,12 @@ def generate_random(rand_ob, dist):
         number = 0
     elif (dist[0] == 'triang'):
         number = rand_ob.dist_triang(dist[2][0], dist[2][1], dist[2][2])
-    elif (dist[0] == 'exponweib'):
-        number = rand_ob.dist_exponweib(dist[2][0], dist[2][1], dist[2][2], dist[2][3])
     elif (dist[0] == 'weibull_max'):
         number = rand_ob.dist_weibull_max(dist[2][0], dist[2][1], dist[2][2])
     elif (dist[0] == 'weibull_min'):
         number = rand_ob.dist_weibull_min(dist[2][0], dist[2][1], dist[2][2])
     elif (dist[0] == 'pareto'):
         number = rand_ob.dist_pareto(dist[2][0], dist[2][1], dist[2][2])
-    elif (dist[0] == 'genextreme'):
-        number = rand_ob.dist_genextreme(dist[2][0], dist[2][1], dist[2][2])
     elif (dist[0] == 'gamma'):
         number = rand_ob.dist_gamma(dist[2][0], dist[2][1], dist[2][2])
     elif (dist[0] == 'beta'):

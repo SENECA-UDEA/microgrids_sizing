@@ -346,11 +346,6 @@ class RandomCreate():
         number = max(0, rand_generation[0])
         return number
 
-    def dist_exponweib(self,a, b, c, d):
-        rand_generation = sc.exponweib.rvs(a, b, loc = c, scale = d, size = 1) 
-        number = max(0, rand_generation[0])
-        return number
-
     def dist_weibull_max(self, a, b, c):
         rand_generation = sc.weibull_max.rvs(a, loc = b, scale = c, size = 1) 
         number = max(0, rand_generation[0])
@@ -363,11 +358,6 @@ class RandomCreate():
 
     def dist_pareto(self, a, b, c):
         rand_generation = sc.pareto.rvs(a, loc = b, scale = c, size = 1) 
-        number = max(0, rand_generation[0])
-        return number
-
-    def dist_genextreme(self, a, b, c):
-        rand_generation = sc.genextreme.rvs(a, loc = b, scale = c, size = 1) 
         number = max(0, rand_generation[0])
         return number
 

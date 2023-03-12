@@ -149,7 +149,5 @@ if termination['Temination Condition'] == 'optimal':
 lcoe_cop = TRM * model_results.descriptive['LCOE']
 
 #Create Excel File
-'''
 percent_df.to_excel("percentresults.xlsx")
 model_results.df_results.to_excel("results.xlsx") 
-'''

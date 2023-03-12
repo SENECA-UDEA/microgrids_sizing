@@ -289,10 +289,9 @@ if (sol_best.results != None):
        
         lcoe_cop = TRM * sol_best.results.descriptive['LCOE']
         #create Excel
-        '''
-        sol_best.results.df_results.to_excel("results2.xlsx")         
+        
+        sol_best.results.df_results.to_excel("results.xlsx")         
         percent_df.to_excel("percentresults.xlsx")
 
-        '''
 else:
     print('No feasible solution, review data')

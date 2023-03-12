@@ -318,22 +318,21 @@ else:
     for scn in list_scn:
         #test current solution in all scenarios
         for scn2 in solutions.keys():
-            generators = solutions[scn].generators_dict_sol
-            #update generation solar and wind
-            solutions[scn].generators_dict_sol = update_forecast(generators, 
-                                                                 forecast_scenarios[scn2], instance_data)
             #update fuel cost
             instance_data['fuel_cost'] = fuel_scenarios[scn2]
-            
+            #update generation solar and wind
+            generators_solution = solutions[scn].generators_dict_sol
+            solutions[scn].generators_dict_sol = update_forecast(generators_solution, 
+                                                                 forecast_scenarios[scn2], instance_data)            
             #Run the dispatch strategy process
             lcoe_cost, df_results, state, time_f, nsh = dispatch_my_strategy(solutions[scn],
                                                                              demand_scenarios[scn2], instance_data, cost_data, delta, rand_ob, my_data, ir)
 
             #save the results
             if state == 'optimal':
-                sol_current = copy.deepcopy(solutions[scn])
-                sol_current.results = Results_my(sol_current, df_results, lcoe_cost)
-                best_solutions[scn][scn2] = ['optimal',sol_current.results.descriptive['LCOE'] ]  
+                sol_scn = copy.deepcopy(solutions[scn])
+                sol_scn.results = Results_my(sol_scn, df_results, lcoe_cost)
+                best_solutions[scn][scn2] = ['optimal',sol_scn.results.descriptive['LCOE']]
             else:
                 best_solutions[scn][scn2] = ['No feasible', math.inf] 
     
@@ -391,9 +390,9 @@ else:
         
         '''get the best solution in original data'''
         
-        generators = solutions[best_sol_position].generators_dict_sol
+        generators_0 = solutions[best_sol_position].generators_dict_sol
         #update generation solar and wind
-        solutions[best_sol_position].generators_dict_sol = update_forecast(generators, 
+        solutions[best_sol_position].generators_dict_sol = update_forecast(generators_0, 
                                                              forecast_scenarios[0], instance_data)
         #update fuel cost
         instance_data['fuel_cost'] = fuel_scenarios[0]
@@ -408,6 +407,8 @@ else:
             best_sol0 = copy.deepcopy(solutions[best_sol_position])
             best_sol0.results = Results_my(best_sol0, df_results, lcoe_cost)
             best0_nsh = nsh
+            #calculate area
+            best_sol0.results.descriptive['area'] = calculate_area(best_sol0)
            
             print(best_sol0.results.descriptive)
             print(best_sol0.results.df_results)
@@ -426,9 +427,3 @@ else:
         else:
             print("The best solution is not feasible in original data")
         
-        '''
-        #create Excel
-        sol_best.results.df_results.to_excel("resultsolarbat.xlsx")         
-        percent_df.to_excel("percentresultssolarbat.xlsx")
-        
-        '''
