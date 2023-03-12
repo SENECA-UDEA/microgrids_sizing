@@ -940,7 +940,6 @@ def get_solar_parameters(LT, TZ, dia, Long, Latit):
 
     if abs(k_total) > 1.0:## vancouver essay
         k_total = k_total / abs(k_total)
-    # print(k_total)
 
     Azimuth = np.arccos(k_total)
     if min_to_hms(LST)[0] >= 12:#Correction after noon
@@ -1786,7 +1785,7 @@ def ils(N_ITERATIONS, sol_current, sol_best, search_operator,
         elif (type_model == 'ILS-DS-MY'):
             lcoe_cost, df_results, state, time_f, nsh = dispatch_my_strategy(sol_try, demand_df, 
                                                                              instance_data, cost_data, delta, rand_ob, my_data, ir)
-        print("finish simulation - state: " + state)
+        #print("finish simulation - state: " + state)
         #Create results
         if state == 'optimal':
             if (type_model == 'ILS-DS'):

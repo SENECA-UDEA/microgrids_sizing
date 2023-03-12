@@ -1099,7 +1099,6 @@ def dispatch_strategy(sol_try, demand_df, instance_data, cost_data, CRF, delta, 
     strategy_def = select_strategy(generators_dict = sol_try.generators_dict_sol,
                                    batteries_dict = sol_try.batteries_dict_sol) 
     
-    print("defined strategy")
     #run the dispatch strategy
     if (strategy_def in list_ds_diesel):
         lcoe_cost, df_results, state, time_f, nsh = ds_diesel(sol_try, 

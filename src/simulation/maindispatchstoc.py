@@ -276,20 +276,18 @@ for scn in range(N_SCENARIOS):
                                               demand_df, cost_data,'ILS-DS', best_nsh, CRF, 0, {})
                 
             if ('aux_diesel' in sol_best.generators_dict_sol.keys()):
-                print('Not Feasible solutions')
+                print('Not Feasible solutions in scenario #' + str(scn))
             else:
                 #df with the feasible solutions
                 df_iterations = pd.DataFrame(rows_df, columns=["i","feasible","area", 
                                                                "LCOE_actual","LCOE_Best","Movement"])
-                #print results best solution
-                print(sol_best.results.descriptive)
-                print(sol_best.results.df_results)
+                print('solution found in scenario #' + str(scn))
                 #save the solution
                 solutions[scn] = sol_best
         else:
-            print('No feasible solution, review data')
+            print('No feasible solution in scenario #' + str(scn))
     else:
-        print('No feasible solution, solution need diesel generators or batteries')
+        print('Solution need diesel generators or batteries, no feasible solution in scenario #' + str(scn))
     del demand_df
     del forecast_df
 
