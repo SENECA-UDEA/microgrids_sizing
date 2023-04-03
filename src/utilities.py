@@ -4,11 +4,10 @@ Created on Wed Apr 20 13:51:07 2022
 
 @author: scastellanos
 """
-import sys
-sys.path.append('../../')
-from src.support.classes import Solar, Eolic, Diesel, Battery
-from src.simulation.strategies import dispatch_strategy, Results
-from src.multiyear.strategiesmy import Results_my, dispatch_my_strategy
+
+from classes import Solar, Eolic, Diesel, Battery
+from strategies import dispatch_strategy, Results
+from strategies import Results_my, dispatch_my_strategy
 import pandas as pd
 import requests
 import json 
@@ -593,7 +592,7 @@ def create_excel(sol_best, percent_df, name_file, lcoe_scn = 0, robust_scn = 0, 
     sol_best.results.df_results.to_excel(writer, sheet_name='Results')
     percent_df.to_excel(writer, sheet_name='Percent')            
     writer.close()  
-    
+
     return 
     
 def interest_rate (i_f, inf):
@@ -755,7 +754,821 @@ def fiscal_incentive (credit, depreciation, corporate_tax, ir, T1, T2):
     
     return delta
 
+
+'''ILS'''
+
+def ils(N_ITERATIONS, sol_current, sol_best, search_operator,
+        REMOVE_FUNCTION, ADD_FUNCTION,delta, rand_ob, instance_data, AMAX,
+        demand_df, cost_data, type_model, best_nsh, CRF = 0, ir = 0, my_data = {}):
+    '''
+    This function performs the iterated local search, creates a dataframe 
+    to save the report of each iteration, part of a current solution and a 
+    better solution, which at the beginning are the same, depending on the
+    solution that is handling whether it is feasible or not, determines
+    whether to do the function add or the function remove, it is also checked
+    if the ils have to do grasp or random. As there are different models, 
+    the model has slight variations if it is multi-year or not.
+    If the solution is feasible it saves it and generates the results,
+    and if it has the lowest lcoe it saves it as the best solution and counts
+    the number of hours not served for this solution.
+    
+    At the end it calculates the area of the solution to check
+    in the next iteration if there is more space or not and at the end
+    it has the report of the best solution together with its results.
+
+    Parameters
+    ----------
+    N_ITERATIONS : NUMBER - INTEGER
+    sol_current : OBJECT OF SOLUTION CLASS
+    sol_best : OBJECT OF SOLUTION CLASS
+    search_operator : OBJECT OF OPERATORS
+    REMOVE_FUNCTION : STRING
+        GRASP or RANDOM
+    ADD_FUNCTION : STRING
+        GRASP or RANDOM
+    delta : NUMBER - PERCENT
+    rand_ob : OBJECT OF RANDOM CLASS
+    instance_data : NUMBER - PERCENT
+    AMAX : NUMBER - DF
+    demand_df : DATAFRAME
+    cost_data : DICTIONARY
+    type_model : String
+        ILS-DS = Iterated local search + Dispatch Strategy
+        ILS-DS-MY = Iterated local search + Dispatch Strategy + Multiyear
+    best_nsh : VALUE - INTEGER
+        initial best not served hours of initial best solution
+    CRF : NUMBER - PERCENT, optional
+        Used only in not multiyear model. The default is 0, to avoid errors
+    ir : NUMBER - PERCENT, optional
+        Used only in multiyear model. The default is 0, to avoid errors
+    my_data : DICTIONATY, optional
+        Used only in multiyear model.. The default is {}, to avoid errors
+
+    Returns
+    -------
+    sol_best : OBJECT OF SOLUTION CLASS
+        Best solution that solves the model - lowest LCOE
+    best_nsh : NUMBER - INTEGER
+        Number of not served hours in the best solution
+    rows_df : DATAFRAME
+        Iterations report
+
+    '''
+
+    rows_df = []
+    movement = "initial solution"
+    for i in range(N_ITERATIONS):
+        #create df to export results
+        rows_df.append([i, sol_current.feasible, 
+                        sol_current.results.descriptive['area'], 
+                        sol_current.results.descriptive['LCOE'], 
+                        sol_best.results.descriptive['LCOE'], movement])
+        
+        if sol_current.feasible:     
+        # save copy as the last solution feasible seen
+            sol_feasible = copy.deepcopy(sol_current) 
+            # Remove a generator or battery from the current solution
+            if (REMOVE_FUNCTION == 'GRASP'): 
+                if (type_model == 'ILS-DS'):                       
+                    sol_try, remove_report = search_operator.remove_object(sol_current, 
+                                                                           delta, rand_ob, 'DS', CRF)
+                elif (type_model == 'ILS-DS-MY'):
+                    sol_try, remove_report = search_operator.remove_object(sol_current, delta, 
+                                                                           rand_ob, 'MY', 0)
+            elif (REMOVE_FUNCTION == 'RANDOM'):
+                sol_try, remove_report = search_operator.remove_random_object(sol_current, rand_ob)
+    
+            movement = "Remove"
+        else:
+            #  Create list of generators that could be added
+            list_available_bat, list_available_gen, list_tec_gen  = search_operator.available_items(sol_current, AMAX)
+            if (list_available_gen != [] or list_available_bat != []):
+                # Add a generator or battery to the current solution
+                if (ADD_FUNCTION == 'GRASP'):
+                    if (type_model == 'ILS-DS'): 
+                        sol_try, remove_report = search_operator.add_object(sol_current, 
+                                                                            list_available_bat, list_available_gen, list_tec_gen, remove_report, 
+                                                                            instance_data['fuel_cost'], rand_ob, delta, 'DS', CRF)
+                    
+                    elif (type_model == 'ILS-DS-MY'):
+                        sol_try, remove_report = search_operator.add_object(sol_current, 
+                                                                            list_available_bat, list_available_gen, list_tec_gen, 
+                                                                            remove_report, instance_data['fuel_cost'], rand_ob, delta, 'MY', 0)
+                elif (ADD_FUNCTION == 'RANDOM'):
+                    sol_try = search_operator.add_random_object(sol_current, 
+                                                                list_available_bat, list_available_gen, list_tec_gen, rand_ob)
+                movement = "Add"
+            else:
+                # return to the last feasible solution
+                sol_current = copy.deepcopy(sol_feasible)
+                continue # Skip running the model and go to the begining of the for loop
+
+        #calculate inverter cost with installed generators
+        #val = instance_data['inverter_cost']#first of the functions
+        #instance_data['inverter cost'] = calculate_inverter_cost(sol_try.generators_dict_sol,
+        #sol_try.batteries_dict_sol,val)
+        
+        #Run the dispatch strategy process
+        if (type_model == 'ILS-DS'):
+            lcoe_cost, df_results, state, time_f, nsh = dispatch_strategy(sol_try, demand_df,
+                                                                          instance_data, cost_data, CRF, delta, rand_ob)
+        elif (type_model == 'ILS-DS-MY'):
+            lcoe_cost, df_results, state, time_f, nsh = dispatch_my_strategy(sol_try, demand_df, 
+                                                                             instance_data, cost_data, delta, rand_ob, my_data, ir)
+        #print("finish simulation - state: " + state)
+        #Create results
+        if state == 'optimal':
+            if (type_model == 'ILS-DS'):
+                sol_try.results = Results(sol_try, df_results, lcoe_cost)
+            elif (type_model == 'ILS-DS-MY'):
+                sol_try.results = Results_my(sol_try, df_results, lcoe_cost)
+            sol_try.feasible = True
+            sol_current = copy.deepcopy(sol_try)
+            #Search the best solution
+            if sol_try.results.descriptive['LCOE'] <= sol_best.results.descriptive['LCOE']:
+                #calculate area
+                sol_try.results.descriptive['area'] = calculate_area(sol_try)
+                #save sol_best
+                sol_best = copy.deepcopy(sol_try)   
+                best_nsh = nsh
+    
+        else:
+            sol_try.feasible = False
+            df_results = []
+            lcoe_cost = None
+            if (type_model == 'ILS-DS'):
+                sol_try.results = Results(sol_try, df_results, lcoe_cost)
+            elif (type_model == 'ILS-DS-MY'):
+                sol_try.results = Results_my(sol_try, df_results, lcoe_cost)
+            sol_current = copy.deepcopy(sol_try)
+        
+        #calculate area
+        sol_current.results.descriptive['area'] = calculate_area(sol_current)
+        #delete to avoid overwriting
+        del df_results
+        del sol_try
+        
+    return sol_best, best_nsh, rows_df    
+      
+'MULTIYEAR'
+
+def read_multiyear_data(demand_filepath, 
+                        forecast_filepath,
+                        units_filepath,
+                        instance_filepath,
+                        fiscal_filepath,
+                        cost_filepath,
+                        my_filepath):
+    '''
+    The codes uses the pd.read_csv() function from the pandas library to read 
+    in the contents of the forecast_filepath and demand_filepath files 
+    into dataframes forecast_df and demand_df respectively.
+
+    It then uses the read_json_data function to read in the contents 
+    of the units_filepath, instance_filepath, fiscal_filepath, my_filepath 
+    and cost_filepath into variables generators_data, instance_data, 
+    fiscal_data, my_data and cost_data respectively.
+
+    Then it extracts the 'generators' and 'batteries' field from 
+    the generators_data and assigns it to the variables
+    generators and batteries respectively.
+
+    Finally, the function returns the dataframes and variables
+    
+    Unlike its similar function, this one has an additional variable
+    as it is used for the multi-year project.
+
+    Parameters
+    ----------
+    demand_filepath : PATH
+        Demand data location
+    forecast_filepath : PATH
+        Forecast data Location (wind speed and irradiation)
+    units_filepath : PATH
+        Batteries and generators data location
+    instance_filepath : PATH
+        Instance paramaters data location
+    fiscal_filepath : PATH
+        Fiscal incentive data location
+    cost_filepath : PATH
+        Auxiliar cost data location - parameters for associated cost
+    my_filepath : PATH
+        Data location for multi-year calculations
+        
+    Returns
+    -------
+    demand_df, forecast_df : DATAFRAMES
+    generators, batteries : LIST
+    instance_data, fiscal_data, cost_data, my_data : DICTIONARIES
+
+    '''
+    forecast_df = pd.read_csv(forecast_filepath)
+    demand_df = pd.read_csv(demand_filepath)
+
+    generators_data = read_json_data(units_filepath)
+    generators = generators_data.get('generators', {})
+    batteries = generators_data.get('batteries', {})
+    
+    instance_data = read_json_data(instance_filepath)
+    fiscal_data = read_json_data(fiscal_filepath)
+    cost_data = read_json_data(cost_filepath)
+    my_data = read_json_data(my_filepath)
+   
+    return demand_df, forecast_df, generators, batteries, instance_data, fiscal_data, cost_data, my_data
+
+
+def create_multiyear_objects(generators, batteries, forecast_df, 
+                             demand_df, instance_data, my_data):
+    
+    '''
+    This function creates objects for generators and batteries 
+    based on their types (Solar, Eolic, Diesel, and Battery)
+    and initializing them with certain values. 
+
+    For each generator in the "generators" list, the function checks 
+    the "tec" key to determine the type of generator. 
+    If it is of type "S" (Solar), the function creates a Solar object,
+    calls several methods on the object
+    (irradiance_panel, get_inoct, solar_generation, solar_cost)
+    and assigns the object to the key of "id_gen" in the "generators_dict" 
+    If it is of type "W" (Eolic), the function creates an Eolic object, 
+    calls several methods on the object (eolic_generation, eolic_cost) 
+    and assigns the object to the key of "id_gen" in the "generators_dict" 
+    .If it is of type "D" (Diesel) the function creates a Diesel object, 
+    and assigns the object to the key of "id_gen" in the "generators_dict" 
+   
+    For each battery in the "batteries" list, the function creates
+    a Battery object, calls the "calculate_soc" method on the object
+    and assigns the object to the key of "id_bat" in the "batteries_dict" 
+   
+    Unlike its similar function, this one has an additional variable
+    as it is used for the multi-year project; 
+    so use equipment degradation rate for each year
+    
+    Parameters
+    ----------
+    generators : LIST
+    batteries : LIST
+    forecast_df : DATAFRAME
+    demand_df : DATAFRAME
+    instance_data : DICTIONARY
+    my_data : DICTIONARY
+
+    Returns
+    -------
+    generators_dict : DICTIONARY
+        Dictionary with generators with their specific class - technology 
+        associated
+    batteries_dict : DICTIONARY
+        Dictionary with batteries, and their attributes of battery class
+
+    '''
+    generators_dict = {}
+    for k in generators:
+      if k['tec'] == 'S':
+        obj_aux = Solar(*k.values())
+        irr = irradiance_panel (forecast_df, instance_data)
+        obj_aux.get_inoct(instance_data["caso"], instance_data["w"])
+        obj_aux.solar_generation( forecast_df['t_ambt'], irr,
+                                 instance_data["G_stc"], my_data["sol_deg"])
+        obj_aux.solar_cost()
+      elif k['tec'] == 'W':
+        obj_aux = Eolic(*k.values())
+        obj_aux.eolic_generation(forecast_df['Wt'], instance_data["h2"]
+                                 , instance_data["coef_hel"], my_data["wind_deg"] )
+        obj_aux.eolic_cost()
+      elif k['tec'] == 'D':
+        obj_aux = Diesel(*k.values())   
+        
+      generators_dict[k['id_gen']] = obj_aux
+      
+    batteries_dict = {}
+    for l in batteries:
+        obj_aux = Battery(*l.values())
+        batteries_dict[l['id_bat']] = obj_aux
+        batteries_dict[l['id_bat']].calculate_soc()
+    return generators_dict, batteries_dict
+
+
+def calculate_multiyear_data(demand_df, forecast_df, my_data, years):
+    '''
+    It creates two new dataframes called 'demand' and 'forecast'
+    that are multi-year dataframes based on the input dataframes. 
+    
+    It first creates empty dataframes with the same columns as the input
+    dataframes and the same number of rows as the number of years passed 
+    in multiplied by 8760 (number of hours in a year). It then populates
+    these dataframes with the data from the input dataframes,
+    adjusting values as necessary (e.g. applying a demand tax) 
+    for each year beyond the first year. 
+    
+    It has the binary option of using the default data or not,
+    If 1 is placed, the data entered by the user that already contains 
+    all the years is used
+    If 0 is placed, the program makes the projection 
+    from the first year to the other years.
+    
+    Example default data
+    --------------------
+            1 = do not do calculations, the user already has the entire time horizon
+            0 = do the calculations as a first year projection
+    
+    Parameters
+    ----------
+    demand_df : DATAFRAME
+    forecast_df : DATAFRAME
+    my_data : DICTIONARY
+    years : PARAMETER
+        Project time horizon
+
+    Returns
+    -------
+    demand : DATAFRAME
+        Multiyear demand
+    forecast : DATAFRAME
+        Multiyear forecast
+
+    '''
+    #check default data
+    default_data = my_data['default_data']
+    if (default_data == 1):
+        demand = copy.deepcopy(demand_df)
+        forecast = copy.deepcopy(forecast_df)
+    else:
+        #total hours
+        len_total = 8760 * years
+        aux_demand = {k : [0] * (len_total) for k in demand_df}
+        aux_forecast = {k : [0] * (len_total) for k in forecast_df}
+        
+        for i in range(len_total):
+            aux_demand['t'][i] = i
+            aux_forecast['t'][i] = i
+            #first year same 
+            if (i < 8760):    
+                aux_demand['demand'][i] = demand_df['demand'][i]
+                aux_forecast['DNI'][i] = forecast_df['DNI'][i]
+                aux_forecast['t_ambt'][i] = forecast_df['t_ambt'][i]
+                aux_forecast['Wt'][i] = forecast_df['Wt'][i]
+                aux_forecast['Qt'][i] = forecast_df['Qt'][i]
+                aux_forecast['GHI'][i] = forecast_df['GHI'][i]
+                aux_forecast['day'][i] = forecast_df['day'][i]
+                aux_forecast['SF'][i] = forecast_df['SF'][i]
+                aux_forecast['DHI'][i] = forecast_df['DHI'][i]
+            #others years
+            else:
+                #get the year
+                k = math.floor(i / 8760)
+                #apply tax
+                val = demand_df['demand'][i - 8760 * k] * (1 + my_data["demand_tax"]) ** k
+                #asign value
+                aux_demand['demand'][i] = val
+                #forecast is the same that first year
+                val2 = forecast_df['DNI'][i - 8760 * k]
+                aux_forecast['DNI'][i] = val2
+                aux_forecast['t_ambt'][i] = forecast_df['t_ambt'][i - 8760 * k]
+                val3 = forecast_df['Wt'][i - 8760 * k]
+                aux_forecast['Wt'][i] = val3
+                aux_forecast['Qt'][i] = forecast_df['Qt'][i - 8760 * k]
+                val4 = forecast_df['GHI'][i - 8760 * k]
+                aux_forecast['GHI'][i] = val4
+                aux_forecast['day'][i] = forecast_df['day'][i - 8760 * k]
+                aux_forecast['SF'][i] = forecast_df['SF'][i - 8760 * k]
+                val5 = forecast_df['DHI'][i - 8760 * k]
+                aux_forecast['DHI'][i] = val5      
+                
+        #create dataframe
+        demand = pd.DataFrame(aux_demand, columns=['t','demand'])
+        forecast = pd.DataFrame(aux_forecast, columns=['t','DNI','t_ambt','Wt', 
+                                               'Qt','GHI','day','SF','DHI'])
+        
+    return demand, forecast
+
+'STOCHASTICITY'
+
+#create the hourly dataframe
+def hour_data(data):
+    '''
+    This function takes in a dataframe as input, and creates a new dataframe
+    with hourly granularity. 
+    
+    The new dataframe is represented as a dictionary, 
+    where the keys are the hours of the day (0-23) and the values are lists 
+    of data for that hour, one element for each day. The original dataframe's 
+    index is used to determine the hour and day for each data point, 
+    which is then used to populate the appropriate element in the new dataframe. 
+
+    Parameters
+    ----------
+    data : DICTIONARY
+        Year data used
+
+    Returns
+    -------
+    vec : DATAFRAME
+        new hourly dataframe.
+
+    '''
+    hours_size = len(data) / 24
+    vec = {k : [0] * int(hours_size) for k in range(int(24))}
+    
+    for t in data.index.tolist():
+        #get the hour
+        hour_day = t % 24
+        #get the day
+        day_year = math.floor(t / 24)
+        #create data
+        vec[hour_day][day_year] = data[t]
+        
+    return vec
+
+
+def week_vector_data(data, year, first_day=1):
+    """
+    This function separates data into separate dataframes
+    for weekdays and weekends. The input "data" is a dataframe containing data 
+    that the user wants to separate by weekdays and weekends. 
+    The input "year" is an integer specifying the year the data is from, 
+    and "first_day" is an integer specifying the first day of the data,
+    with a default value of 1 (January 1st). The function then calculates
+    the initial and final days of the data, and uses the number of weekdays
+    and weekends to create two dataframes "dem_week_vec" and "dem_weekend_vec"
+    with the data separated by weekday and weekend respectively.
+    The function then returns the two dataframes.
+
+    Parameters
+    ----------
+    data : DATAFRAME
+        Data from which the time separation between week and weekend 
+        will be made, for example the demand.
+    year : INTEGER
+        year from which the data is taken, for example 2018
+    first_day : INTEGER
+        first day of the database, by default it starts on the first of January, 
+        a number between 1 and 365 is placed, 
+        the number 32 would correspond to the first of February
+
+    Returns
+    -------
+    dem_week_vec : DATAFRAME
+        Hourly Dataframe, and for each day fill it with the demand data 
+        that is not a weekend
+    dem_weekend_vec : DATAFRAME
+        Hourly Dataframe, and for each day fill it with the demand data 
+        that is a weekend
+
+    """
+    #first day of the year
+    first_january = dt.date(year, 1, 1)
+    #check the day of the fist day of the data
+    initial_day = dt.timedelta(int(first_day) - 1) + first_january
+    initial_day_number = int(initial_day.strftime("%w"))
+    #get the last day
+    hours_size = len(data) / 24
+    final_day = dt.timedelta(int(hours_size)) + initial_day
+    
+    #number of week and weekend days
+    day_number = initial_day_number
+    end = final_day
+    start = initial_day
+    days = np.busday_count(start, end)
+
+    dem_week_vec = {k : [0] * int(days) for k in range(int(24))}
+    dem_weekend_vec = {k : [0] * int(hours_size - days) for k in range(int(24))}
+    day_week = -1
+    day_weekend = -1
+    
+    for t in data.index.tolist():
+        #get the hour
+        hour_day = t%24
+        #calculate the week day
+        if ((hour_day == 0) and (day_number == 6) and (t != 0)):
+            day_number = 0
+        elif ((hour_day == 0) and (t != 0)):
+            day_number += 1
+        
+        
+        if (day_number != 6 and day_number != 0):
+            #create data
+            dem_week_vec[hour_day][day_week] = data[t]
+            if (hour_day == 0):
+                day_week += 1
+        else:
+            dem_weekend_vec[hour_day][day_weekend] = data[t]
+            if (hour_day == 0):
+                day_weekend += 1
+    return dem_week_vec, dem_weekend_vec
+
+
+def get_best_distribution(vec):
+    '''
+    Fix a distribution for each set
+
+    Parameters
+    ----------
+    vec : DATAFRAME
+
+    Returns
+    -------
+    dist : DICTIONARY
+        To each vector in the data frame returns 
+        the best associated probability distribution
+
+    '''
+    #get the total hours
+    hours = len(vec)
+    dist = {}
+
+    #calculate distribution of df
+    for i in range(int(hours)):
+        dist[i] = best_distribution(vec[i])
+    return dist
+
+
+def best_distribution(data):
+    '''
+    This function takes in a data set as input, and attempts to find
+    the best fitting probability distribution for the data. 
+    It does this by iterating through a list of pre-defined distributions 
+    using the SciPy library's "getattr" function and "fit" method. 
+    It then applies the Kolmogorov-Smirnov test to each distribution
+    and gets the p-value. 
+    The function then selects the distribution that has the highest p-value 
+    and returns the name of the distribution, its p-value and its parameters.
+    If the sum of the data is 0 and the standard deviation is also 0,
+    the function returns "No distribution" and None as the best distribution.
+
+    Parameters
+    ----------
+    data : DATAFRAME
+
+    Returns
+    -------
+    best_dist : VALUE
+    best_p : VALUE
+    params[best_dist] : VALUE
+        Parameters associated to the best distribution
+
+    '''
+    #available distributions
+    dist_names = [
+        "norm","weibull_max","weibull_min","pareto", 
+        "gamma","beta","rayleigh","invgauss",
+        "uniform","expon", "lognorm","pearson3","triang"
+        ]
+    dist_results = []
+    params = {}
+    #if 0 no distribution, 0 value, example solar generator at night
+    if (sum(data) == 0 and np.std(data) == 0):
+        best_dist = 'No distribution'
+        best_p = None
+        params[best_dist] = 0
+    else:
+        #fit each distribution
+        for dist_name in dist_names:
+            dist = getattr(st, dist_name)
+            param = dist.fit(data)
+            params[dist_name] = param
+            # Applying the Kolmogorov-Smirnov test and get p-value
+            D, p = st.kstest(data, dist_name, args = param)
+            dist_results.append((dist_name, p))
+    
+        # select the best fitted distribution
+        best_dist, best_p = (max(dist_results, key = lambda item: item[1]))
+        # store the name of the best fit and its p value
+
+    return best_dist, best_p, params[best_dist]
+
+
+#create stochastic df
+def calculate_stochasticity_demand(rand_ob, demand_df_i, week_dist, weekend_dist,
+                                   year, first_day=1):
+    '''
+    The function iterates over the time index of the demand_df dataframe.
+    For each time step, it extracts the hour of the day from the index and
+    uses it to look up the appropriate probability distribution from 
+    the dem_dist dictionary. Previously, the model checks whether it should use
+    the weekly or weekend distribution, depending on the corresponding day
+    of the week. It then generates a random number using
+    the rand_ob object and the selected probability distribution. 
+    The function then updates the demand_df dataframe by adding 
+    the generated random number as a new column at the corresponding time step.
+    Finally, the function returns the updated demand_df dataframe.
+
+    Parameters
+    ----------
+    rand_ob : OBJECT OF RANDOM GENERATOR CLASS
+        Function to calculate random values or sets
+    demand_df_i : DATAFRAME
+    week_dist : DICTIONARY
+    weekend_dist : DICTIONARY
+    Returns
+    year : INTEGER
+        year from which the data is taken, for example 2018
+    first_day : INTEGER
+        first day of the database, by default it starts on the first of January, 
+        a number between 1 and 365 is placed, 
+        the number 32 would correspond to the first of February
+    -------
+    demand_df : DATAFRAME
+        New dataframe
+
+    '''
+    demand_df = copy.deepcopy(demand_df_i)
+    #first day of the year
+    first_january = dt.date(year, 1, 1)
+    #check the day of the fist day of the data
+    initial_day = dt.timedelta(int(first_day) - 1) + first_january
+    initial_day_number = int(initial_day.strftime("%w"))
+    
+    #number of week and weekend days
+    day_number = initial_day_number
+              
+    for t in demand_df['t']:
+        #get the hour for the distribution
+        hour = t % 24
+        #calculate the week day
+        if ((hour == 0) and (day_number == 6) and (t != 0)):
+            day_number = 0
+        elif ((hour == 0) and (t != 0)):
+            day_number += 1
+        #generate one random number for each hour, select week or weekend
+        if (day_number != 6 and day_number != 0):  
+            obj = generate_random(rand_ob, week_dist[hour])
+            demand_df.loc[t] = [t,obj]
+        else:
+            obj = generate_random(rand_ob, weekend_dist[hour])
+            demand_df.loc[t] = [t,obj]            
   
+    return demand_df
+    
+
+def calculate_stochasticity_forecast(rand_ob, forecast_df_i, wind_dist,
+                                     sol_distdni, sol_distdhi, sol_distghi):
+    '''
+    The function iterates over the time index of the forecast_df dataframe.
+    For each time step, it extracts the hour of the day from the index 
+    and uses it to look up the appropriate probability distributions 
+    from the wind_dist, sol_distdni, sol_distdhi, and sol_distghi dictionaries.
+    It then generates a random number using the rand_ob object 
+    and the selected probability distributions. 
+    The function then updates the forecast_df dataframe by adding 
+    the generated random numbers as new columns at the corresponding time step. 
+
+    Parameters
+    ----------
+    rand_ob : OBJECT OF RANDOM GENERATOR CLASS
+        Function to calculate random values or sets
+    forecast_df : DATAFRAME
+    wind_dist : DICTIONARY
+        For Wind speed.
+    sol_distdni : DICTIONARY
+        For Direct normal Irradiance
+    sol_distdhi : DICTIONARY
+        For Diffuse Horizontal Irradiance
+    sol_distghi : DICTIONARY
+        For Global horizontal Irradiance
+
+    Returns
+    -------
+    forecast_df : DATAFRAME
+        New dataframe
+
+    '''
+    forecast_df = copy.deepcopy(forecast_df_i)
+    for t in forecast_df['t']:
+        #get the hour for the distribution
+        hour = t % 24
+        #generate one random number for each hour (demand and forecast)
+        nf_w = generate_random(rand_ob, wind_dist[hour])
+        nf_dni = generate_random(rand_ob, sol_distdni[hour])
+        nf_dhi = generate_random(rand_ob, sol_distdhi[hour])
+        nf_ghi = generate_random(rand_ob, sol_distghi[hour])
+        t_ambt = forecast_df['t_ambt'][t]
+        Qt = forecast_df['Qt'][t]
+        day = forecast_df['day'][t]
+        SF = forecast_df['SF'][t]
+        forecast_df.loc[t] = [t, nf_dni, t_ambt, nf_w, Qt, nf_ghi, day, SF, nf_dhi]
+               
+    return forecast_df
+    
+
+#generate one random number with distribution
+def generate_random(rand_ob, dist):
+    '''
+    The function first checks the name of the distribution from dist[0], 
+    It then checks different probability distributions and call 
+    the appropriate method of rand_ob and pass the parameters if the name
+    of the distribution is matched.
+    
+    If the distribution name is not matched with any of the names it returns 0.
+    Finally, the function returns the generated random number.
+
+    Parameters
+    ----------
+    rand_ob : TYPE
+        DESCRIPTION.
+    dist : DICTIONARY
+        Contains the name of the distribution and its parameters
+
+    Returns
+    -------
+    Number : VALUE
+        Random number generated
+
+    '''
+    if (dist[0] == 'norm'):
+        number = rand_ob.dist_norm(dist[2][0], dist[2][1])
+    elif (dist[0] == 'uniform'):
+        number = rand_ob.dist_uniform(dist[2][0], dist[2][1])
+    elif(dist[0] == 'No distribution'):
+        number = 0
+    elif (dist[0] == 'triang'):
+        number = rand_ob.dist_triang(dist[2][0], dist[2][1], dist[2][2])
+    elif (dist[0] == 'weibull_max'):
+        number = rand_ob.dist_weibull_max(dist[2][0], dist[2][1], dist[2][2])
+    elif (dist[0] == 'weibull_min'):
+        number = rand_ob.dist_weibull_min(dist[2][0], dist[2][1], dist[2][2])
+    elif (dist[0] == 'pareto'):
+        number = rand_ob.dist_pareto(dist[2][0], dist[2][1], dist[2][2])
+    elif (dist[0] == 'gamma'):
+        number = rand_ob.dist_gamma(dist[2][0], dist[2][1], dist[2][2])
+    elif (dist[0] == 'beta'):
+        number = rand_ob.dist_beta(dist[2][0], dist[2][1], dist[2][2], dist[2][3])
+    elif (dist[0] == 'rayleigh'):
+        number = rand_ob.dist_rayleigh(dist[2][0], dist[2][1])
+    elif (dist[0] == 'invgauss'):
+        number = rand_ob.dist_invgauss(dist[2][0], dist[2][1], dist[2][2])
+    elif (dist[0] == 'expon'):
+        number = rand_ob.dist_expon(dist[2][0], dist[2][1])
+    elif (dist[0] == 'lognorm'):
+        number = rand_ob.dist_lognorm(dist[2][0], dist[2][1], dist[2][2])
+    elif (dist[0] == 'pearson3'):
+        number = rand_ob.dist_pearson3(dist[2][0], dist[2][1], dist[2][2])        
+    else:
+        number = 0
+    return number
+
+
+def generate_number_distribution(rand_ob, param, limit):
+    '''
+    Generates triangular distribution for parameters like fuel cost
+    
+    Parameters
+    ----------
+    rand_ob : OBJECT OF RANDOM GENERATOR CLASS
+        Function to calculate random values or sets
+    param : VALUE
+        mean value for triangular distribution
+    limit : VALUE
+        deviation for triangular distribution (left and right symmetric)
+
+    Returns
+    -------
+    number : VALUE
+        Random number generated
+
+    '''
+    #simetric triangular
+    a = param * (1 - limit)
+    b = param
+    c = param * (1 + limit)
+    number = rand_ob.dist_triangular(a,b,c)
+    return number
+
+
+def update_forecast(generators, forecast_df, instance_data):
+    """
+   This function is used to update the hourly generation and variable
+   cost data for renewable energies when there is a change in the forecast 
+
+    Parameters
+    ----------
+    generators : DICTIONARY
+    forecast_df : DATAFRAME
+    instance_data : DICTIONARY
+
+
+    Returns
+    -------
+    generators_dict : DICTIONARY UPDATED
+
+    """
+    generators_dict = copy.deepcopy(generators)
+    irr = irradiance_panel (forecast_df, instance_data)
+    for gen in generators_dict.values():
+        if (gen.tec == 'S'):
+            gen.solar_generation( forecast_df['t_ambt'], irr, instance_data["G_stc"], 0)
+            gen.solar_cost()
+        if (gen.tec == 'W'):
+            gen.eolic_generation(forecast_df['Wt'], instance_data["h2"],
+                                     instance_data["coef_hel"], 0)
+            gen.eolic_cost()
+
+ 
+    return generators_dict
+
+'SOLAR'  
+    
 def irradiance_panel (forecast_df, instance_data):
     '''
     This function calculates the irradiance for the solar panel 
@@ -947,9 +1760,7 @@ def get_solar_parameters(LT, TZ, dia, Long, Latit):
 
     return Elevation * ka, Azimuth * ka 
 
-
 #a_s: Sun altitude (grados)//Elevation
-
 
 def cos_incidence_angle(a_M, A_M, a_s, A_s):
     '''
@@ -1003,822 +1814,5 @@ def get_sky_view_factor(t_M):
 
     svf = (1 + np.cos(t_M * np.pi / 180)) / 2
     return svf
-
-
-
-'MULTIYEAR'
-
-def read_multiyear_data(demand_filepath, 
-                        forecast_filepath,
-                        units_filepath,
-                        instance_filepath,
-                        fiscal_filepath,
-                        cost_filepath,
-                        my_filepath):
-    '''
-    The codes uses the pd.read_csv() function from the pandas library to read 
-    in the contents of the forecast_filepath and demand_filepath files 
-    into dataframes forecast_df and demand_df respectively.
-
-    It then uses the read_json_data function to read in the contents 
-    of the units_filepath, instance_filepath, fiscal_filepath, my_filepath 
-    and cost_filepath into variables generators_data, instance_data, 
-    fiscal_data, my_data and cost_data respectively.
-
-    Then it extracts the 'generators' and 'batteries' field from 
-    the generators_data and assigns it to the variables
-    generators and batteries respectively.
-
-    Finally, the function returns the dataframes and variables
-    
-    Unlike its similar function, this one has an additional variable
-    as it is used for the multi-year project.
-
-    Parameters
-    ----------
-    demand_filepath : PATH
-        Demand data location
-    forecast_filepath : PATH
-        Forecast data Location (wind speed and irradiation)
-    units_filepath : PATH
-        Batteries and generators data location
-    instance_filepath : PATH
-        Instance paramaters data location
-    fiscal_filepath : PATH
-        Fiscal incentive data location
-    cost_filepath : PATH
-        Auxiliar cost data location - parameters for associated cost
-    my_filepath : PATH
-        Data location for multi-year calculations
-        
-    Returns
-    -------
-    demand_df, forecast_df : DATAFRAMES
-    generators, batteries : LIST
-    instance_data, fiscal_data, cost_data, my_data : DICTIONARIES
-
-    '''
-    forecast_df = pd.read_csv(forecast_filepath)
-    demand_df = pd.read_csv(demand_filepath)
-
-    generators_data = read_json_data(units_filepath)
-    generators = generators_data.get('generators', {})
-    batteries = generators_data.get('batteries', {})
-    
-    instance_data = read_json_data(instance_filepath)
-    fiscal_data = read_json_data(fiscal_filepath)
-    cost_data = read_json_data(cost_filepath)
-    my_data = read_json_data(my_filepath)
-   
-    return demand_df, forecast_df, generators, batteries, instance_data, fiscal_data, cost_data, my_data
-
-
-def create_multiyear_objects(generators, batteries, forecast_df, 
-                             demand_df, instance_data, my_data):
-    
-    '''
-    This function creates objects for generators and batteries 
-    based on their types (Solar, Eolic, Diesel, and Battery)
-    and initializing them with certain values. 
-
-    For each generator in the "generators" list, the function checks 
-    the "tec" key to determine the type of generator. 
-    If it is of type "S" (Solar), the function creates a Solar object,
-    calls several methods on the object
-    (irradiance_panel, get_inoct, solar_generation, solar_cost)
-    and assigns the object to the key of "id_gen" in the "generators_dict" 
-    If it is of type "W" (Eolic), the function creates an Eolic object, 
-    calls several methods on the object (eolic_generation, eolic_cost) 
-    and assigns the object to the key of "id_gen" in the "generators_dict" 
-    .If it is of type "D" (Diesel) the function creates a Diesel object, 
-    and assigns the object to the key of "id_gen" in the "generators_dict" 
-   
-    For each battery in the "batteries" list, the function creates
-    a Battery object, calls the "calculate_soc" method on the object
-    and assigns the object to the key of "id_bat" in the "batteries_dict" 
-   
-    Unlike its similar function, this one has an additional variable
-    as it is used for the multi-year project; 
-    so use equipment degradation rate for each year
-    
-    Parameters
-    ----------
-    generators : LIST
-    batteries : LIST
-    forecast_df : DATAFRAME
-    demand_df : DATAFRAME
-    instance_data : DICTIONARY
-    my_data : DICTIONARY
-
-    Returns
-    -------
-    generators_dict : DICTIONARY
-        Dictionary with generators with their specific class - technology 
-        associated
-    batteries_dict : DICTIONARY
-        Dictionary with batteries, and their attributes of battery class
-
-    '''
-    generators_dict = {}
-    for k in generators:
-      if k['tec'] == 'S':
-        obj_aux = Solar(*k.values())
-        irr = irradiance_panel (forecast_df, instance_data)
-        obj_aux.get_inoct(instance_data["caso"], instance_data["w"])
-        obj_aux.solar_generation( forecast_df['t_ambt'], irr,
-                                 instance_data["G_stc"], my_data["sol_deg"])
-        obj_aux.solar_cost()
-      elif k['tec'] == 'W':
-        obj_aux = Eolic(*k.values())
-        obj_aux.eolic_generation(forecast_df['Wt'], instance_data["h2"]
-                                 , instance_data["coef_hel"], my_data["wind_deg"] )
-        obj_aux.eolic_cost()
-      elif k['tec'] == 'D':
-        obj_aux = Diesel(*k.values())   
-        
-      generators_dict[k['id_gen']] = obj_aux
-      
-    batteries_dict = {}
-    for l in batteries:
-        obj_aux = Battery(*l.values())
-        batteries_dict[l['id_bat']] = obj_aux
-        batteries_dict[l['id_bat']].calculate_soc()
-    return generators_dict, batteries_dict
-
-def calculate_multiyear_data(demand_df, forecast_df, my_data, years):
-    '''
-    It creates two new dataframes called 'demand' and 'forecast'
-    that are multi-year dataframes based on the input dataframes. 
-    
-    It first creates empty dataframes with the same columns as the input
-    dataframes and the same number of rows as the number of years passed 
-    in multiplied by 8760 (number of hours in a year). It then populates
-    these dataframes with the data from the input dataframes,
-    adjusting values as necessary (e.g. applying a demand tax) 
-    for each year beyond the first year. 
-    
-    It has the binary option of using the default data or not,
-    If 1 is placed, the data entered by the user that already contains 
-    all the years is used
-    If 0 is placed, the program makes the projection 
-    from the first year to the other years.
-    
-    Example default data
-    --------------------
-            1 = do not do calculations, the user already has the entire time horizon
-            0 = do the calculations as a first year projection
-    
-    Parameters
-    ----------
-    demand_df : DATAFRAME
-    forecast_df : DATAFRAME
-    my_data : DICTIONARY
-    years : PARAMETER
-        Project time horizon
-
-    Returns
-    -------
-    demand : DATAFRAME
-        Multiyear demand
-    forecast : DATAFRAME
-        Multiyear forecast
-
-    '''
-    #check default data
-    default_data = my_data['default_data']
-    if (default_data == 1):
-        demand = copy.deepcopy(demand_df)
-        forecast = copy.deepcopy(forecast_df)
-    else:
-        #total hours
-        len_total = 8760 * years
-        aux_demand = {k : [0] * (len_total) for k in demand_df}
-        aux_forecast = {k : [0] * (len_total) for k in forecast_df}
-        
-        for i in range(len_total):
-            aux_demand['t'][i] = i
-            aux_forecast['t'][i] = i
-            #first year same 
-            if (i < 8760):    
-                aux_demand['demand'][i] = demand_df['demand'][i]
-                aux_forecast['DNI'][i] = forecast_df['DNI'][i]
-                aux_forecast['t_ambt'][i] = forecast_df['t_ambt'][i]
-                aux_forecast['Wt'][i] = forecast_df['Wt'][i]
-                aux_forecast['Qt'][i] = forecast_df['Qt'][i]
-                aux_forecast['GHI'][i] = forecast_df['GHI'][i]
-                aux_forecast['day'][i] = forecast_df['day'][i]
-                aux_forecast['SF'][i] = forecast_df['SF'][i]
-                aux_forecast['DHI'][i] = forecast_df['DHI'][i]
-            #others years
-            else:
-                #get the year
-                k = math.floor(i / 8760)
-                #apply tax
-                val = demand_df['demand'][i - 8760 * k] * (1 + my_data["demand_tax"]) ** k
-                #asign value
-                aux_demand['demand'][i] = val
-                #forecast is the same that first year
-                val2 = forecast_df['DNI'][i - 8760 * k]
-                aux_forecast['DNI'][i] = val2
-                aux_forecast['t_ambt'][i] = forecast_df['t_ambt'][i - 8760 * k]
-                val3 = forecast_df['Wt'][i - 8760 * k]
-                aux_forecast['Wt'][i] = val3
-                aux_forecast['Qt'][i] = forecast_df['Qt'][i - 8760 * k]
-                val4 = forecast_df['GHI'][i - 8760 * k]
-                aux_forecast['GHI'][i] = val4
-                aux_forecast['day'][i] = forecast_df['day'][i - 8760 * k]
-                aux_forecast['SF'][i] = forecast_df['SF'][i - 8760 * k]
-                val5 = forecast_df['DHI'][i - 8760 * k]
-                aux_forecast['DHI'][i] = val5      
-                
-        #create dataframe
-        demand = pd.DataFrame(aux_demand, columns=['t','demand'])
-        forecast = pd.DataFrame(aux_forecast, columns=['t','DNI','t_ambt','Wt', 
-                                               'Qt','GHI','day','SF','DHI'])
-        
-    return demand, forecast
-
-
-'STOCHASTICITY'
-
-#create the hourly dataframe
-def hour_data(data):
-    '''
-    This function takes in a dataframe as input, and creates a new dataframe
-    with hourly granularity. 
-    
-    The new dataframe is represented as a dictionary, 
-    where the keys are the hours of the day (0-23) and the values are lists 
-    of data for that hour, one element for each day. The original dataframe's 
-    index is used to determine the hour and day for each data point, 
-    which is then used to populate the appropriate element in the new dataframe. 
-
-    Parameters
-    ----------
-    data : DICTIONARY
-        Year data used
-
-    Returns
-    -------
-    vec : DATAFRAME
-        new hourly dataframe.
-
-    '''
-    hours_size = len(data) / 24
-    vec = {k : [0] * int(hours_size) for k in range(int(24))}
-    
-    for t in data.index.tolist():
-        #get the hour
-        hour_day = t % 24
-        #get the day
-        day_year = math.floor(t / 24)
-        #create data
-        vec[hour_day][day_year] = data[t]
-        
-    return vec
-
-
-
-def week_vector_data(data, year, first_day=1):
-    """
-    This function separates data into separate dataframes
-    for weekdays and weekends. The input "data" is a dataframe containing data 
-    that the user wants to separate by weekdays and weekends. 
-    The input "year" is an integer specifying the year the data is from, 
-    and "first_day" is an integer specifying the first day of the data,
-    with a default value of 1 (January 1st). The function then calculates
-    the initial and final days of the data, and uses the number of weekdays
-    and weekends to create two dataframes "dem_week_vec" and "dem_weekend_vec"
-    with the data separated by weekday and weekend respectively.
-    The function then returns the two dataframes.
-
-    Parameters
-    ----------
-    data : DATAFRAME
-        Data from which the time separation between week and weekend 
-        will be made, for example the demand.
-    year : INTEGER
-        year from which the data is taken, for example 2018
-    first_day : INTEGER
-        first day of the database, by default it starts on the first of January, 
-        a number between 1 and 365 is placed, 
-        the number 32 would correspond to the first of February
-
-    Returns
-    -------
-    dem_week_vec : DATAFRAME
-        Hourly Dataframe, and for each day fill it with the demand data 
-        that is not a weekend
-    dem_weekend_vec : DATAFRAME
-        Hourly Dataframe, and for each day fill it with the demand data 
-        that is a weekend
-
-    """
-    #first day of the year
-    first_january = dt.date(year, 1, 1)
-    #check the day of the fist day of the data
-    initial_day = dt.timedelta(int(first_day) - 1) + first_january
-    initial_day_number = int(initial_day.strftime("%w"))
-    #get the last day
-    hours_size = len(data) / 24
-    final_day = dt.timedelta(int(hours_size)) + initial_day
-    
-    #number of week and weekend days
-    day_number = initial_day_number
-    end = final_day
-    start = initial_day
-    days = np.busday_count(start, end)
-
-    dem_week_vec = {k : [0] * int(days) for k in range(int(24))}
-    dem_weekend_vec = {k : [0] * int(hours_size - days) for k in range(int(24))}
-    day_week = -1
-    day_weekend = -1
-    
-    for t in data.index.tolist():
-        #get the hour
-        hour_day = t%24
-        #calculate the week day
-        if ((hour_day == 0) and (day_number == 6) and (t != 0)):
-            day_number = 0
-        elif ((hour_day == 0) and (t != 0)):
-            day_number += 1
-        
-        
-        if (day_number != 6 and day_number != 0):
-            #create data
-            dem_week_vec[hour_day][day_week] = data[t]
-            if (hour_day == 0):
-                day_week += 1
-        else:
-            dem_weekend_vec[hour_day][day_weekend] = data[t]
-            if (hour_day == 0):
-                day_weekend += 1
-    return dem_week_vec, dem_weekend_vec
-
-def get_best_distribution(vec):
-    '''
-    Fix a distribution for each set
-
-    Parameters
-    ----------
-    vec : DATAFRAME
-
-    Returns
-    -------
-    dist : DICTIONARY
-        To each vector in the data frame returns 
-        the best associated probability distribution
-
-    '''
-    #get the total hours
-    hours = len(vec)
-    dist = {}
-
-    #calculate distribution of df
-    for i in range(int(hours)):
-        dist[i] = best_distribution(vec[i])
-    return dist
-
-
-def best_distribution(data):
-    '''
-    This function takes in a data set as input, and attempts to find
-    the best fitting probability distribution for the data. 
-    It does this by iterating through a list of pre-defined distributions 
-    using the SciPy library's "getattr" function and "fit" method. 
-    It then applies the Kolmogorov-Smirnov test to each distribution
-    and gets the p-value. 
-    The function then selects the distribution that has the highest p-value 
-    and returns the name of the distribution, its p-value and its parameters.
-    If the sum of the data is 0 and the standard deviation is also 0,
-    the function returns "No distribution" and None as the best distribution.
-
-    Parameters
-    ----------
-    data : DATAFRAME
-
-    Returns
-    -------
-    best_dist : VALUE
-    best_p : VALUE
-    params[best_dist] : VALUE
-        Parameters associated to the best distribution
-
-    '''
-    #available distributions
-    dist_names = [
-        "norm","weibull_max","weibull_min","pareto", 
-        "gamma","beta","rayleigh","invgauss",
-        "uniform","expon", "lognorm","pearson3","triang"
-        ]
-    dist_results = []
-    params = {}
-    #if 0 no distribution, 0 value, example solar generator at night
-    if (sum(data) == 0 and np.std(data) == 0):
-        best_dist = 'No distribution'
-        best_p = None
-        params[best_dist] = 0
-    else:
-        #fit each distribution
-        for dist_name in dist_names:
-            dist = getattr(st, dist_name)
-            param = dist.fit(data)
-            params[dist_name] = param
-            # Applying the Kolmogorov-Smirnov test and get p-value
-            D, p = st.kstest(data, dist_name, args = param)
-            dist_results.append((dist_name, p))
-    
-        # select the best fitted distribution
-        best_dist, best_p = (max(dist_results, key = lambda item: item[1]))
-        # store the name of the best fit and its p value
-
-    return best_dist, best_p, params[best_dist]
-
-
-#create stochastic df
-def calculate_stochasticity_demand(rand_ob, demand_df_i, week_dist, weekend_dist,
-                                   year, first_day=1):
-    '''
-    The function iterates over the time index of the demand_df dataframe.
-    For each time step, it extracts the hour of the day from the index and
-    uses it to look up the appropriate probability distribution from 
-    the dem_dist dictionary. Previously, the model checks whether it should use
-    the weekly or weekend distribution, depending on the corresponding day
-    of the week. It then generates a random number using
-    the rand_ob object and the selected probability distribution. 
-    The function then updates the demand_df dataframe by adding 
-    the generated random number as a new column at the corresponding time step.
-    Finally, the function returns the updated demand_df dataframe.
-
-    Parameters
-    ----------
-    rand_ob : OBJECT OF RANDOM GENERATOR CLASS
-        Function to calculate random values or sets
-    demand_df_i : DATAFRAME
-    week_dist : DICTIONARY
-    weekend_dist : DICTIONARY
-    Returns
-    year : INTEGER
-        year from which the data is taken, for example 2018
-    first_day : INTEGER
-        first day of the database, by default it starts on the first of January, 
-        a number between 1 and 365 is placed, 
-        the number 32 would correspond to the first of February
-    -------
-    demand_df : DATAFRAME
-        New dataframe
-
-    '''
-    demand_df = copy.deepcopy(demand_df_i)
-    #first day of the year
-    first_january = dt.date(year, 1, 1)
-    #check the day of the fist day of the data
-    initial_day = dt.timedelta(int(first_day) - 1) + first_january
-    initial_day_number = int(initial_day.strftime("%w"))
-    
-    #number of week and weekend days
-    day_number = initial_day_number
-
-                
-    for t in demand_df['t']:
-        #get the hour for the distribution
-        hour = t % 24
-        #calculate the week day
-        if ((hour == 0) and (day_number == 6) and (t != 0)):
-            day_number = 0
-        elif ((hour == 0) and (t != 0)):
-            day_number += 1
-        #generate one random number for each hour, select week or weekend
-        if (day_number != 6 and day_number != 0):  
-            obj = generate_random(rand_ob, week_dist[hour])
-            demand_df.loc[t] = [t,obj]
-        else:
-            obj = generate_random(rand_ob, weekend_dist[hour])
-            demand_df.loc[t] = [t,obj]            
-  
-    return demand_df
-    
-
-def calculate_stochasticity_forecast(rand_ob, forecast_df_i, wind_dist,
-                                     sol_distdni, sol_distdhi, sol_distghi):
-    '''
-    The function iterates over the time index of the forecast_df dataframe.
-    For each time step, it extracts the hour of the day from the index 
-    and uses it to look up the appropriate probability distributions 
-    from the wind_dist, sol_distdni, sol_distdhi, and sol_distghi dictionaries.
-    It then generates a random number using the rand_ob object 
-    and the selected probability distributions. 
-    The function then updates the forecast_df dataframe by adding 
-    the generated random numbers as new columns at the corresponding time step. 
-
-    Parameters
-    ----------
-    rand_ob : OBJECT OF RANDOM GENERATOR CLASS
-        Function to calculate random values or sets
-    forecast_df : DATAFRAME
-    wind_dist : DICTIONARY
-        For Wind speed.
-    sol_distdni : DICTIONARY
-        For Direct normal Irradiance
-    sol_distdhi : DICTIONARY
-        For Diffuse Horizontal Irradiance
-    sol_distghi : DICTIONARY
-        For Global horizontal Irradiance
-
-    Returns
-    -------
-    forecast_df : DATAFRAME
-        New dataframe
-
-    '''
-    forecast_df = copy.deepcopy(forecast_df_i)
-    for t in forecast_df['t']:
-        #get the hour for the distribution
-        hour = t % 24
-        #generate one random number for each hour (demand and forecast)
-        nf_w = generate_random(rand_ob, wind_dist[hour])
-        nf_dni = generate_random(rand_ob, sol_distdni[hour])
-        nf_dhi = generate_random(rand_ob, sol_distdhi[hour])
-        nf_ghi = generate_random(rand_ob, sol_distghi[hour])
-        t_ambt = forecast_df['t_ambt'][t]
-        Qt = forecast_df['Qt'][t]
-        day = forecast_df['day'][t]
-        SF = forecast_df['SF'][t]
-        forecast_df.loc[t] = [t, nf_dni, t_ambt, nf_w, Qt, nf_ghi, day, SF, nf_dhi]
-               
-    return forecast_df
-    
-
-#generate one random number with distribution
-def generate_random(rand_ob, dist):
-    '''
-    The function first checks the name of the distribution from dist[0], 
-    It then checks different probability distributions and call 
-    the appropriate method of rand_ob and pass the parameters if the name
-    of the distribution is matched.
-    
-    If the distribution name is not matched with any of the names it returns 0.
-    Finally, the function returns the generated random number.
-
-    Parameters
-    ----------
-    rand_ob : TYPE
-        DESCRIPTION.
-    dist : DICTIONARY
-        Contains the name of the distribution and its parameters
-
-    Returns
-    -------
-    Number : VALUE
-        Random number generated
-
-    '''
-    if (dist[0] == 'norm'):
-        number = rand_ob.dist_norm(dist[2][0], dist[2][1])
-    elif (dist[0] == 'uniform'):
-        number = rand_ob.dist_uniform(dist[2][0], dist[2][1])
-    elif(dist[0] == 'No distribution'):
-        number = 0
-    elif (dist[0] == 'triang'):
-        number = rand_ob.dist_triang(dist[2][0], dist[2][1], dist[2][2])
-    elif (dist[0] == 'weibull_max'):
-        number = rand_ob.dist_weibull_max(dist[2][0], dist[2][1], dist[2][2])
-    elif (dist[0] == 'weibull_min'):
-        number = rand_ob.dist_weibull_min(dist[2][0], dist[2][1], dist[2][2])
-    elif (dist[0] == 'pareto'):
-        number = rand_ob.dist_pareto(dist[2][0], dist[2][1], dist[2][2])
-    elif (dist[0] == 'gamma'):
-        number = rand_ob.dist_gamma(dist[2][0], dist[2][1], dist[2][2])
-    elif (dist[0] == 'beta'):
-        number = rand_ob.dist_beta(dist[2][0], dist[2][1], dist[2][2], dist[2][3])
-    elif (dist[0] == 'rayleigh'):
-        number = rand_ob.dist_rayleigh(dist[2][0], dist[2][1])
-    elif (dist[0] == 'invgauss'):
-        number = rand_ob.dist_invgauss(dist[2][0], dist[2][1], dist[2][2])
-    elif (dist[0] == 'expon'):
-        number = rand_ob.dist_expon(dist[2][0], dist[2][1])
-    elif (dist[0] == 'lognorm'):
-        number = rand_ob.dist_lognorm(dist[2][0], dist[2][1], dist[2][2])
-    elif (dist[0] == 'pearson3'):
-        number = rand_ob.dist_pearson3(dist[2][0], dist[2][1], dist[2][2])        
-    else:
-        number = 0
-    return number
-
-
-
-def generate_number_distribution(rand_ob, param, limit):
-    '''
-    Generates triangular distribution for parameters like fuel cost
-    
-    Parameters
-    ----------
-    rand_ob : OBJECT OF RANDOM GENERATOR CLASS
-        Function to calculate random values or sets
-    param : VALUE
-        mean value for triangular distribution
-    limit : VALUE
-        deviation for triangular distribution (left and right symmetric)
-
-    Returns
-    -------
-    number : VALUE
-        Random number generated
-
-    '''
-    #simetric triangular
-    a = param * (1 - limit)
-    b = param
-    c = param * (1 + limit)
-    number = rand_ob.dist_triangular(a,b,c)
-    return number
-
-def update_forecast(generators, forecast_df, instance_data):
-    """
-   This function is used to update the hourly generation and variable
-   cost data for renewable energies when there is a change in the forecast 
-
-    Parameters
-    ----------
-    generators : DICTIONARY
-    forecast_df : DATAFRAME
-    instance_data : DICTIONARY
-
-
-    Returns
-    -------
-    generators_dict : DICTIONARY UPDATED
-
-    """
-    generators_dict = copy.deepcopy(generators)
-    irr = irradiance_panel (forecast_df, instance_data)
-    for gen in generators_dict.values():
-        if (gen.tec == 'S'):
-            gen.solar_generation( forecast_df['t_ambt'], irr, instance_data["G_stc"], 0)
-            gen.solar_cost()
-        if (gen.tec == 'W'):
-            gen.eolic_generation(forecast_df['Wt'], instance_data["h2"],
-                                     instance_data["coef_hel"], 0)
-            gen.eolic_cost()
-
- 
-    return generators_dict
-
-
-
-'''ILS'''
-
-def ils(N_ITERATIONS, sol_current, sol_best, search_operator,
-        REMOVE_FUNCTION, ADD_FUNCTION,delta, rand_ob, instance_data, AMAX,
-        demand_df, cost_data, type_model, best_nsh, CRF = 0, ir = 0, my_data = {}):
-    '''
-    This function performs the iterated local search, creates a dataframe 
-    to save the report of each iteration, part of a current solution and a 
-    better solution, which at the beginning are the same, depending on the
-    solution that is handling whether it is feasible or not, determines
-    whether to do the function add or the function remove, it is also checked
-    if the ils have to do grasp or random. As there are different models, 
-    the model has slight variations if it is multi-year or not.
-    If the solution is feasible it saves it and generates the results,
-    and if it has the lowest lcoe it saves it as the best solution and counts
-    the number of hours not served for this solution.
-    
-    At the end it calculates the area of the solution to check
-    in the next iteration if there is more space or not and at the end
-    it has the report of the best solution together with its results.
-
-    Parameters
-    ----------
-    N_ITERATIONS : NUMBER - INTEGER
-    sol_current : OBJECT OF SOLUTION CLASS
-    sol_best : OBJECT OF SOLUTION CLASS
-    search_operator : OBJECT OF OPERATORS
-    REMOVE_FUNCTION : STRING
-        GRASP or RANDOM
-    ADD_FUNCTION : STRING
-        GRASP or RANDOM
-    delta : NUMBER - PERCENT
-    rand_ob : OBJECT OF RANDOM CLASS
-    instance_data : NUMBER - PERCENT
-    AMAX : NUMBER - DF
-    demand_df : DATAFRAME
-    cost_data : DICTIONARY
-    type_model : String
-        ILS-DS = Iterated local search + Dispatch Strategy
-        ILS-DS-MY = Iterated local search + Dispatch Strategy + Multiyear
-    best_nsh : VALUE - INTEGER
-        initial best not served hours of initial best solution
-    CRF : NUMBER - PERCENT, optional
-        Used only in not multiyear model. The default is 0, to avoid errors
-    ir : NUMBER - PERCENT, optional
-        Used only in multiyear model. The default is 0, to avoid errors
-    my_data : DICTIONATY, optional
-        Used only in multiyear model.. The default is {}, to avoid errors
-
-    Returns
-    -------
-    sol_best : OBJECT OF SOLUTION CLASS
-        Best solution that solves the model - lowest LCOE
-    best_nsh : NUMBER - INTEGER
-        Number of not served hours in the best solution
-    rows_df : DATAFRAME
-        Iterations report
-
-    '''
-
-    rows_df = []
-    movement = "initial solution"
-    for i in range(N_ITERATIONS):
-        #create df to export results
-        rows_df.append([i, sol_current.feasible, 
-                        sol_current.results.descriptive['area'], 
-                        sol_current.results.descriptive['LCOE'], 
-                        sol_best.results.descriptive['LCOE'], movement])
-        
-        if sol_current.feasible:     
-        # save copy as the last solution feasible seen
-            sol_feasible = copy.deepcopy(sol_current) 
-            # Remove a generator or battery from the current solution
-            if (REMOVE_FUNCTION == 'GRASP'): 
-                if (type_model == 'ILS-DS'):                       
-                    sol_try, remove_report = search_operator.remove_object(sol_current, 
-                                                                           CRF, delta, rand_ob)
-                elif (type_model == 'ILS-DS-MY'):
-                    sol_try, remove_report = search_operator.remove_object(sol_current, delta, rand_ob)
-            elif (REMOVE_FUNCTION == 'RANDOM'):
-                sol_try, remove_report = search_operator.remove_random_object(sol_current, rand_ob)
-    
-            movement = "Remove"
-        else:
-            #  Create list of generators that could be added
-            list_available_bat, list_available_gen, list_tec_gen  = search_operator.available_items(sol_current, AMAX)
-            if (list_available_gen != [] or list_available_bat != []):
-                # Add a generator or battery to the current solution
-                if (ADD_FUNCTION == 'GRASP'):
-                    if (type_model == 'ILS-DS'): 
-                        sol_try, remove_report = search_operator.add_object(sol_current, 
-                                                                            list_available_bat, list_available_gen, list_tec_gen, remove_report,  CRF, 
-                                                                            instance_data['fuel_cost'], rand_ob, delta)
-                    
-                    elif (type_model == 'ILS-DS-MY'):
-                        sol_try, remove_report = search_operator.add_object(sol_current, 
-                                                                            list_available_bat, list_available_gen, list_tec_gen, 
-                                                                            remove_report, instance_data['fuel_cost'], rand_ob, delta)
-                elif (ADD_FUNCTION == 'RANDOM'):
-                    sol_try = search_operator.add_random_object(sol_current, 
-                                                                list_available_bat, list_available_gen, list_tec_gen, rand_ob)
-                movement = "Add"
-            else:
-                # return to the last feasible solution
-                sol_current = copy.deepcopy(sol_feasible)
-                continue # Skip running the model and go to the begining of the for loop
-
-        #calculate inverter cost with installed generators
-        #val = instance_data['inverter_cost']#first of the functions
-        #instance_data['inverter cost'] = calculate_inverter_cost(sol_try.generators_dict_sol,
-        #sol_try.batteries_dict_sol,val)
-        
-        #Run the dispatch strategy process
-        if (type_model == 'ILS-DS'):
-            lcoe_cost, df_results, state, time_f, nsh = dispatch_strategy(sol_try, demand_df,
-                                                                          instance_data, cost_data, CRF, delta, rand_ob)
-        elif (type_model == 'ILS-DS-MY'):
-            lcoe_cost, df_results, state, time_f, nsh = dispatch_my_strategy(sol_try, demand_df, 
-                                                                             instance_data, cost_data, delta, rand_ob, my_data, ir)
-        #print("finish simulation - state: " + state)
-        #Create results
-        if state == 'optimal':
-            if (type_model == 'ILS-DS'):
-                sol_try.results = Results(sol_try, df_results, lcoe_cost)
-            elif (type_model == 'ILS-DS-MY'):
-                sol_try.results = Results_my(sol_try, df_results, lcoe_cost)
-            sol_try.feasible = True
-            sol_current = copy.deepcopy(sol_try)
-            #Search the best solution
-            if sol_try.results.descriptive['LCOE'] <= sol_best.results.descriptive['LCOE']:
-                #calculate area
-                sol_try.results.descriptive['area'] = calculate_area(sol_try)
-                #save sol_best
-                sol_best = copy.deepcopy(sol_try)   
-                best_nsh = nsh
-    
-        else:
-            sol_try.feasible = False
-            df_results = []
-            lcoe_cost = None
-            if (type_model == 'ILS-DS'):
-                sol_try.results = Results(sol_try, df_results, lcoe_cost)
-            elif (type_model == 'ILS-DS-MY'):
-                sol_try.results = Results_my(sol_try, df_results, lcoe_cost)
-            sol_current = copy.deepcopy(sol_try)
-        
-        #calculate area
-        sol_current.results.descriptive['area'] = calculate_area(sol_current)
-        #delete to avoid overwriting
-        del df_results
-        del sol_try
-        
-    return sol_best, best_nsh, rows_df    
-
 
 

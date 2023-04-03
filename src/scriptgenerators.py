@@ -34,7 +34,7 @@ and batteries_def lists to it
 
 '''
 #set the origin of data
-units_filepath = "../../data/pprueba.json"
+units_filepath = "../../data/Leticia/parameters_Leticia.json"
 
 #load the data
 try:
