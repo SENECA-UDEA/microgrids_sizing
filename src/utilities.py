@@ -529,15 +529,17 @@ def calculate_percent_tec (sol_best, percent_df):
     return mean_total_d, mean_total_s, mean_total_w, mean_total_b
 
 
-def create_excel(sol_best, percent_df, name_file, lcoe_scn = 0, robust_scn = 0, type_model = 0):
+def create_excel(sol_best, percent_df, name_file, folder_file, lcoe_scn = 0, robust_scn = 0, type_model = 0):
     """
     This function creates a excel file with the most relevant results
-
+    
     Parameters
     ----------
     sol_best : SOLUTION OBJECT.
     percent_df : DATAFRAME
     name_file : STRING
+    folder_file STRING
+        Location to save the file
     lcoe_scn : VALUE, optional
         Average best scenario lcoe
     robust_scn : VALUE, optional
@@ -586,7 +588,9 @@ def create_excel(sol_best, percent_df, name_file, lcoe_scn = 0, robust_scn = 0, 
     results_report = results_report.T     
     results_report.rename(columns = {0:'Results'}, inplace = True)
     name_excel = str(name_file) + '.xlsx' 
-    writer = pd.ExcelWriter(name_excel, engine='xlsxwriter')
+    #route_excel = "../data/Results_output/" + name_excel
+    route_excel = str(folder_file) + "/" + name_excel
+    writer = pd.ExcelWriter(route_excel, engine='xlsxwriter')
     results_report.to_excel(writer, sheet_name='descriptive results', startrow = 0 , startcol = 0)
     pd_tecs.to_excel(writer, sheet_name='descriptive results', startrow = 0 , startcol = 3)
     sol_best.results.df_results.to_excel(writer, sheet_name='Results')

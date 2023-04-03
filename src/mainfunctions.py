@@ -28,7 +28,7 @@ pd.options.display.max_columns = None
 
 
 def maindispatch(demand_df, forecast_df, generators, batteries, instance_data, fisc_data, cost_data,
-                 best_nsh, rand_ob, ADD_FUNCTION, REMOVE_FUNCTION):
+                 best_nsh, rand_ob, ADD_FUNCTION, REMOVE_FUNCTION, folder_path):
     '''
     This function makes a microgrid sizing optimization; 
     according to the two-stage formulation, 
@@ -71,7 +71,9 @@ def maindispatch(demand_df, forecast_df, generators, batteries, instance_data, f
         (GRASP or RANDOM) select the type of add function to applies
     REMOVE_FUNCTION : STRING
         (GRASP or RANDOM) select the type of remove function to applies
-
+    folder_path : STRING
+        Path where the user wants to save the file
+    
     Returns
     -------
     percent_df : DATAFRAME
@@ -189,7 +191,7 @@ def maindispatch(demand_df, forecast_df, generators, batteries, instance_data, f
                 except KeyError:
                     pass                
                 
-                create_excel(sol_best, percent_df, "deterministic",0 ,0 ,0)
+                create_excel(sol_best, percent_df, "deterministic",folder_path,0 ,0 ,0)
                 
 
         else:
@@ -201,7 +203,7 @@ def maindispatch(demand_df, forecast_df, generators, batteries, instance_data, f
 
 
 def maindispatchmy(demand_df, forecast_df, generators, batteries, instance_data, fisc_data, cost_data,
-                   my_data, best_nsh, rand_ob, ADD_FUNCTION, REMOVE_FUNCTION):
+                   my_data, best_nsh, rand_ob, ADD_FUNCTION, REMOVE_FUNCTION, folder_path):
     
     '''
     This function performs a microgrid sizing optimization;
@@ -248,7 +250,8 @@ def maindispatchmy(demand_df, forecast_df, generators, batteries, instance_data,
         (GRASP or RANDOM) select the type of add function to applies
     REMOVE_FUNCTION : STRING
         (GRASP or RANDOM) select the type of remove function to applies
-
+    folder_path : STRING
+        Path where the user wants to save the file
     Returns
     -------
     percent_df : DATAFRAME
@@ -362,7 +365,7 @@ def maindispatchmy(demand_df, forecast_df, generators, batteries, instance_data,
                     pass    
                 #create Excel
                 
-                create_excel(sol_best, percent_df, "Multiyear", 0, 0, 0)
+                create_excel(sol_best, percent_df, "Multiyear", folder_path, 0, 0, 0)
         else:
             print('No feasible solution, review data')
     else:
@@ -372,8 +375,8 @@ def maindispatchmy(demand_df, forecast_df, generators, batteries, instance_data,
 
 
 
-def mainstoc(demand_df_i, forecast_df_i, generators, batteries, instance_data, fisc_data, cost_data,
-             best_nsh, rand_ob, ADD_FUNCTION, REMOVE_FUNCTION):
+def mainstoc(demand_df_i, forecast_df_i, generators, batteries, instance_data,
+             fisc_data, cost_data, best_nsh, rand_ob, ADD_FUNCTION, REMOVE_FUNCTION, folder_path):
     '''
     This function uses several procedures to perform
     microgrid sizing optimization; according to the two-stage formulation, 
@@ -426,7 +429,9 @@ def mainstoc(demand_df_i, forecast_df_i, generators, batteries, instance_data, f
         (GRASP or RANDOM) select the type of add function to applies
     REMOVE_FUNCTION : STRING
         (GRASP or RANDOM) select the type of remove function to applies
-
+    folder_path : STRING
+        Path where the user wants to save the file
+        
     Returns
     -------
     percent_df : DATAFRAME
@@ -710,7 +715,7 @@ def mainstoc(demand_df_i, forecast_df_i, generators, batteries, instance_data, f
                 pass
             
             #create excel
-            create_excel(best_sol, percent_df, "stochastic", average_lcoe_best,
+            create_excel(best_sol, percent_df, "stochastic", folder_path, average_lcoe_best,
                          average_optimal_sol, 1)
             
             '''get the best solution in original data'''
@@ -745,7 +750,7 @@ def mainstoc(demand_df_i, forecast_df_i, generators, batteries, instance_data, f
                                                                                            best_sol0.generators_dict_sol, best_sol0.results, demand_scenarios[0])
                 except KeyError:
                     pass
-                create_excel(best_sol0, percent_df0, "stochastic_origin",
+                create_excel(best_sol0, percent_df0, "stochastic_origin", folder_path,
                              average_lcoe_best, average_optimal_sol, 1)
             else:
                 print("The best solution is not feasible in original data")
@@ -753,8 +758,8 @@ def mainstoc(demand_df_i, forecast_df_i, generators, batteries, instance_data, f
 
 
 
-def mainstocmy(demand_df_year, forecast_df_year, generators, batteries, instance_data, fisc_data, cost_data,
-                   my_data, best_nsh, rand_ob, ADD_FUNCTION, REMOVE_FUNCTION):
+def mainstocmy(demand_df_year, forecast_df_year, generators, batteries, instance_data,
+               fisc_data, cost_data, my_data, best_nsh, rand_ob, ADD_FUNCTION, REMOVE_FUNCTION, folder_path):
     '''
     This function uses several data and functions to perform
     microgrid sizing optimization; according to the two-stage formulation, 
@@ -806,7 +811,8 @@ def mainstocmy(demand_df_year, forecast_df_year, generators, batteries, instance
         (GRASP or RANDOM) select the type of add function to applies
     REMOVE_FUNCTION : STRING
         (GRASP or RANDOM) select the type of remove function to applies
-
+    folder_path : STRING
+        Path where the user wants to save the file
 
     Returns
     -------
@@ -1094,7 +1100,7 @@ def mainstocmy(demand_df_year, forecast_df_year, generators, batteries, instance
             
             #create excel
             create_excel(best_sol, percent_df, "stochasticmy", average_lcoe_best,
-                         average_optimal_sol, 1)
+                         folder_path, average_optimal_sol, 1)
             
             '''get the best solution in original data'''
             
@@ -1130,14 +1136,15 @@ def mainstocmy(demand_df_year, forecast_df_year, generators, batteries, instance
                 except KeyError:
                     pass
                 create_excel(best_sol0, percent_df0, "stochasticmy_origin",
-                             average_lcoe_best, average_optimal_sol, 1)
+                             folder_path, average_lcoe_best, average_optimal_sol, 1)
             else:
                 print("The best solution is not feasible in original data")
         
     return percent_df, energy_df, renew_df, total_df, brand_df, df_iterations, percent_df0, solutions
 
 
-def mainopt(demand_df,forecast_df, generators, batteries, instance_data, fisc_data, cost_data, solver_data):
+def mainopt(demand_df,forecast_df, generators, batteries, instance_data, 
+            fisc_data, cost_data, solver_data, folder_path):
     '''
     This function uses several data and procedures 
     that are used to create and optimize a microgrid sizing system; for the
@@ -1173,7 +1180,9 @@ def mainopt(demand_df,forecast_df, generators, batteries, instance_data, fisc_da
         Contains information about costs of generarors or batteries
     solver_data : DICTIONARY
         Contains information about the solver parameters.
-
+    folder_path : STRING
+        Path where the user wants to save the file
+    
     Returns
     -------
     percent_df : DATAFRAME
@@ -1256,14 +1265,14 @@ def mainopt(demand_df,forecast_df, generators, batteries, instance_data, fisc_da
     
     
     #Create Excel File
-    percent_df.to_excel("percentresults.xlsx")
-    model_results.df_results.to_excel("results.xlsx") 
+    percent_df.to_excel(str(folder_path) + "/" + "percentresults.xlsx")
+    model_results.df_results.to_excel(str(folder_path) + "/" + "results.xlsx") 
     
     return percent_df, energy_df, renew_df, total_df, brand_df
 
 
 def mainopttstage (demand_df, forecast_df, generators, batteries, instance_data, fisc_data,
-                   cost_data, rand_ob, ADD_FUNCTION, REMOVE_FUNCTION, solver_data):
+                   cost_data, rand_ob, ADD_FUNCTION, REMOVE_FUNCTION, solver_data, folder_path):
     '''
     This functions import several data and procedures
     that are used to create and optimize a microgrid sizing system; for the 
@@ -1308,7 +1317,9 @@ def mainopttstage (demand_df, forecast_df, generators, batteries, instance_data,
         (GRASP or RANDOM) select the type of remove function to applies
     solver_data : DICTIONARY
         Contains information about the solver parameters.
-
+    folder_path : STRING
+        Path where the user wants to save the file
+        
     Returns
     -------
     percent_df : DATAFRAME
@@ -1514,9 +1525,8 @@ def mainopttstage (demand_df, forecast_df, generators, batteries, instance_data,
   
             #create Excel
             
-            sol_best.results.df_results.to_excel("results.xlsx")         
-            percent_df.to_excel("percentresults.xlsx")
-
+            sol_best.results.df_results.to_excel(str(folder_path) + "/" +"results.xlsx")         
+            percent_df.to_excel(str(folder_path) + "/" +"percentresults.xlsx")
     else:
         print('No feasible solution, review data')
     return percent_df, energy_df, renew_df, total_df, brand_df, df_iterations

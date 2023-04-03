@@ -3,6 +3,7 @@ from utilities import read_multiyear_data, calculate_multiyear_data
 from classes import RandomCreate
 from mainfunctions import maindispatch, maindispatchmy, mainopt, mainopttstage 
 from mainfunctions import mainstoc, mainstocmy
+import os
 
 #Set the seed for random
 
@@ -115,26 +116,26 @@ generators, batteries = calculate_cost_data(generators, batteries,
 #Demand to be covered
 demand_df_year['demand'] = instance_data['demand_covered'] * demand_df_year['demand']
 
-
+folder_path = os.getcwd()
 
 
 percent_df, energy_df, renew_df, total_df, brand_df  = maindispatch(demand_df,
                                                                     forecast_df, generators, batteries, instance_data, fisc_data, cost_data,
-                                                                    best_nsh, rand_ob, ADD_FUNCTION, REMOVE_FUNCTION)
+                                                                    best_nsh, rand_ob, ADD_FUNCTION, REMOVE_FUNCTION, folder_path)
 
 percent_df, energy_df, renew_df, total_df, brand_df  =  maindispatchmy(demand_df, forecast_df, generators, batteries, instance_data, fisc_data, cost_data,
-                                                                       my_data, best_nsh, rand_ob, ADD_FUNCTION, REMOVE_FUNCTION)
+                                                                       my_data, best_nsh, rand_ob, ADD_FUNCTION, REMOVE_FUNCTION, folder_path)
 
 percent_df, energy_df, renew_df, total_df, brand_df  = mainopt(demand_df,forecast_df, generators, batteries, 
-                                                               instance_data, fisc_data, cost_data, solver_data)
+                                                               instance_data, fisc_data, cost_data, solver_data, folder_path)
 
 percent_df, energy_df, renew_df, total_df, brand_df, df_iterations = mainopttstage (demand_df, forecast_df, generators, batteries, instance_data, fisc_data,
-                                                                                    cost_data, rand_ob, ADD_FUNCTION, REMOVE_FUNCTION, solver_data)
+                                                                                    cost_data, rand_ob, ADD_FUNCTION, REMOVE_FUNCTION, solver_data, folder_path)
 
 
 percent_df, energy_df, renew_df, total_df, brand_df, df_iterations, percent_df0, solutions = mainstoc(demand_df_i, forecast_df_i, generators, batteries, instance_data, fisc_data, cost_data,
-                                                                                                      best_nsh, rand_ob, ADD_FUNCTION, REMOVE_FUNCTION)
+                                                                                                      best_nsh, rand_ob, ADD_FUNCTION, REMOVE_FUNCTION, folder_path)
 
 
 percent_df, energy_df, renew_df, total_df, brand_df, df_iterations, percent_df0, solutions = mainstocmy(demand_df_year, forecast_df_year, generators, batteries, instance_data, fisc_data, cost_data,
-                                                                                                        my_data, best_nsh, rand_ob, ADD_FUNCTION, REMOVE_FUNCTION)
+                                                                                                        my_data, best_nsh, rand_ob, ADD_FUNCTION, REMOVE_FUNCTION, folder_path)
