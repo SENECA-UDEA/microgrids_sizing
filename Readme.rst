@@ -42,6 +42,6 @@ Go to http://www.pyomo.org for more information.
 
 ::
 
-    python -m microgrids_sizing -wf "../data/results.csv" 
+    python -m microgrids_sizing -sw "../data/Providencia/forecast_Providencia.csv"  -df "../data/Providencia/demand_Providencia.csv" -gu "../data/Providencia/parameters_Providencia.csv"
 
-* You need to install a linear solver such as "Gurobi": www.gurobi.com/ (e.g Gurobi, Cplex, SCJP, etc.)
+* For the optimization model You need to install a linear solver such as "Gurobi": www.gurobi.com/ (e.g Gurobi, Cplex, SCJP, etc.)
