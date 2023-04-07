@@ -36,7 +36,7 @@ default_folder_path = os.getcwd()
 @click.option('--demand', '-df', default=demand_filepath,
               type=str, help='Path of demand forecast data .csv file')
 @click.option('--forecast', '-sw', default=forecast_filepath,
-              type=str, help='Path of wheater forecast data .csv file')
+              type=str, help='Path of weather forecast data .csv file')
 @click.option('--generation_units', '-gu', default=units_filepath,
               type=str, help='Path of generation and batteries units parameters .json file')
 @click.option('--instance_filepath', '-id', default=instanceData_filepath,
@@ -54,9 +54,9 @@ default_folder_path = os.getcwd()
 #@click.option('--my_data', '-md', default=myearData_filepath,
 #              type=str, help='Path of multiyear parameters .json file')
 #@click.option('--solver_name', '-sn', default='gurobi', 
-#              help='Solver name to be use to solve the model; default = gurobi')
+#              help='Solver name to be used to solve the model; default = gurobi')
 #@click.option('--gap', '-gp', default=0.01, type = float, 
-#              help='Solver GAP to be use to solve the model; default = 0.01')
+#              help='Solver GAP to be used to solve the model; default = 0.01')
 
 
 def main (demand, forecast, generation_units, instance_filepath, tax_incentive, 
