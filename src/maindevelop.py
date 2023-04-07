@@ -109,7 +109,7 @@ else:
     
     
     #Demand to be covered
-    demand_df['demand'] = instance_data['demand_covered'] * demand_df['demand'] 
+    demand_df_i['demand'] = instance_data['demand_covered'] * demand_df_i['demand'] 
     
     #Calculate salvage, operation and replacement cost with investment cost
     generators, batteries = calculate_cost_data(generators, batteries, 
