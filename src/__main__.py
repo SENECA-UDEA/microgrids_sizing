@@ -51,12 +51,19 @@ default_folder_path = os.getcwd()
               type=str,help='Base name for .xlsx output file')
 
 
-@click.option('--my_data', '-md', default=myearData_filepath,
-              type=str, help='Path of multiyear parameters .json file')
-@click.option('--solver_name', '-sn', default='gurobi', 
-              help='Solver name to be use to solve the model; default = gurobi')
-@click.option('--gap', '-gp', default=0.01, type = float, 
-              help='Solver GAP to be use to solve the model; default = 0.01')
+#@click.option('--my_data', '-md', default=myearData_filepath,
+#              type=str, help='Path of multiyear parameters .json file')
+#@click.option('--solver_name', '-sn', default='gurobi', 
+#              help='Solver name to be use to solve the model; default = gurobi')
+#@click.option('--gap', '-gp', default=0.01, type = float, 
+#              help='Solver GAP to be use to solve the model; default = 0.01')
+
+
+def main (demand, forecast, generation_units, instance_filepath, tax_incentive, 
+          parameters_cost, rand_seed, folder_path):
+    return main_func(demand, forecast, generation_units, instance_filepath, tax_incentive, 
+                     parameters_cost, rand_seed, folder_path)
+
 
 
 def input_check(forecast, demand, generation_units):
@@ -72,11 +79,6 @@ def input_check(forecast, demand, generation_units):
         raise RuntimeError('You have to set a generation_units input file')
     elif not os.path.exists(generation_units):
         raise RuntimeError('Data file ({}) does not exist in your current folder'.format(generation_units))
-
-def main (demand, forecast, generation_units, instance_filepath, tax_incentive, 
-          parameters_cost, rand_seed, folder_path):
-    return main_func(demand, forecast, generation_units, instance_filepath, tax_incentive, 
-                     parameters_cost, rand_seed, folder_path)
 
 
 
