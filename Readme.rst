@@ -1,4 +1,4 @@
-MicrogridManagement
+MicrogridSizing
 ========
 
 This package uses optimization models to sizing the isolated microgrid.
