@@ -97,22 +97,22 @@ def main_func (demand, forecast, generation_units, instance_filepath, tax_incent
     best_nsh = 0
     
     # read data
-    demand_df, forecast_df, generators, batteries, instance_data, fisc_data, cost_data = read_data(demand,
-                                                                                                    forecast,
-                                                                                                    generation_units,
-                                                                                                    instance_filepath,
-                                                                                                    tax_incentive,
-                                                                                                    parameters_cost)
+    demand_df_i, forecast_df_i, generators, batteries, instance_data, fisc_data, cost_data = read_data(demand,
+                                                                                                        forecast,
+                                                                                                        generation_units,
+                                                                                                        instance_filepath,
+                                                                                                        tax_incentive,
+                                                                                                        parameters_cost)
 
     #Calculate salvage, operation and replacement cost with investment cost
     generators, batteries = calculate_cost_data(generators, batteries, 
                                                 instance_data, cost_data)
     #Demand to be covered
-    demand_df['demand'] = instance_data['demand_covered'] * demand_df['demand'] 
+    demand_df_i['demand'] = instance_data['demand_covered'] * demand_df_i['demand'] 
+    percent_df, energy_df, renew_df, total_df, brand_df, df_iterations, percent_df0, solutions = mf.mainstoc(demand_df_i, 
+                                                                                                             forecast_df_i, generators, batteries, instance_data, fisc_data, cost_data,
+                                                                                                             best_nsh, rand_ob, ADD_FUNCTION, REMOVE_FUNCTION, folder_path)
 
-    percent_df, energy_df, renew_df, total_df, brand_df  = mf.maindispatch(demand_df,
-                                                                           forecast_df, generators, batteries, instance_data, fisc_data, cost_data,
-                                                                           best_nsh, rand_ob, ADD_FUNCTION, REMOVE_FUNCTION, folder_path)
     
     return percent_df, energy_df, renew_df, total_df, brand_df
     
