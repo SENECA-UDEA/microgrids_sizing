@@ -193,6 +193,7 @@ def maindispatch(demand_df, forecast_df, generators, batteries, instance_data, f
                 
                 create_excel(sol_best, percent_df, "deterministic",folder_path,0 ,0 ,0)
                 
+                print("The output results are located in " + str(folder_path))
 
         else:
             print('No feasible solution, review data')
@@ -366,6 +367,8 @@ def maindispatchmy(demand_df, forecast_df, generators, batteries, instance_data,
                 #create Excel
                 
                 create_excel(sol_best, percent_df, "Multiyear", folder_path, 0, 0, 0)
+                
+                print("The output results are located in " + str(folder_path))
         else:
             print('No feasible solution, review data')
     else:
@@ -718,6 +721,8 @@ def mainstoc(demand_df_i, forecast_df_i, generators, batteries, instance_data,
             create_excel(best_sol, percent_df, "stochastic", folder_path, average_lcoe_best,
                          average_optimal_sol, 1)
             
+            print("The output results are located in " + str(folder_path))
+            
             '''get the best solution in original data'''
             generators_0 = solutions[best_sol_position].generators_dict_sol
             #update generation solar and wind
@@ -752,6 +757,9 @@ def mainstoc(demand_df_i, forecast_df_i, generators, batteries, instance_data,
                     pass
                 create_excel(best_sol0, percent_df0, "stochastic_origin", folder_path,
                              average_lcoe_best, average_optimal_sol, 1)
+                
+                print("The output results in the original data are located in " + str(folder_path))
+                
             else:
                 print("The best solution is not feasible in original data")
     return percent_df, energy_df, renew_df, total_df, brand_df, df_iterations, percent_df0, solutions
@@ -1102,6 +1110,8 @@ def mainstocmy(demand_df_year, forecast_df_year, generators, batteries, instance
             create_excel(best_sol, percent_df, "stochasticmy", average_lcoe_best,
                          folder_path, average_optimal_sol, 1)
             
+            print("The output results are located in " + str(folder_path))
+            
             '''get the best solution in original data'''
             
             generators_0 = solutions[best_sol_position].generators_dict_sol
@@ -1137,6 +1147,8 @@ def mainstocmy(demand_df_year, forecast_df_year, generators, batteries, instance
                     pass
                 create_excel(best_sol0, percent_df0, "stochasticmy_origin",
                              folder_path, average_lcoe_best, average_optimal_sol, 1)
+                
+                print("The output results in the original data are located in " + str(folder_path))
             else:
                 print("The best solution is not feasible in original data")
         
@@ -1267,7 +1279,7 @@ def mainopt(demand_df,forecast_df, generators, batteries, instance_data,
     #Create Excel File
     percent_df.to_excel(str(folder_path) + "/" + "percentresults.xlsx")
     model_results.df_results.to_excel(str(folder_path) + "/" + "results.xlsx") 
-    
+    print("The output results are located in " + str(folder_path))
     return percent_df, energy_df, renew_df, total_df, brand_df
 
 
@@ -1527,6 +1539,7 @@ def mainopttstage (demand_df, forecast_df, generators, batteries, instance_data,
             
             sol_best.results.df_results.to_excel(str(folder_path) + "/" +"results.xlsx")         
             percent_df.to_excel(str(folder_path) + "/" +"percentresults.xlsx")
+            print("The output results are located in " + str(folder_path))
     else:
         print('No feasible solution, review data')
     return percent_df, energy_df, renew_df, total_df, brand_df, df_iterations
