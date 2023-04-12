@@ -146,8 +146,6 @@ def main_func (demand, forecast, instance_filepath, type_model, generation_units
                                                                                                        cost_data, rand_ob, ADD_FUNCTION, REMOVE_FUNCTION, solver_data, folder_path)
     
     else:   
-        #Multiyear
-        myearData_filepath = "../data/auxiliar/multiyear.json"
         
         # read my data
         demand_df_i, forecast_df_i, generators, batteries, instance_data, fisc_data, cost_data, my_data = read_multiyear_data(demand_filepath,
@@ -188,6 +186,238 @@ def main_func (demand, forecast, instance_filepath, type_model, generation_units
 
     return percent_df, energy_df, renew_df, total_df, brand_df
     
+
+'''Functions to run the different models'''
+def Deterministic(demand, forecast, instance_filepath, 
+                  generation_units = units_filepath, 
+                  tax_incentive = fiscalData_filepath,
+                  parameters_cost = costData_filepath,
+                  folder_path = default_folder_path,
+                  rand_seed = None):
+    
+    #Add and remove parameters
+    ADD_FUNCTION = 'GRASP'
+    REMOVE_FUNCTION = 'RANDOM'
+    SEED = rand_seed
+    rand_ob = RandomCreate(seed = SEED)
+    
+    #auxiliar best nsh
+    best_nsh = 0
+    
+    # read data
+    demand_df, forecast_df, generators, batteries, instance_data, fisc_data, cost_data = read_data(demand,
+                                                                                                    forecast,
+                                                                                                    generation_units,
+                                                                                                    instance_filepath,
+                                                                                                    tax_incentive,
+                                                                                                    parameters_cost)
+
+    #Calculate salvage, operation and replacement cost with investment cost
+    generators, batteries = calculate_cost_data(generators, batteries, 
+                                                instance_data, cost_data)
+    #Demand to be covered
+    demand_df['demand'] = instance_data['demand_covered'] * demand_df['demand'] 
+    
+    percent_df, energy_df, renew_df, total_df, brand_df = mf.maindispatch(demand_df, 
+                                                                          forecast_df, generators, batteries, instance_data, fisc_data, cost_data,
+                                                                          best_nsh, rand_ob, ADD_FUNCTION, REMOVE_FUNCTION, folder_path)
+    
+    return percent_df, energy_df, renew_df, total_df, brand_df
+
+
+def Stochastic (demand, forecast, instance_filepath, 
+                generation_units = units_filepath, 
+                tax_incentive = fiscalData_filepath,
+                parameters_cost = costData_filepath,
+                folder_path = default_folder_path,
+                rand_seed = None):
+    
+    #Add and remove parameters
+    ADD_FUNCTION = 'GRASP'
+    REMOVE_FUNCTION = 'RANDOM'
+    SEED = rand_seed
+    rand_ob = RandomCreate(seed = SEED)
+    
+    #auxiliar best nsh
+    best_nsh = 0
+    
+    # read data
+    demand_df, forecast_df, generators, batteries, instance_data, fisc_data, cost_data = read_data(demand,
+                                                                                                    forecast,
+                                                                                                    generation_units,
+                                                                                                    instance_filepath,
+                                                                                                    tax_incentive,
+                                                                                                    parameters_cost)
+
+    #Calculate salvage, operation and replacement cost with investment cost
+    generators, batteries = calculate_cost_data(generators, batteries, 
+                                                instance_data, cost_data)
+    #Demand to be covered
+    demand_df['demand'] = instance_data['demand_covered'] * demand_df['demand'] 
+    demand_df_i = copy.deepcopy(demand_df)
+    forecast_df_i = copy.deepcopy(forecast_df)
+    percent_df, energy_df, renew_df, total_df, brand_df, df_iterations, percent_df0, solutions = mf.mainstoc(demand_df_i, 
+                                                                                                             forecast_df_i, generators, batteries, instance_data, fisc_data, cost_data,
+                                                                                                             best_nsh, rand_ob, ADD_FUNCTION, REMOVE_FUNCTION, folder_path)
+
+    return percent_df, energy_df, renew_df, total_df, brand_df
+
+
+def Optimization(demand, forecast, instance_filepath, 
+                generation_units = units_filepath, 
+                tax_incentive = fiscalData_filepath,
+                parameters_cost = costData_filepath,
+                folder_path = default_folder_path,
+                gap = 0.01, solver_name = 'gurobi'):
+        
+    # read data
+    demand_df, forecast_df, generators, batteries, instance_data, fisc_data, cost_data = read_data(demand,
+                                                                                                    forecast,
+                                                                                                    generation_units,
+                                                                                                    instance_filepath,
+                                                                                                    tax_incentive,
+                                                                                                    parameters_cost)
+
+    #Calculate salvage, operation and replacement cost with investment cost
+    generators, batteries = calculate_cost_data(generators, batteries, 
+                                                instance_data, cost_data)
+    #Demand to be covered
+    demand_df['demand'] = instance_data['demand_covered'] * demand_df['demand'] 
+    
+    solver_data = {"MIP_GAP":gap,"TEE_SOLVER":True,"OPT_SOLVER":solver_name}
+    
+
+    percent_df, energy_df, renew_df, total_df, brand_df  = mf.mainopt(demand_df,
+                                                                      forecast_df, generators, batteries, 
+                                                                      instance_data, fisc_data, cost_data, solver_data, folder_path)
+
+    return percent_df, energy_df, renew_df, total_df, brand_df
+
+
+def IlsOptimization (demand, forecast, instance_filepath, 
+                    generation_units = units_filepath, 
+                    tax_incentive = fiscalData_filepath,
+                    parameters_cost = costData_filepath,
+                    folder_path = default_folder_path,
+                    rand_seed = None,
+                    gap = 0.01, solver_name = 'gurobi'):
+    
+    #Add and remove parameters
+    ADD_FUNCTION = 'GRASP'
+    REMOVE_FUNCTION = 'RANDOM'
+    SEED = rand_seed
+    rand_ob = RandomCreate(seed = SEED)
+    solver_data = {"MIP_GAP":gap,"TEE_SOLVER":True,"OPT_SOLVER":solver_name}
+    
+    # read data
+    demand_df, forecast_df, generators, batteries, instance_data, fisc_data, cost_data = read_data(demand,
+                                                                                                    forecast,
+                                                                                                    generation_units,
+                                                                                                    instance_filepath,
+                                                                                                    tax_incentive,
+                                                                                                    parameters_cost)
+
+    #Calculate salvage, operation and replacement cost with investment cost
+    generators, batteries = calculate_cost_data(generators, batteries, 
+                                                instance_data, cost_data)
+    #Demand to be covered
+    demand_df['demand'] = instance_data['demand_covered'] * demand_df['demand'] 
+
+    percent_df, energy_df, renew_df, total_df, brand_df, df_iterations = mf.mainopttstage (demand_df, 
+                                                                                           forecast_df, generators, batteries, instance_data, fisc_data,
+                                                                                           cost_data, rand_ob, ADD_FUNCTION, REMOVE_FUNCTION, solver_data, folder_path)
+
+    return percent_df, energy_df, renew_df, total_df, brand_df
+
+
+def Multiyear (demand, forecast, instance_filepath, 
+                generation_units = units_filepath, 
+                tax_incentive = fiscalData_filepath,
+                parameters_cost = costData_filepath,
+                folder_path = default_folder_path,
+                rand_seed = None,
+                my_data = myearData_filepath):
+    
+    #Add and remove parameters
+    ADD_FUNCTION = 'GRASP'
+    REMOVE_FUNCTION = 'RANDOM'
+    SEED = rand_seed
+    rand_ob = RandomCreate(seed = SEED)
+    
+    #auxiliar best nsh
+    best_nsh = 0
+    
+    # read my data
+    demand_df_i, forecast_df_i, generators, batteries, instance_data, fisc_data, cost_data, my_data = read_multiyear_data(demand_filepath,
+                                                                                                                          forecast_filepath,
+                                                                                                                          units_filepath,
+                                                                                                                          instanceData_filepath,
+                                                                                                                          fiscalData_filepath,
+                                                                                                                          costData_filepath,
+                                                                                                                          myearData_filepath)
+    
+    
+    #Demand to be covered
+    demand_df_i['demand'] = instance_data['demand_covered'] * demand_df_i['demand'] 
+    
+    #Calculate salvage, operation and replacement cost with investment cost
+    generators, batteries = calculate_cost_data(generators, batteries, 
+                                                instance_data, cost_data)
+    
+    demand_df, forecast_df = calculate_multiyear_data(demand_df_i, forecast_df_i,
+                                                      my_data, instance_data['years'])  
+
+
+    percent_df, energy_df, renew_df, total_df, brand_df  = mf.maindispatchmy(demand_df,
+                                                                             forecast_df, generators, batteries, instance_data, fisc_data, cost_data,
+                                                                             my_data, best_nsh, rand_ob, ADD_FUNCTION, REMOVE_FUNCTION, folder_path)
+
+
+    return percent_df, energy_df, renew_df, total_df, brand_df
+
+
+def StocMultiyear (demand, forecast, instance_filepath, 
+                    generation_units = units_filepath, 
+                    tax_incentive = fiscalData_filepath,
+                    parameters_cost = costData_filepath,
+                    folder_path = default_folder_path,
+                    rand_seed = None,
+                    my_data = myearData_filepath):
+    
+    #Add and remove parameters
+    ADD_FUNCTION = 'GRASP'
+    REMOVE_FUNCTION = 'RANDOM'
+    SEED = rand_seed
+    rand_ob = RandomCreate(seed = SEED)
+    
+    #auxiliar best nsh
+    best_nsh = 0
+    
+    # read my data
+    demand_df_i, forecast_df_i, generators, batteries, instance_data, fisc_data, cost_data, my_data = read_multiyear_data(demand_filepath,
+                                                                                                                          forecast_filepath,
+                                                                                                                          units_filepath,
+                                                                                                                          instanceData_filepath,
+                                                                                                                          fiscalData_filepath,
+                                                                                                                          costData_filepath,
+                                                                                                                          myearData_filepath)
+    
+    
+    #Demand to be covered
+    demand_df_i['demand'] = instance_data['demand_covered'] * demand_df_i['demand'] 
+    
+    #Calculate salvage, operation and replacement cost with investment cost
+    generators, batteries = calculate_cost_data(generators, batteries, 
+                                                instance_data, cost_data)
+    
+    demand_df_year = copy.deepcopy(demand_df_i)
+    forecast_df_year = copy.deepcopy(forecast_df_i)
+    
+    percent_df, energy_df, renew_df, total_df, brand_df, df_iterations, percent_df0, solutions = mf.mainstocmy(demand_df_year, 
+                                                                                                               forecast_df_year, generators, batteries, instance_data, fisc_data, cost_data,
+                                                                                                               my_data, best_nsh, rand_ob, ADD_FUNCTION, REMOVE_FUNCTION, folder_path)
+        
+    return percent_df, energy_df, renew_df, total_df, brand_df
 
 
 if __name__ == "__main__":
