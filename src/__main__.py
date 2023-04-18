@@ -66,6 +66,24 @@ def main (demand, forecast, instance_filepath, type_model, generation_units, tax
                      tax_incentive, parameters_cost, rand_seed, folder_path, my_data, solver_name, gap)
 
 
+def f_Deterministic(demand, forecast, instance_filepath, 
+                      generation_units = units_filepath, 
+                      tax_incentive = fiscalData_filepath,
+                      parameters_cost = costData_filepath,
+                      folder_path = default_folder_path,
+                      rand_seed = None):
+    return Deterministic(demand, forecast, instance_filepath, generation_units,
+                         tax_incentive, parameters_cost, folder_path, rand_seed)
+
+def f_Stochastic(demand, forecast, instance_filepath, 
+                generation_units = units_filepath, 
+                tax_incentive = fiscalData_filepath,
+                parameters_cost = costData_filepath,
+                folder_path = default_folder_path,
+                rand_seed = None):
+    return Stochastic(demand, forecast, instance_filepath, generation_units,
+                      tax_incentive, parameters_cost, folder_path, rand_seed)
+
 
 def input_check(demand, forecast, instance_filepath, type_model):
     if not demand:
@@ -195,6 +213,8 @@ def Deterministic(demand, forecast, instance_filepath,
                   folder_path = default_folder_path,
                   rand_seed = None):
     
+    type_model = ['dt']
+    input_check(demand, forecast, instance_filepath, type_model)
     #Add and remove parameters
     ADD_FUNCTION = 'GRASP'
     REMOVE_FUNCTION = 'RANDOM'
@@ -232,6 +252,8 @@ def Stochastic (demand, forecast, instance_filepath,
                 folder_path = default_folder_path,
                 rand_seed = None):
     
+    type_model = ['st']
+    input_check(demand, forecast, instance_filepath, type_model)
     #Add and remove parameters
     ADD_FUNCTION = 'GRASP'
     REMOVE_FUNCTION = 'RANDOM'
@@ -269,7 +291,9 @@ def Optimization(demand, forecast, instance_filepath,
                 parameters_cost = costData_filepath,
                 folder_path = default_folder_path,
                 gap = 0.01, solver_name = 'gurobi'):
-        
+
+    type_model = ['op']
+    input_check(demand, forecast, instance_filepath, type_model)    
     # read data
     demand_df, forecast_df, generators, batteries, instance_data, fisc_data, cost_data = read_data(demand,
                                                                                                     forecast,
@@ -302,6 +326,8 @@ def IlsOptimization (demand, forecast, instance_filepath,
                     rand_seed = None,
                     gap = 0.01, solver_name = 'gurobi'):
     
+    type_model = ['ot']
+    input_check(demand, forecast, instance_filepath, type_model)
     #Add and remove parameters
     ADD_FUNCTION = 'GRASP'
     REMOVE_FUNCTION = 'RANDOM'
@@ -338,6 +364,8 @@ def Multiyear (demand, forecast, instance_filepath,
                 rand_seed = None,
                 my_data = myearData_filepath):
     
+    type_model = ['my']
+    input_check(demand, forecast, instance_filepath, type_model)
     #Add and remove parameters
     ADD_FUNCTION = 'GRASP'
     REMOVE_FUNCTION = 'RANDOM'
@@ -383,7 +411,9 @@ def StocMultiyear (demand, forecast, instance_filepath,
                     folder_path = default_folder_path,
                     rand_seed = None,
                     my_data = myearData_filepath):
-    
+
+    type_model = ['sm']
+    input_check(demand, forecast, instance_filepath, type_model)
     #Add and remove parameters
     ADD_FUNCTION = 'GRASP'
     REMOVE_FUNCTION = 'RANDOM'
