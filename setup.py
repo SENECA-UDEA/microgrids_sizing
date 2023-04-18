@@ -13,7 +13,7 @@ if sys.version[0] == '2':
     sys.exit(1)
 
 setuptools.setup(
-    name="Microgrid_sizing",
+    name="sizingmicrogrids",
     version="1",
     author="Sebastian Castellanos Buitrago",
     author_email="sebastian.castellanos@udea.edu.co",
