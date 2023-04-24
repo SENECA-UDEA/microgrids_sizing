@@ -1,34 +1,34 @@
 
 # -*- coding: utf-8 -*-
-import mainfunctions as mf
-from utilities import read_data, calculate_cost_data
-from utilities import read_multiyear_data, calculate_multiyear_data
-from classes import RandomCreate
+import src.mainfunctions as mf
+from src.utilities import read_data, calculate_cost_data
+from src.utilities import read_multiyear_data, calculate_multiyear_data
+from src.classes import RandomCreate
 import copy
 import os
 import click
 
+#default folder path
+default_folder_path = os.getcwd()
 
 '''Default location'''
 PLACE = 'Providencia'
 # file paths 
-demand_filepath = "../data/" + PLACE + "/demand_" + PLACE+".csv"
-forecast_filepath = "../data/"+PLACE+"/forecast_" + PLACE + ".csv"
-units_filepath = "../data/" + PLACE + "/parameters_" + PLACE + ".json"
-instanceData_filepath = "../data/" + PLACE + "/instance_data_" + PLACE + ".json"
+demand_filepath = default_folder_path + "/data/" + PLACE + "/demand_" + PLACE+".csv"
+forecast_filepath = default_folder_path + "/data/"+ PLACE + "/forecast_" + PLACE + ".csv"
+units_filepath = default_folder_path + "/data/" + PLACE + "/parameters_" + PLACE + ".json"
+instanceData_filepath = default_folder_path + "/data/" + PLACE + "/instance_data_" + PLACE + ".json"
 #fiscal Data
-fiscalData_filepath = "../data/auxiliar/fiscal_incentive.json"
+fiscalData_filepath = default_folder_path + "/data/auxiliar/fiscal_incentive.json"
 #cost Data
-costData_filepath = "../data/auxiliar/parameters_cost.json"
+costData_filepath = default_folder_path + "/data/auxiliar/parameters_cost.json"
 #multiyear Data
-myearData_filepath = "../data/auxiliar/multiyear.json"
+myearData_filepath = default_folder_path + "/data/auxiliar/multiyear.json"
 
 
 #default seed
 SEED = None
 
-#default folder path
-default_folder_path = os.getcwd()
 
 type_model_options = ['st','dt','my','sm','op','ot']
 
@@ -213,7 +213,7 @@ def Deterministic(demand, forecast, instance_filepath,
                   folder_path = default_folder_path,
                   rand_seed = None):
     
-    type_model = ['dt']
+    type_model = 'dt'
     input_check(demand, forecast, instance_filepath, type_model)
     #Add and remove parameters
     ADD_FUNCTION = 'GRASP'
@@ -252,7 +252,7 @@ def Stochastic (demand, forecast, instance_filepath,
                 folder_path = default_folder_path,
                 rand_seed = None):
     
-    type_model = ['st']
+    type_model = 'st'
     input_check(demand, forecast, instance_filepath, type_model)
     #Add and remove parameters
     ADD_FUNCTION = 'GRASP'
@@ -292,7 +292,7 @@ def Optimization(demand, forecast, instance_filepath,
                 folder_path = default_folder_path,
                 gap = 0.01, solver_name = 'gurobi'):
 
-    type_model = ['op']
+    type_model = 'op'
     input_check(demand, forecast, instance_filepath, type_model)    
     # read data
     demand_df, forecast_df, generators, batteries, instance_data, fisc_data, cost_data = read_data(demand,
@@ -326,7 +326,7 @@ def IlsOptimization (demand, forecast, instance_filepath,
                     rand_seed = None,
                     gap = 0.01, solver_name = 'gurobi'):
     
-    type_model = ['ot']
+    type_model = 'ot'
     input_check(demand, forecast, instance_filepath, type_model)
     #Add and remove parameters
     ADD_FUNCTION = 'GRASP'
@@ -364,7 +364,7 @@ def Multiyear (demand, forecast, instance_filepath,
                 rand_seed = None,
                 my_data = myearData_filepath):
     
-    type_model = ['my']
+    type_model = 'my'
     input_check(demand, forecast, instance_filepath, type_model)
     #Add and remove parameters
     ADD_FUNCTION = 'GRASP'
@@ -412,7 +412,7 @@ def StocMultiyear (demand, forecast, instance_filepath,
                     rand_seed = None,
                     my_data = myearData_filepath):
 
-    type_model = ['sm']
+    type_model = 'sm'
     input_check(demand, forecast, instance_filepath, type_model)
     #Add and remove parameters
     ADD_FUNCTION = 'GRASP'
