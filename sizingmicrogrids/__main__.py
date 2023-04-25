@@ -1,9 +1,9 @@
 
 # -*- coding: utf-8 -*-
-import src.mainfunctions as mf
-from src.utilities import read_data, calculate_cost_data
-from src.utilities import read_multiyear_data, calculate_multiyear_data
-from src.classes import RandomCreate
+import mainfunctions as mf
+from utilities import read_data, calculate_cost_data
+from utilities import read_multiyear_data, calculate_multiyear_data
+from classes import RandomCreate
 import copy
 import os
 import click

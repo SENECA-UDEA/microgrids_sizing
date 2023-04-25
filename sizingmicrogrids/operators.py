@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
-from src.utilities import create_technologies
-from src.utilities import calculate_sizing_cost, interest_rate
-import src.opt as opt
-from src.classes import Solution, Diesel
+from utilities import create_technologies
+from utilities import calculate_sizing_cost, interest_rate
+import opt as opt
+from classes import Solution, Diesel
 import copy
 import math
 import pandas as pd
-from src.strategies import dispatch_my_strategy, Results_my
-from src.strategies import Results, dispatch_strategy
+from strategies import dispatch_my_strategy, Results_my
+from strategies import Results, dispatch_strategy
 
 
 class SolConstructor():

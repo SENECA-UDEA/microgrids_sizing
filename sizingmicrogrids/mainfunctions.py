@@ -2,27 +2,27 @@
 """
 @author: scastellanos
 """
-from src.utilities import create_technologies 
-from src.utilities import calculate_area, calculate_energy
-from src.utilities import fiscal_incentive
-from src.utilities import create_objects, interest_rate, ils
-from src.utilities import create_excel, calculate_sizing_cost
-from src.utilities import create_multiyear_objects
-from src.utilities import calculate_stochasticity_forecast
-from src.utilities import generate_number_distribution
-from src.utilities import calculate_stochasticity_demand
-from src.utilities import  get_best_distribution, hour_data
-from src.utilities import  week_vector_data, update_forecast
-from src.utilities import calculate_multiyear_data
-from src.strategies import dispatch_strategy, Results
-from src.strategies import Results_my, dispatch_my_strategy
+from utilities import create_technologies 
+from utilities import calculate_area, calculate_energy
+from utilities import fiscal_incentive
+from utilities import create_objects, interest_rate, ils
+from utilities import create_excel, calculate_sizing_cost
+from utilities import create_multiyear_objects
+from utilities import calculate_stochasticity_forecast
+from utilities import generate_number_distribution
+from utilities import calculate_stochasticity_demand
+from utilities import  get_best_distribution, hour_data
+from utilities import  week_vector_data, update_forecast
+from utilities import calculate_multiyear_data
+from strategies import dispatch_strategy, Results
+from strategies import Results_my, dispatch_my_strategy
 import math
 
 import pandas as pd 
-from src.operators import SolConstructor, SearchOperator
+from operators import SolConstructor, SearchOperator
 from plotly.offline import plot
 import copy
-import src.opt as opt
+import opt as opt
 pd.options.display.max_columns = None
 
 
