@@ -8,6 +8,7 @@ pyplot
 copy
 random
 json
+xlsxwriter
 math
 requests
 time
