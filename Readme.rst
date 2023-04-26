@@ -36,12 +36,17 @@ Go to http://www.pyomo.org for more information.
 
     python setup.py develop
 
+4. For a quick-first run  a) Return to the current path:
 
-4. For a quick-first run :
+::
+
+    cd..
+
+5. For a quick-first run b) run the model:
 
 
 ::
 
-    python -m microgrids_sizing -df "../data/Providencia/demand_Providencia.csv" -sw "../data/Providencia/forecast_Providencia.csv"  -gu "../data/Providencia/instance_data_Providencia.csv" -tm "st"
+    python -m sizingmicrogrids -df "microgrids_sizing/data/Providencia/demand_Providencia.csv" -sw "microgrids_sizing/data/Providencia/forecast_Providencia.csv"  -id "microgrids_sizing/data/Providencia/instance_data_Providencia.json" -tm "st"
 
 * For the optimization model You need to install a linear solver such as "Gurobi": www.gurobi.com/ (e.g Gurobi, Cplex, SCJP, etc.)

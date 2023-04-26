@@ -21,7 +21,7 @@ setuptools.setup(
     long_description=long_description,
     long_description_content_type="text/x-rst",
     url="https://github.com/SENECA-UDEA/microgrids_sizing",
-    packages=setuptools.find_packages(),
+    packages=setuptools.find_packages(install_requires),
     classifiers=[
         "Programming Language :: Python :: 3",
         "Operating System :: OS Independent",

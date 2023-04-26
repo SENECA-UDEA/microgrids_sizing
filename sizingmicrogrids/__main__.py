@@ -1,9 +1,9 @@
 
 # -*- coding: utf-8 -*-
-import mainfunctions as mf
-from utilities import read_data, calculate_cost_data
-from utilities import read_multiyear_data, calculate_multiyear_data
-from classes import RandomCreate
+import sizingmicrogrids.mainfunctions as mf
+from sizingmicrogrids.utilities import read_data, calculate_cost_data
+from sizingmicrogrids.utilities import read_multiyear_data, calculate_multiyear_data
+from sizingmicrogrids.classes import RandomCreate
 import copy
 import os
 import click
@@ -14,16 +14,16 @@ default_folder_path = os.getcwd()
 '''Default location'''
 PLACE = 'Providencia'
 # file paths 
-demand_filepath = default_folder_path + "/data/" + PLACE + "/demand_" + PLACE+".csv"
-forecast_filepath = default_folder_path + "/data/"+ PLACE + "/forecast_" + PLACE + ".csv"
-units_filepath = default_folder_path + "/data/" + PLACE + "/parameters_" + PLACE + ".json"
-instanceData_filepath = default_folder_path + "/data/" + PLACE + "/instance_data_" + PLACE + ".json"
+demand_filepath = default_folder_path + "/microgrids_sizing/data/" + PLACE + "/demand_" + PLACE+".csv"
+forecast_filepath = default_folder_path + "/microgrids_sizing/data/"+ PLACE + "/forecast_" + PLACE + ".csv"
+units_filepath = default_folder_path + "/microgrids_sizing/data/" + PLACE + "/parameters_" + PLACE + ".json"
+instanceData_filepath = default_folder_path + "/microgrids_sizing/data/" + PLACE + "/instance_data_" + PLACE + ".json"
 #fiscal Data
-fiscalData_filepath = default_folder_path + "/data/auxiliar/fiscal_incentive.json"
+fiscalData_filepath = default_folder_path + "/microgrids_sizing/data/auxiliar/fiscal_incentive.json"
 #cost Data
-costData_filepath = default_folder_path + "/data/auxiliar/parameters_cost.json"
+costData_filepath = default_folder_path + "/microgrids_sizing/data/auxiliar/parameters_cost.json"
 #multiyear Data
-myearData_filepath = default_folder_path + "/data/auxiliar/multiyear.json"
+myearData_filepath = default_folder_path + "/microgrids_sizing/data/auxiliar/multiyear.json"
 
 
 #default seed

@@ -2,27 +2,27 @@
 """
 @author: scastellanos
 """
-from utilities import create_technologies 
-from utilities import calculate_area, calculate_energy
-from utilities import fiscal_incentive
-from utilities import create_objects, interest_rate, ils
-from utilities import create_excel, calculate_sizing_cost
-from utilities import create_multiyear_objects
-from utilities import calculate_stochasticity_forecast
-from utilities import generate_number_distribution
-from utilities import calculate_stochasticity_demand
-from utilities import  get_best_distribution, hour_data
-from utilities import  week_vector_data, update_forecast
-from utilities import calculate_multiyear_data
-from strategies import dispatch_strategy, Results
-from strategies import Results_my, dispatch_my_strategy
+from sizingmicrogrids.utilities import create_technologies 
+from sizingmicrogrids.utilities import calculate_area, calculate_energy
+from sizingmicrogrids.utilities import fiscal_incentive
+from sizingmicrogrids.utilities import create_objects, interest_rate, ils
+from sizingmicrogrids.utilities import create_excel, calculate_sizing_cost
+from sizingmicrogrids.utilities import create_multiyear_objects
+from sizingmicrogrids.utilities import calculate_stochasticity_forecast
+from sizingmicrogrids.utilities import generate_number_distribution
+from sizingmicrogrids.utilities import calculate_stochasticity_demand
+from sizingmicrogrids.utilities import  get_best_distribution, hour_data
+from sizingmicrogrids.utilities import  week_vector_data, update_forecast
+from sizingmicrogrids.utilities import calculate_multiyear_data
+from sizingmicrogrids.strategies import dispatch_strategy, Results
+from sizingmicrogrids.strategies import Results_my, dispatch_my_strategy
 import math
 
 import pandas as pd 
-from operators import SolConstructor, SearchOperator
+from sizingmicrogrids.operators import SolConstructor, SearchOperator
 from plotly.offline import plot
 import copy
-import opt as opt
+import sizingmicrogrids.opt as opt
 pd.options.display.max_columns = None
 
 

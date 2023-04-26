@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
-from utilities import create_technologies
-from utilities import calculate_sizing_cost, interest_rate
-import opt as opt
-from classes import Solution, Diesel
+from sizingmicrogrids.utilities import create_technologies
+from sizingmicrogrids.utilities import calculate_sizing_cost, interest_rate
+import sizingmicrogrids.opt as opt
+from sizingmicrogrids.classes import Solution, Diesel
 import copy
 import math
 import pandas as pd
-from strategies import dispatch_my_strategy, Results_my
-from strategies import Results, dispatch_strategy
+from sizingmicrogrids.strategies import dispatch_my_strategy, Results_my
+from sizingmicrogrids.strategies import Results, dispatch_strategy
 
 
 class SolConstructor():

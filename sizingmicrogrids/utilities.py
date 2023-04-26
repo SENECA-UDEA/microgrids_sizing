@@ -5,9 +5,9 @@ Created on Wed Apr 20 13:51:07 2022
 @author: scastellanos
 """
 
-from classes import Solar, Eolic, Diesel, Battery
-from strategies import dispatch_strategy, Results
-from strategies import Results_my, dispatch_my_strategy
+from sizingmicrogrids.classes import Solar, Eolic, Diesel, Battery
+from sizingmicrogrids.strategies import dispatch_strategy, Results
+from sizingmicrogrids.strategies import Results_my, dispatch_my_strategy
 import pandas as pd
 import requests
 import json 
