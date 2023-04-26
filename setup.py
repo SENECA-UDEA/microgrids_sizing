@@ -26,7 +26,7 @@ setuptools.setup(
         "Programming Language :: Python :: 3",
         "Operating System :: OS Independent",
     ],
-    # install_requires=install_requires,
+    install_requires=install_requires,
     include_package_data=True,
 )
 
