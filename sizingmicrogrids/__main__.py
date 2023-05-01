@@ -66,25 +66,6 @@ def main (demand, forecast, instance_filepath, type_model, generation_units, tax
                      tax_incentive, parameters_cost, rand_seed, folder_path, my_data, solver_name, gap)
 
 
-def f_Deterministic(demand, forecast, instance_filepath, 
-                      generation_units = units_filepath, 
-                      tax_incentive = fiscalData_filepath,
-                      parameters_cost = costData_filepath,
-                      folder_path = default_folder_path,
-                      rand_seed = None):
-    return Deterministic(demand, forecast, instance_filepath, generation_units,
-                         tax_incentive, parameters_cost, folder_path, rand_seed)
-
-def f_Stochastic(demand, forecast, instance_filepath, 
-                generation_units = units_filepath, 
-                tax_incentive = fiscalData_filepath,
-                parameters_cost = costData_filepath,
-                folder_path = default_folder_path,
-                rand_seed = None):
-    return Stochastic(demand, forecast, instance_filepath, generation_units,
-                      tax_incentive, parameters_cost, folder_path, rand_seed)
-
-
 def input_check(demand, forecast, instance_filepath, type_model):
     if not demand:
         raise RuntimeError('You have to set a demand input file')
