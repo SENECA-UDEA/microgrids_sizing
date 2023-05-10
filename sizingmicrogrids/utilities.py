@@ -18,6 +18,7 @@ import math
 import datetime as dt
 
 
+
 def read_data(demand_filepath, 
               forecast_filepath,
               units_filepath,
@@ -584,17 +585,42 @@ def create_excel(sol_best, percent_df, name_file, folder_file, lcoe_scn = 0, rob
                                                                 "mean solar generation","mean batteries generation",
                                                                 "average lcoe best solution", "robustness best solution"])
 
-        
+    
     results_report = results_report.T     
     results_report.rename(columns = {0:'Results'}, inplace = True)
     name_excel = str(name_file) + '.xlsx' 
     #route_excel = "../data/Results_output/" + name_excel
     route_excel = str(folder_file) + "/" + name_excel
+    
     writer = pd.ExcelWriter(route_excel, engine='xlsxwriter')
     results_report.to_excel(writer, sheet_name='descriptive results', startrow = 0 , startcol = 0)
     pd_tecs.to_excel(writer, sheet_name='descriptive results', startrow = 0 , startcol = 3)
+    workbook  = writer.book
+    worksheet = writer.sheets['descriptive results']
+    
+    #percent format
+    percent_format = workbook.add_format({'num_format': '0.00%'})    
+    
+    # Format
+    worksheet.write('B4', lpsp_mean, percent_format)
+    worksheet.write('B5', wasted_mean, percent_format)
+    worksheet.write('B6', mean_total_d, percent_format)
+    worksheet.write('B7', mean_total_w, percent_format)
+    worksheet.write('B8', mean_total_s, percent_format)
+    worksheet.write('B9', mean_total_b, percent_format)
+    
+    #results sheet
     sol_best.results.df_results.to_excel(writer, sheet_name='Results')
-    percent_df.to_excel(writer, sheet_name='Percent')            
+    worksheet = writer.sheets['Results']
+    column_index = sol_best.results.df_results.columns.get_loc('S-')
+    worksheet.set_column(column_index + 1, column_index + 3, None, percent_format)    
+    
+    #percent sheet
+    percent_df.to_excel(writer, sheet_name='Percent')    
+    worksheet = writer.sheets['Percent']
+    column_index = len(percent_df)
+    worksheet.set_column(1, column_index + 1, None, percent_format)
+        
     writer.close()  
 
     return 
