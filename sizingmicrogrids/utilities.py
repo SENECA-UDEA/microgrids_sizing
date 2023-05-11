@@ -613,7 +613,7 @@ def create_excel(sol_best, percent_df, name_file, folder_file, lcoe_scn = 0, rob
     sol_best.results.df_results.to_excel(writer, sheet_name='Results')
     worksheet = writer.sheets['Results']
     column_index = sol_best.results.df_results.columns.get_loc('S-')
-    worksheet.set_column(column_index + 1, column_index + 3, None, percent_format)    
+    worksheet.set_column(column_index + 2, column_index + 2, None, percent_format)    
     
     #percent sheet
     percent_df.to_excel(writer, sheet_name='Percent')    
