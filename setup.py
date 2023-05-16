@@ -1,9 +1,11 @@
 import setuptools
 import sys
 
+#Long description
 with open("Readme.rst", "r") as fh:
     long_description = fh.read()
 
+#Read requeriments
 with open('requirements.txt') as f:
     install_requires = f.read().strip().split('\n')
 
@@ -12,6 +14,7 @@ if sys.version[0] == '2':
     print("Error: This package must be installed with python3")
     sys.exit(1)
 
+#Package configuration
 setuptools.setup(
     name="sizingmicrogrids",
     version="1",
@@ -26,6 +29,7 @@ setuptools.setup(
         "Programming Language :: Python :: 3",
         "Operating System :: OS Independent",
     ],
+    #Install requeriments
     install_requires=install_requires,
     include_package_data=True,
 )

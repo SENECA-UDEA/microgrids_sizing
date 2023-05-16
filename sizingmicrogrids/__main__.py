@@ -41,7 +41,7 @@ SEED = None
 
 type_model_options = ['st','dt','my','sm','op','ot']
 
-
+#Console read option
 @click.command()
 @click.option('--demand', '-df', default=None,
               type=str, help='Path of demand forecast data .csv file')
@@ -69,12 +69,14 @@ type_model_options = ['st','dt','my','sm','op','ot']
               help='Solver GAP to be used to solve the model; default = 0.01')
 
 
+#Default main function
 def main (demand, forecast, instance_filepath, type_model, generation_units, tax_incentive, 
           parameters_cost, rand_seed, folder_path, my_data, solver_name, gap):
     return main_func(demand, forecast, instance_filepath, type_model, generation_units, 
                      tax_incentive, parameters_cost, rand_seed, folder_path, my_data, solver_name, gap)
 
 
+#Check if the none default path exist
 def input_check(demand, forecast, instance_filepath, type_model):
     if not demand:
         raise RuntimeError('You have to set a demand input file')
@@ -94,9 +96,11 @@ def input_check(demand, forecast, instance_filepath, type_model):
         raise RuntimeError('You have to select a correct model type')
 
 
+#Main function - for each type of model
 def main_func (demand, forecast, instance_filepath, type_model, generation_units, tax_incentive, 
               parameters_cost, rand_seed, folder_path, my_data, solver_name, gap):
 
+    #Check the path
     input_check(demand, forecast, instance_filepath, type_model)
     
     #Add and remove parameters
@@ -196,6 +200,8 @@ def main_func (demand, forecast, instance_filepath, type_model, generation_units
     
 
 '''Functions to run the different models'''
+
+#Dispatch Strategy deterministic
 def Deterministic(demand, forecast, instance_filepath, 
                   generation_units = units_filepath, 
                   tax_incentive = fiscalData_filepath,
@@ -204,6 +210,7 @@ def Deterministic(demand, forecast, instance_filepath,
                   rand_seed = None):
     
     type_model = 'dt'
+    #check if the path exists
     input_check(demand, forecast, instance_filepath, type_model)
     #Add and remove parameters
     ADD_FUNCTION = 'GRASP'
@@ -228,6 +235,7 @@ def Deterministic(demand, forecast, instance_filepath,
     #Demand to be covered
     demand_df['demand'] = instance_data['demand_covered'] * demand_df['demand'] 
     
+    #solve the model
     percent_df, energy_df, renew_df, total_df, brand_df = mf.maindispatch(demand_df, 
                                                                           forecast_df, generators, batteries, instance_data, fisc_data, cost_data,
                                                                           best_nsh, rand_ob, ADD_FUNCTION, REMOVE_FUNCTION, folder_path)
@@ -235,6 +243,7 @@ def Deterministic(demand, forecast, instance_filepath,
     return percent_df, energy_df, renew_df, total_df, brand_df
 
 
+#Dispatch Strategy stochastic
 def Stochastic (demand, forecast, instance_filepath, 
                 generation_units = units_filepath, 
                 tax_incentive = fiscalData_filepath,
@@ -243,6 +252,8 @@ def Stochastic (demand, forecast, instance_filepath,
                 rand_seed = None):
     
     type_model = 'st'
+    
+    #check if the path exists
     input_check(demand, forecast, instance_filepath, type_model)
     #Add and remove parameters
     ADD_FUNCTION = 'GRASP'
@@ -268,13 +279,14 @@ def Stochastic (demand, forecast, instance_filepath,
     demand_df['demand'] = instance_data['demand_covered'] * demand_df['demand'] 
     demand_df_i = copy.deepcopy(demand_df)
     forecast_df_i = copy.deepcopy(forecast_df)
+    #solve the model
     percent_df, energy_df, renew_df, total_df, brand_df, df_iterations, percent_df0, solutions = mf.mainstoc(demand_df_i, 
                                                                                                              forecast_df_i, generators, batteries, instance_data, fisc_data, cost_data,
                                                                                                              best_nsh, rand_ob, ADD_FUNCTION, REMOVE_FUNCTION, folder_path)
 
     return percent_df, energy_df, renew_df, total_df, brand_df
 
-
+#One - stage optimization model
 def Optimization(demand, forecast, instance_filepath, 
                 generation_units = units_filepath, 
                 tax_incentive = fiscalData_filepath,
@@ -283,6 +295,7 @@ def Optimization(demand, forecast, instance_filepath,
                 gap = 0.01, solver_name = 'gurobi'):
 
     type_model = 'op'
+    #checj if the paths exist
     input_check(demand, forecast, instance_filepath, type_model)    
     # read data
     demand_df, forecast_df, generators, batteries, instance_data, fisc_data, cost_data = read_data(demand,
@@ -297,10 +310,10 @@ def Optimization(demand, forecast, instance_filepath,
                                                 instance_data, cost_data)
     #Demand to be covered
     demand_df['demand'] = instance_data['demand_covered'] * demand_df['demand'] 
-    
+    #set solver parameters
     solver_data = {"MIP_GAP":gap,"TEE_SOLVER":True,"OPT_SOLVER":solver_name}
     
-
+    #solve the model
     percent_df, energy_df, renew_df, total_df, brand_df  = mf.mainopt(demand_df,
                                                                       forecast_df, generators, batteries, 
                                                                       instance_data, fisc_data, cost_data, solver_data, folder_path)
@@ -308,6 +321,7 @@ def Optimization(demand, forecast, instance_filepath,
     return percent_df, energy_df, renew_df, total_df, brand_df
 
 
+#Two stage optimization model with iterated local search
 def IlsOptimization (demand, forecast, instance_filepath, 
                     generation_units = units_filepath, 
                     tax_incentive = fiscalData_filepath,
@@ -317,12 +331,14 @@ def IlsOptimization (demand, forecast, instance_filepath,
                     gap = 0.01, solver_name = 'gurobi'):
     
     type_model = 'ot'
+    #check if the paths exist
     input_check(demand, forecast, instance_filepath, type_model)
     #Add and remove parameters
     ADD_FUNCTION = 'GRASP'
     REMOVE_FUNCTION = 'RANDOM'
     SEED = rand_seed
     rand_ob = RandomCreate(seed = SEED)
+    #set the solver data
     solver_data = {"MIP_GAP":gap,"TEE_SOLVER":True,"OPT_SOLVER":solver_name}
     
     # read data
@@ -338,7 +354,7 @@ def IlsOptimization (demand, forecast, instance_filepath,
                                                 instance_data, cost_data)
     #Demand to be covered
     demand_df['demand'] = instance_data['demand_covered'] * demand_df['demand'] 
-
+    #solve the model
     percent_df, energy_df, renew_df, total_df, brand_df, df_iterations = mf.mainopttstage (demand_df, 
                                                                                            forecast_df, generators, batteries, instance_data, fisc_data,
                                                                                            cost_data, rand_ob, ADD_FUNCTION, REMOVE_FUNCTION, solver_data, folder_path)
@@ -346,6 +362,7 @@ def IlsOptimization (demand, forecast, instance_filepath,
     return percent_df, energy_df, renew_df, total_df, brand_df
 
 
+#Dispatch Strategy deterministic + multiyear 
 def Multiyear (demand, forecast, instance_filepath, 
                 generation_units = units_filepath, 
                 tax_incentive = fiscalData_filepath,
@@ -355,6 +372,7 @@ def Multiyear (demand, forecast, instance_filepath,
                 my_data = myearData_filepath):
     
     type_model = 'my'
+    #check if the paths exist
     input_check(demand, forecast, instance_filepath, type_model)
     #Add and remove parameters
     ADD_FUNCTION = 'GRASP'
@@ -382,10 +400,11 @@ def Multiyear (demand, forecast, instance_filepath,
     generators, batteries = calculate_cost_data(generators, batteries, 
                                                 instance_data, cost_data)
     
+    #calculate multiyear data
     demand_df, forecast_df = calculate_multiyear_data(demand_df_i, forecast_df_i,
                                                       my_data, instance_data['years'])  
 
-
+    #solve the model
     percent_df, energy_df, renew_df, total_df, brand_df  = mf.maindispatchmy(demand_df,
                                                                              forecast_df, generators, batteries, instance_data, fisc_data, cost_data,
                                                                              my_data, best_nsh, rand_ob, ADD_FUNCTION, REMOVE_FUNCTION, folder_path)
@@ -394,6 +413,7 @@ def Multiyear (demand, forecast, instance_filepath,
     return percent_df, energy_df, renew_df, total_df, brand_df
 
 
+#Dispatch Strategy stochastic + multiyear
 def StocMultiyear (demand, forecast, instance_filepath, 
                     generation_units = units_filepath, 
                     tax_incentive = fiscalData_filepath,
@@ -403,6 +423,7 @@ def StocMultiyear (demand, forecast, instance_filepath,
                     my_data = myearData_filepath):
 
     type_model = 'sm'
+    #chek if the paths exist
     input_check(demand, forecast, instance_filepath, type_model)
     #Add and remove parameters
     ADD_FUNCTION = 'GRASP'
@@ -433,12 +454,13 @@ def StocMultiyear (demand, forecast, instance_filepath,
     demand_df_year = copy.deepcopy(demand_df_i)
     forecast_df_year = copy.deepcopy(forecast_df_i)
     
+    #solve the model
     percent_df, energy_df, renew_df, total_df, brand_df, df_iterations, percent_df0, solutions = mf.mainstocmy(demand_df_year, 
                                                                                                                forecast_df_year, generators, batteries, instance_data, fisc_data, cost_data,
                                                                                                                my_data, best_nsh, rand_ob, ADD_FUNCTION, REMOVE_FUNCTION, folder_path)
         
     return percent_df, energy_df, renew_df, total_df, brand_df
 
-
+#default function
 if __name__ == "__main__":
     main()
