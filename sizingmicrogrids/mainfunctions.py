@@ -27,7 +27,8 @@ pd.options.display.max_columns = None
 
 
 
-def maindispatch(demand_df, forecast_df, generators, batteries, instance_data, fisc_data, cost_data,
+def maindispatch(demand_df, forecast_df, generators, batteries, instance_data,
+                 fisc_data, cost_data,
                  best_nsh, rand_ob, ADD_FUNCTION, REMOVE_FUNCTION, folder_path):
     '''
     This function makes a microgrid sizing optimization; 
@@ -203,7 +204,8 @@ def maindispatch(demand_df, forecast_df, generators, batteries, instance_data, f
     return percent_df, energy_df, renew_df, total_df, brand_df 
 
 
-def maindispatchmy(demand_df, forecast_df, generators, batteries, instance_data, fisc_data, cost_data,
+def maindispatchmy(demand_df, forecast_df, generators, batteries, instance_data, 
+                   fisc_data, cost_data,
                    my_data, best_nsh, rand_ob, ADD_FUNCTION, REMOVE_FUNCTION, folder_path):
     
     '''
@@ -766,8 +768,9 @@ def mainstoc(demand_df_i, forecast_df_i, generators, batteries, instance_data,
 
 
 
-def mainstocmy(demand_df_year, forecast_df_year, generators, batteries, instance_data,
-               fisc_data, cost_data, my_data, best_nsh, rand_ob, ADD_FUNCTION, REMOVE_FUNCTION, folder_path):
+def mainstocmy(demand_df_year, forecast_df_year, generators, 
+               batteries, instance_data,fisc_data, cost_data, my_data, best_nsh, 
+               rand_ob, ADD_FUNCTION, REMOVE_FUNCTION, folder_path):
     '''
     This function uses several data and functions to perform
     microgrid sizing optimization; according to the two-stage formulation, 
@@ -1038,7 +1041,8 @@ def mainstocmy(demand_df_year, forecast_df_year, generators, batteries, instance
             list_scn = list(solutions.keys())
         
         #create matrix to save solutions
-        best_solutions = {k : [0] * int(len(solutions.keys())) for k in range(int(len(solutions.keys())))}
+        best_solutions = {k : [0] * int(len(solutions.keys())) 
+                          for k in range(int(len(solutions.keys())))}
         
         #solve each solution in each scenario
         for scn in list_scn:
@@ -1283,7 +1287,8 @@ def mainopt(demand_df,forecast_df, generators, batteries, instance_data,
     return percent_df, energy_df, renew_df, total_df, brand_df
 
 
-def mainopttstage (demand_df, forecast_df, generators, batteries, instance_data, fisc_data,
+def mainopttstage (demand_df, forecast_df, generators, batteries,
+                   instance_data, fisc_data,
                    cost_data, rand_ob, ADD_FUNCTION, REMOVE_FUNCTION, solver_data, folder_path):
     '''
     This functions import several data and procedures

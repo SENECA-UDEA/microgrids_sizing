@@ -70,10 +70,11 @@ type_model_options = ['st','dt','my','sm','op','ot']
 
 
 #Default main function
-def main (demand, forecast, instance_filepath, type_model, generation_units, tax_incentive, 
-          parameters_cost, rand_seed, folder_path, my_data, solver_name, gap):
+def main (demand, forecast, instance_filepath, type_model, generation_units,
+          tax_incentive, parameters_cost, rand_seed, folder_path, my_data, solver_name, gap):
     return main_func(demand, forecast, instance_filepath, type_model, generation_units, 
-                     tax_incentive, parameters_cost, rand_seed, folder_path, my_data, solver_name, gap)
+                     tax_incentive, parameters_cost, rand_seed, folder_path, my_data, 
+                     solver_name, gap)
 
 
 #Check if the none default path exist
@@ -97,8 +98,8 @@ def input_check(demand, forecast, instance_filepath, type_model):
 
 
 #Main function - for each type of model
-def main_func (demand, forecast, instance_filepath, type_model, generation_units, tax_incentive, 
-              parameters_cost, rand_seed, folder_path, my_data, solver_name, gap):
+def main_func (demand, forecast, instance_filepath, type_model, generation_units, 
+               tax_incentive, parameters_cost, rand_seed, folder_path, my_data, solver_name, gap):
 
     #Check the path
     input_check(demand, forecast, instance_filepath, type_model)
